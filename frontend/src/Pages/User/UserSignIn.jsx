@@ -30,7 +30,7 @@ const userSignIn = () => {
         username,
         password,
         email,
-        mood
+        //mood
       });
 
       if (response.status === 200) {
@@ -114,7 +114,7 @@ const userSignIn = () => {
             />
           </div>
 
-          <div>
+          {/* <div>
             <label htmlFor="mood" className="block text-gray-300">Mood</label>
             <select
               id="mood"
@@ -129,7 +129,7 @@ const userSignIn = () => {
               <option value="Tired">😴 Tired</option>
               <option value="Angry">😡 Angry</option>
             </select>
-          </div>
+          </div> */}
 
           <button
             type="submit"
