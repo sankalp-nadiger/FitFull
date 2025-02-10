@@ -1,90 +1,111 @@
 import mongoose, { Schema } from "mongoose"
 import bcrypt from 'bcryptjs';
 import jwt from "jsonwebtoken";
-const userSchema = new Schema( {
-    username:
-    {
-        type: String,
-        required:true,
-        unique:true,
-        minLength: 10,
-        maxLength: 30
-    },
-    fullName:
-    {
+const userSchema = new Schema(
+  {
+    username: {
       type: String,
-      required:true,
-      unique:true,
+      required: true,
+      unique: true,
+      minLength: 10,
+      maxLength: 30,
+    },
+    fullName: {
+      type: String,
+      required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    password: {
+      type: String,
+      required: function () {
+        return !this.authProvider;
+      },
+    },
+    avatar: {
+      type: String, // Profile picture URL
+    },
+    age: {
+      type: Number,
+    },
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
+      required: true,
+    },
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local", // Tracks if user registered via Google/Spotify/local signup
+    },
+    googleId: {
+      type: String, // Stores Google OAuth ID
+      unique: true,
+      sparse: true, // Allows null values while enforcing uniqueness
+    },
+    spotifyId: {
+      type: String, // Stores Spotify OAuth ID
+      unique: true,
+      sparse: true,
+    },
+    tokens: {
+      refreshToken: String, // General refresh token for session handling
+      spotifyAccessToken: String, // Spotify access token
+      spotifyRefreshToken: String, // Spotify refresh token (to get new access tokens)
+    },
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"], // GeoJSON type for geospatial data
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+      },
+      address: {
+        type: String, // Human-readable address
+      },
+    },
+    progress: {
+      type: Number,
+      default: 0, // Percentage progress if it's a goal (e.g., 0-100%)
+    },
+    lastLoginDate: {
+      type: Date,
+    },
+    issues: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Issue",
+      },
+    ],
+    family: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    streak: {
+      type: Number,
+      default: 0,
+    },
+    maxStreak: {
+      type: Number,
+      default: 0,
+    },
+    achievements: {
+      type: String,
+    },
+    prescriptions: [{ type: Schema.Types.ObjectId, ref: "Prescription" }],
+    testReports: [{ type: Schema.Types.ObjectId, ref: "TestReport" }],
+    diagnoses: [{ type: Schema.Types.ObjectId, ref: "Diagnosis" }],
+
   },
-    password:
-    {
-        type: String,
-        required: true,
-        unique:true
-    },
-    avatar:
-    {
-        type: String,
-    },
-    age: 
-    {
-        type: Number,
-    },
-    gender:{
-        type:String,enum:["Male","Female","Other"],
-        required:true 
-    },
-    email:
-    {
-        type: String,
-        required:true
-    },
-        location: {
-          type: {
-            type: String,
-            enum: ["Point"], // GeoJSON type for geospatial data
-           
-          },
-          coordinates: {
-            type: [Number], // [longitude, latitude]
-         
-          },
-          address: {
-            type: String, // Human-readable address
-          },
-        },
-        progress: {
-          type: Number,
-          default: 0, // Percentage progress if it's a goal (e.g., 0-100%)
-        },
-        // idCard:
-        // {
-        //   type: String
-        // },
-        parent_phone_no: Number,
-        lastLoginDate: {
-          type: Date,
-        },
-        issues:
-        [{
-          type: Schema.Types.ObjectId,
-            ref: "Issue"
-        }],
-        family :{
-             type: Schema.Types.ObjectId,
-            ref: "family"
-        },
-        streak: {
-          type: Number,
-          default: 0,
-        },
-        maxStreak: {
-          type: Number,
-          default: 0,
-        },    
-        refreshToken: String,
-        achievements: String
-}, { timestamps: true})
+  { timestamps: true }
+);
+userSchema.index({ location: "2dsphere" });
 
 userSchema.methods.assignRandomAvatar = async function () {
   const male_avatars = [

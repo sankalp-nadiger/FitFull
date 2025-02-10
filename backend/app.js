@@ -1,8 +1,12 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-const axios = require('axios');
-const querystring = require('querystring');
+import axios from 'axios';
+import { queryString } from 'querystring';  
+import { google } from 'googleapis'; 
+import { User } from './src/models/user.model.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Router imports
 import userRouter from './routes/user.routes.js';
@@ -12,7 +16,6 @@ import communityRouter from "./routes/community.routes.js";
 import doctorRouter from "./routes/doctor.routes.js";
 import dm_chatRouter from "./routes/dm_chat.routes.js";
 import journalRouter from "./routes/journal.routes.js";
-//import parentRouter from "./routes/parent.routes.js";
 import storyRouter from "./routes/story.routes.js";
 import postsRouter from "./routes/posts.routes.js";
 import recomendations from "./routes/recommendations.route.js";
@@ -21,7 +24,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-    origin: 'http://localhost:5173', // Adjust the frontend URL as needed
+    origin: 'http://localhost:5173',
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
@@ -32,7 +35,7 @@ app.use(cookieParser());
 
 const SPOTIFY_CLIENT_ID = 'YOUR_SPOTIFY_CLIENT_ID';
 const SPOTIFY_CLIENT_SECRET = 'YOUR_SPOTIFY_CLIENT_SECRET';
-const SPOTIFY_REDIRECT_URI = 'http://localhost:8000/auth/spotify/callback';
+const SPOTIFY_REDIRECT_URI = 'http://localhost:5173/loading';
 
 // Routes
 app.use("/api/users", userRouter);
@@ -47,6 +50,97 @@ app.use("/api/story", storyRouter);
 app.use("/api/post", postsRouter);
 app.use("/api/recommendations", recomendations);
 
+const oauth2Client = new google.auth.OAuth2(
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+  );
+  
+  // Route to Start Google OAuth
+  app.get("/auth/google-url", (req, res) => {
+    const url = oauth2Client.generateAuthUrl({
+      access_type: "offline",
+      scope: ["https://www.googleapis.com/auth/fitness.activity.read"],
+      redirect_uri: "http://localhost:5173/loading",
+    });
+  
+    res.json({url});
+  });
+  
+  // Route to Handle Google OAuth Callback
+  router.post("/auth/google/callback", async (req, res) => {
+    const { code } = req.body;
+
+    if (!code) return res.status(400).json({ success: false, message: "No authorization code provided" });
+
+    try {
+        // Exchange code for tokens
+        const { tokens } = await oauth2Client.getToken(code);
+        oauth2Client.setCredentials(tokens);
+
+        // Get user info from Google
+        const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
+        const { data: googleUser } = await oauth2.userinfo.get();
+
+        // Store user info in session (or database)
+        let user = await User.findOne({ email: googleUser.email });
+
+        if (!user) {
+            user = new User({
+                fullName: `${googleUser.given_name} ${googleUser.family_name}`,
+                email: googleUser.email,
+                avatar: googleUser.picture,
+                googleId: googleUser.id,
+                authProvider: "google",
+                tokens: { googleFitToken: tokens.access_token },
+            });
+            await user.save();
+        }
+
+        const jwtToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+        res.json({ success: true, jwt: jwtToken, user });
+    } catch (error) {
+        console.error("Google OAuth Error:", error);
+        res.status(500).json({ success: false, message: "Google authentication failed" });
+    }
+});
+
+
+app.post("/login/google", async (req, res) => {
+    const { token } = req.body; // Google OAuth Token from frontend
+  
+    try {
+      // Verify token with Google
+      const ticket = await oauth2Client.verifyIdToken({
+        idToken: token,
+        audience: "YOUR_CLIENT_ID",
+      });
+  
+      const payload = ticket.getPayload(); // User data from Google
+      const email = payload.email;
+  
+      let user = await User.findOne({ email });
+  
+      if (!user) {
+        // Create a new user if they don't exist
+        user = new User({
+          email,
+          googleFitToken: token, // Store OAuth token for Google Fit
+        });
+        await user.save();
+      }
+  
+      // Generate a JWT for app authentication
+      const jwtToken = jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: process.env.ACCESS_TOKEN_EXPIRY } );
+  
+      res.json({ jwt: jwtToken, googleFitConnected: true });
+    } catch (error) {
+      console.error("Google Login Error:", error);
+      res.status(401).send("Invalid Google Token");
+    }
+  });
+
 app.post('/auth/spotify', async (req, res) => {
     const state = Math.random().toString(36).substring(7);  // Random state string for security
     const scope = 'playlist-read-private user-library-read';
@@ -57,20 +151,19 @@ app.post('/auth/spotify', async (req, res) => {
                     `scope=${encodeURIComponent(scope)}&` +
                     `state=${state}`;
   
-    // Redirect user to Spotify's login page
+    // Redirects user to Spotify's login page
     res.redirect(authUrl);
   });
   
-  app.get('/auth/spotify/callback', async (req, res) => {
-    const { code } = req.query;  // Extract authorization code from Spotify redirect
+//   app.get('/auth/spotify/callback', async (req, res) => {
+//     const { code } = req.query;
 
-    if (!code) {
-        return res.redirect('http://localhost:5173/error?message=No+authorization+code+received');
-    }
+//     if (!code) {
+//         return res.redirect('http://localhost:5173/error?message=No+authorization+code+received');
+//     }
 
-    // 🚀 Instead of processing everything now, redirect the user to frontend's loading page
-    res.redirect(`http://localhost:5173/loading?code=${code}`);
-});
+//     res.redirect(`http://localhost:5173/loading?code=${code}`);
+// });
 
 app.post('/auth/spotify/exchange-token', async (req, res) => {
     const { code } = req.body;
