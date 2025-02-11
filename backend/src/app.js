@@ -2,26 +2,27 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import axios from 'axios';
-import { queryString } from 'querystring';  
+//import queryString from 'querystring';  
 import { google } from 'googleapis'; 
-import { User } from './src/models/user.model.js';
+import { User } from './models/user.model.js';
 import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
 dotenv.config();
 
 // Router imports
 import userRouter from './routes/user.routes.js';
-import resourceRouter from "./routes/resource.routes.js";
-import activityRouter from "./routes/activity.routes.js";
-import communityRouter from "./routes/community.routes.js";
-import doctorRouter from "./routes/doctor.routes.js";
-import dm_chatRouter from "./routes/dm_chat.routes.js";
-import journalRouter from "./routes/journal.routes.js";
-import storyRouter from "./routes/story.routes.js";
-import postsRouter from "./routes/posts.routes.js";
-import recomendations from "./routes/recommendations.route.js";
+//import resourceRouter from "./routes/resource.routes.js";
+//import activityRouter from "./routes/activity.routes.js";
+// import communityRouter from "./routes/community.routes.js";
+// import doctorRouter from "./routes/doctor.routes.js";
+// import dm_chatRouter from "./routes/dm_chat.routes.js";
+// import journalRouter from "./routes/journal.routes.js";
+// import storyRouter from "./routes/story.routes.js";
+// import postsRouter from "./routes/posts.routes.js";
+// import recomendations from "./routes/recommendations.route.js";
 
 const app = express();
-
+const router = express.Router();
 // Middleware
 app.use(cors({
     origin: 'http://localhost:5173',
@@ -39,37 +40,41 @@ const SPOTIFY_REDIRECT_URI = 'http://localhost:5173/loading';
 
 // Routes
 app.use("/api/users", userRouter);
-app.use("/api/resources", resourceRouter);
-app.use("/api/journals", journalRouter);
-app.use("/api/activity", activityRouter);
-app.use("/api/community", communityRouter);  // Community Chat Route
-app.use("/api/doctor", doctorRouter);
-app.use("/api/dm_chat", dm_chatRouter);
-//app.use("/api/parent", parentRouter);
-app.use("/api/story", storyRouter);
-app.use("/api/post", postsRouter);
-app.use("/api/recommendations", recomendations);
+// app.use("/api/resources", resourceRouter);
+// app.use("/api/journals", journalRouter);
+// app.use("/api/activity", activityRouter);
+// app.use("/api/community", communityRouter);  // Community Chat Route
+// app.use("/api/doctor", doctorRouter);
+// app.use("/api/dm_chat", dm_chatRouter);
+// //app.use("/api/parent", parentRouter);
+// app.use("/api/story", storyRouter);
+// app.use("/api/post", postsRouter);
+// app.use("/api/recommendations", recomendations);
 
 const oauth2Client = new google.auth.OAuth2(
-    "GOOGLE_CLIENT_ID",
-    "GOOGLE_CLIENT_SECRET",
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.GOOGLE_REDIRECT_URI
   );
   
   // Route to Start Google OAuth
   app.get("/auth/google-url", (req, res) => {
     const url = oauth2Client.generateAuthUrl({
       access_type: "offline",
-      scope: ["https://www.googleapis.com/auth/fitness.activity.read"],
-      redirect_uri: "http://localhost:5173/loading",
+      scope: ["https://www.googleapis.com/auth/fitness.activity.read",
+        'https://www.googleapis.com/auth/userinfo.profile',
+    'https://www.googleapis.com/auth/userinfo.email',
+      ],
+      redirect_uri: "http://localhost:5173/up-loading",
     });
   
     res.json({url});
   });
   
   // Route to Handle Google OAuth Callback
-  router.post("/auth/google/callback", async (req, res) => {
+  app.post("/auth/google/callback", async (req, res) => {
     const { code } = req.body;
-
+    console.log(code)
     if (!code) return res.status(400).json({ success: false, message: "No authorization code provided" });
 
     try {
@@ -96,7 +101,7 @@ const oauth2Client = new google.auth.OAuth2(
             await user.save();
         }
 
-        const jwtToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+        const jwtToken = jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "7d" });
 
         res.json({ success: true, jwt: jwtToken, user });
     } catch (error) {
@@ -106,40 +111,55 @@ const oauth2Client = new google.auth.OAuth2(
 });
 
 
-app.post("/login/google", async (req, res) => {
-    const { token } = req.body; // Google OAuth Token from frontend
-  
-    try {
-      // Verify token with Google
-      const ticket = await oauth2Client.verifyIdToken({
-        idToken: token,
-        audience: "YOUR_CLIENT_ID",
-      });
-  
-      const payload = ticket.getPayload(); // User data from Google
-      const email = payload.email;
-  
-      let user = await User.findOne({ email });
-  
-      if (!user) {
-        // Create a new user if they don't exist
-        user = new User({
-          email,
-          googleFitToken: token, // Store OAuth token for Google Fit
-        });
-        await user.save();
-      }
-  
-      // Generate a JWT for app authentication
-      const jwtToken = jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: process.env.ACCESS_TOKEN_EXPIRY } );
-  
-      res.json({ jwt: jwtToken, googleFitConnected: true });
-    } catch (error) {
-      console.error("Google Login Error:", error);
-      res.status(401).send("Invalid Google Token");
-    }
+app.post("/login-google", async (req, res) => {
+  // Generate Google OAuth URL for fresh token each time
+  const authUrl = oauth2Client.generateAuthUrl({
+      access_type: "offline",
+      scope: ["https://www.googleapis.com/auth/fitness.activity.read"],
+      redirect_uri: "http://localhost:5173/in-loading",
+      prompt: "consent", // Always ask for permission
   });
+
+  res.json({ url: authUrl });
+});
+
+app.post("/auth/google/check-login", async (req, res) => {
+  const { code } = req.body;
+
+  if (!code) {
+      return res.status(400).json({ success: false, message: "No authorization code provided" });
+  }
+
+  try {
+      // Exchange code for tokens
+      const { tokens } = await oauth2Client.getToken(code);
+      oauth2Client.setCredentials(tokens);
+
+      // Get user info from Google
+      const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
+      const { data: googleUser } = await oauth2.userinfo.get();
+
+      // Check if user exists in the database
+      let user = await User.findOne({ email: googleUser.email });
+
+      if (!user) {
+          return res.status(404).json({ success: false, message: "User does not exist. Please sign up first." });
+      }
+
+      // Generate JWT for the existing user
+      const jwtToken = jwt.sign(
+          { userId: user._id },
+          process.env.JWT_SECRET,
+          { expiresIn: "7d" }
+      );
+
+      res.json({ success: true, jwt: jwtToken, user });
+
+  } catch (error) {
+      console.error("Google OAuth Error:", error);
+      res.status(500).json({ success: false, message: "Google authentication failed" });
+  }
+});
 
 app.post('/auth/spotify', async (req, res) => {
     const state = Math.random().toString(36).substring(7);  // Random state string for security

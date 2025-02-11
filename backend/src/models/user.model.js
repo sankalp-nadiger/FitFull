@@ -5,7 +5,7 @@ const userSchema = new Schema(
   {
     username: {
       type: String,
-      required: true,
+      //required: true,
       unique: true,
       minLength: 10,
       maxLength: 30,
@@ -34,7 +34,7 @@ const userSchema = new Schema(
     gender: {
       type: String,
       enum: ["Male", "Female", "Other"],
-      required: true,
+      //required: true,
     },
     authProvider: {
       type: String,
@@ -184,4 +184,4 @@ userSchema.pre("save", async function (next) {
       };
 
 
-export const User= mongoose.model("User", userSchema) 
+export const User= mongoose.model("User", userSchema)

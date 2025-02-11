@@ -1,12 +1,15 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+//import signInWithGoogle from "./UserGoogleSignIn";
 
-const userSignIn = () => {
+const UserSignIn = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false); // State for password visibility toggle
-
+  async function signInWithGoogle() {
+                navigate("/in-loading");  
+}
   const handleSignIn = async (event) => {
     event.preventDefault();
 
@@ -14,10 +17,9 @@ const userSignIn = () => {
     const username = event.target.username.value;
     const email = event.target.email.value;
     const password = event.target.password.value;
-    const mood = event.target.mood.value;
 
     // Validate fields
-    if (!email || !password || !mood || !username) {
+    if (!email || !password || !username) {
       alert("Please fill in all fields.");
       return;
     }
@@ -66,7 +68,7 @@ const userSignIn = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6">
-      <h1 className="text-4xl font-bold text-green-600 mb-6">Welcome to Mindfull</h1>
+      <h1 className="text-4xl font-bold text-green-600 mb-6">Welcome to Fitfull</h1>
 
       <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg">
         <h2 className="text-2xl font-semibold text-center text-indigo-300 mb-4">User Sign In</h2>
@@ -152,7 +154,7 @@ const userSignIn = () => {
         {/* Sign in with Google Button */}
         <div className="mt-4 text-center">
           <button
-            onClick={() => navigate("/google-signin")}
+            onClick={signInWithGoogle}
             className="w-full py-2 text-lg font-bold text-white bg-red-500 rounded-md hover:bg-red-600 transition-all mt-2"
           >
             Sign in with Google
@@ -164,4 +166,4 @@ const userSignIn = () => {
   );
 };
 
-export default userSignIn;
+export default UserSignIn;

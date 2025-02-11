@@ -1,13 +1,32 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-function LoadingPage() {
+function SignInLoadingPage() {
     const navigate = useNavigate();
-
     useEffect(() => {
-        // Step 5: Once user logs in, check status & navigate
-        checkGoogleLogin();
+        signInWithGoogle(); // Start the sign-up process immediately
     }, []);
+    async function signInWithGoogle()
+    {
+           try {  
+       
+               // Step 2: Fetch the Google OAuth URL from the backend
+               const response = await fetch("http://localhost:8000/auth/login-google");
+               const data = await response.json();
+       
+               if (data.url) {
+                   // Step 3: Open Google OAuth login in a new tab
+                   window.location.href(data.url);
+       
+                   // Wait and check when the user completes login
+                   checkGoogleLogin();
+               } else {
+                   console.error("Failed to get Google OAuth URL");
+               }
+           } catch (error) {
+               console.error("Google OAuth Error:", error);
+           }
+    }
 
     async function checkGoogleLogin() {
         try {
@@ -33,4 +52,4 @@ function LoadingPage() {
     );
 }
 
-export default LoadingPage;
+export default SignInLoadingPage

@@ -4,7 +4,7 @@ import app from './app.js'
 import { Server } from "socket.io";
 import http from "http";
 dotenv.config({
-    path: './.env'
+    path: '../.env'
 })
 const server = http.createServer(app);
 const io = new Server(server, {

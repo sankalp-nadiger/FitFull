@@ -1,11 +1,7 @@
 import React from "react";
-import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+//import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 
   import { useNavigate } from "react-router-dom";
-const SignUpWithGoogle = ({ onSuccess }) => {
-  const auth = getAuth();
-  const provider = new GoogleAuthProvider();
-  provider.addScope("https://www.googleapis.com/auth/fitness.activity.read");
 
 
 async function signInWithGoogle() {
@@ -13,15 +9,15 @@ async function signInWithGoogle() {
 
     try {
         // Step 1: Show loading screen while getting Google OAuth URL
-        navigate("/loading");  
+        navigate("/in-loading");  
 
         // Step 2: Fetch the Google OAuth URL from the backend
-        const response = await fetch("http://localhost:8000/auth/google-url");
+        const response = await fetch("http://localhost:8000/auth/login-google");
         const data = await response.json();
 
         if (data.url) {
             // Step 3: Open Google OAuth login in a new tab
-            window.open(data.url, "_blank");
+            window.location.open(data.url);
 
             // Wait and check when the user completes login
             checkGoogleLogin();
@@ -36,7 +32,7 @@ async function signInWithGoogle() {
 // Step 4: Polling function to check if the user has completed login
 async function checkGoogleLogin() {
     try {
-        const response = await fetch("http://localhost:8000/auth/google/check-login");
+        const response = await fetch("http://localhost:8000/auth/google/callback");
         const data = await response.json();
 
         if (data.success) {
@@ -69,14 +65,13 @@ async function checkGoogleLogin() {
     }
   }
 
-  return (
-    <button
-      onClick={signInWithGoogle}
-      className="w-full py-2 text-lg font-bold text-white bg-red-500 rounded-md hover:bg-red-600 transition-all"
-    >
-      Sign Up with Google
-    </button>
-  );
-};
+  // return (
+  //   <button
+  //     onClick={signInWithGoogle}
+  //     className="w-full py-2 text-lg font-bold text-white bg-red-500 rounded-md hover:bg-red-600 transition-all"
+  //   >
+  //     Sign Up with Google
+  //   </button>
+  // );
 
-export default SignUpWithGoogle;
+  export default {signInWithGoogle, checkGoogleSignIn};
