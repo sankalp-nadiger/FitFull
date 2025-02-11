@@ -2,9 +2,9 @@ import {User} from "../models/user.model.js"
 import { ApiError } from "../utils/API_Error.js";
 import ApiResponse from "../utils/API_Response.js";
 import asyncHandler from "../utils/asynchandler.utils.js";
-import { Prescription } from "../models/Prescription.js";
-import { TestReport } from "../models/TestReport.js";
-import { Diagnosis } from "../models/Diagnosis.js";
+import { Prescription } from "../models/prescription.model.js";
+import { TestReport } from "../models/TestReport.model.js";
+import { Diagnosis } from "../models/Diagnoses.model.js";
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
       const user = await User.findById(userId);

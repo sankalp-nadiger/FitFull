@@ -6,12 +6,49 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Session } from "../models/session.model.js";
 import { verifyOTP } from "./parent.controller.js";
-import { Diagnosis } from "../models/Diagnosis.js";
-import { Prescription } from "../models/Prescription.js";
-import { TestReport } from "../models/TestReport.js";
+import { Diagnosis } from "../models/Diagnoses.model.js";
+import { Prescription } from "../models/prescription.model.js"
+import { TestReport } from "../models/TestReport.model.js";
 import app from "../app.js"
 import {server,io} from "../index.js"
+import twilio from "twilio"
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
+const sendOTP = async (req, res) => {
+    const mobileNumber= req.body.mobileNumber;
+    const otp=generateOTP();
+    await OTP.create({ mobileNumber, otp, createdAt: new Date() });
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_API_KEY_SECRET;
+const Twilio_Number = process.env.TWILIO_NUMBER;
+const client = twilio(accountSid, authToken);
+try {
+    const message = await client.messages.create({
+        body: `Your OTP is: ${otp}`, // Use template literals to include OTP
+        to: `+91${mobileNumber}`, 
+        from: Twilio_Number });
+
+    res.json({ success: true, messageSid: message.sid });
+} catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+}
+};
+// OTP verification function
+const verifyOTP = async (mobileNumber, enteredOTP) => {
+    console.log('Searching for OTP with mobile number:', mobileNumber);
+    const record = await OTP.findOne({ mobileNumber }).setOptions({ bypassHooks: true }).sort({ createdAt: -1 });
+    console.log(record);
+    if (!record || record.otp !== enteredOTP) {
+        return { success: false, message: 'Invalid OTP' };
+    }
+
+    const isExpired = (new Date() - record.createdAt) > 5 * 60 * 1000; // 5 minutes expiry
+    if (isExpired) {
+        return { success: false, message: 'OTP expired' };
+    }
+
+    return { success: true, message: 'OTP verified' };
+};
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
       const doctor = await Doctor.findById(userId);
