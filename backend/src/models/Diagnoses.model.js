@@ -1,3 +1,4 @@
+import mongoose, { Schema } from "mongoose"
 const diagnosisSchema = new Schema({
     user: { type: Schema.Types.ObjectId, ref: "User" },
     condition: String,

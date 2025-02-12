@@ -13,8 +13,8 @@ const SuccessPage = () => {
 
     // Navigate to home page after the animation ends
     setTimeout(() => {
-      navigate('/'); // Replace with your desired route, '/' is for the home page
-    }, 2500); // Adjust the time based on your animation duration
+      navigate('/mainPage'); 
+        }, 2500); // Adjust the time based on your animation duration
   }, [navigate]);
 
   return (

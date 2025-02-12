@@ -9,6 +9,7 @@ const userSchema = new Schema(
       unique: true,
       minLength: 10,
       maxLength: 30,
+      sparse:true
     },
     fullName: {
       type: String,

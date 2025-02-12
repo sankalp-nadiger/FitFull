@@ -5,7 +5,7 @@ import axios from 'axios';
 //import queryString from 'querystring';  
 import { google } from 'googleapis'; 
 import { User } from './models/user.model.js';
-import dotenv from 'dotenv';
+import dotenv, { configDotenv } from 'dotenv';
 import jwt from 'jsonwebtoken';
 dotenv.config();
 
@@ -51,21 +51,30 @@ app.use("/api/users", userRouter);
 // app.use("/api/post", postsRouter);
 // app.use("/api/recommendations", recomendations);
 
-const oauth2Client = new google.auth.OAuth2(
+const SIGNUP_REDIRECT_URI = "http://localhost:5173/up-loading";
+const LOGIN_REDIRECT_URI = "http://localhost:5173/in-loading";
+
+const signupOAuthClient = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URI
-  );
+    SIGNUP_REDIRECT_URI
+);
+
+const loginOAuthClient = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    LOGIN_REDIRECT_URI
+);
   
   // Route to Start Google OAuth
   app.get("/auth/google-url", (req, res) => {
+    const oauth2Client = signupOAuthClient;
     const url = oauth2Client.generateAuthUrl({
       access_type: "offline",
       scope: ["https://www.googleapis.com/auth/fitness.activity.read",
         'https://www.googleapis.com/auth/userinfo.profile',
     'https://www.googleapis.com/auth/userinfo.email',
       ],
-      redirect_uri: "http://localhost:5173/up-loading",
     });
   
     res.json({url});
@@ -74,20 +83,40 @@ const oauth2Client = new google.auth.OAuth2(
   // Route to Handle Google OAuth Callback
   app.post("/auth/google/callback", async (req, res) => {
     const { code } = req.body;
-    console.log(code)
-    if (!code) return res.status(400).json({ success: false, message: "No authorization code provided" });
+    console.log('Received code:', code);
 
+    if (!code) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "No authorization code provided" 
+        });
+    }
+    const oauth2Client = signupOAuthClient;
     try {
-        // Exchange code for tokens
-        const { tokens } = await oauth2Client.getToken(code);
+        // Exchange code for tokens with correct parameters
+        const { tokens } = await oauth2Client.getToken({
+            code: code,
+            redirect_uri: oauth2Client.redirectUri  // This is crucial
+        });
+        
+        console.log('Token exchange successful');
         oauth2Client.setCredentials(tokens);
 
         // Get user info from Google
-        const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
+        const oauth2 = google.oauth2({ 
+            version: "v2", 
+            auth: oauth2Client 
+        });
         const { data: googleUser } = await oauth2.userinfo.get();
 
-        // Store user info in session (or database)
+        // Store user info in database
         let user = await User.findOne({ email: googleUser.email });
+        if (user) {
+            return res.status(409).json({  // 409 Conflict for already existing user
+                success: false,
+                message: "User already exists. Please sign in instead."
+            });
+        }
 
         if (!user) {
             user = new User({
@@ -96,27 +125,64 @@ const oauth2Client = new google.auth.OAuth2(
                 avatar: googleUser.picture,
                 googleId: googleUser.id,
                 authProvider: "google",
-                tokens: { googleFitToken: tokens.access_token },
+                username: googleUser.email.split('@')[0] + "_" + Math.floor(Math.random() * 10000),
+                tokens: { 
+                    googleFitToken: tokens.access_token,
+                    refreshToken: tokens.refresh_token  // Store refresh token if available
+                },
             });
+            await user.save();
+        } else {
+            // Update existing user's tokens
+            user.tokens = { 
+                googleFitToken: tokens.access_token,
+                refreshToken: tokens.refresh_token
+            };
             await user.save();
         }
 
-        const jwtToken = jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "7d" });
+        const jwtToken = jwt.sign(
+            { userId: user._id }, 
+            process.env.ACCESS_TOKEN_SECRET, 
+            { expiresIn: "7d" }
+        );
 
-        res.json({ success: true, jwt: jwtToken, user });
+        res.json({ 
+            success: true, 
+            jwt: jwtToken, 
+            user: {
+                id: user._id,
+                email: user.email,
+                fullName: user.fullName,
+                avatar: user.avatar
+            } 
+        });
+
     } catch (error) {
         console.error("Google OAuth Error:", error);
-        res.status(500).json({ success: false, message: "Google authentication failed" });
+        console.error("Error details:", {
+            message: error.message,
+            response: error.response?.data
+        });
+        
+        res.status(500).json({ 
+            success: false, 
+            message: "Google authentication failed",
+            error: error.message 
+        });
     }
 });
 
 
-app.post("/login-google", async (req, res) => {
+app.get("/auth/login-google", async (req, res) => {
   // Generate Google OAuth URL for fresh token each time
+  const oauth2Client = loginOAuthClient;
   const authUrl = oauth2Client.generateAuthUrl({
       access_type: "offline",
-      scope: ["https://www.googleapis.com/auth/fitness.activity.read"],
-      redirect_uri: "http://localhost:5173/in-loading",
+      scope: ["https://www.googleapis.com/auth/fitness.activity.read",
+        'https://www.googleapis.com/auth/userinfo.email',
+        "https://www.googleapis.com/auth/userinfo.profile" 
+      ],
       prompt: "consent", // Always ask for permission
   });
 
@@ -125,11 +191,11 @@ app.post("/login-google", async (req, res) => {
 
 app.post("/auth/google/check-login", async (req, res) => {
   const { code } = req.body;
-
+    console.log(code)
   if (!code) {
       return res.status(400).json({ success: false, message: "No authorization code provided" });
   }
-
+  const oauth2Client = loginOAuthClient;
   try {
       // Exchange code for tokens
       const { tokens } = await oauth2Client.getToken(code);
@@ -149,7 +215,7 @@ app.post("/auth/google/check-login", async (req, res) => {
       // Generate JWT for the existing user
       const jwtToken = jwt.sign(
           { userId: user._id },
-          process.env.JWT_SECRET,
+          process.env.ACCESS_TOKEN_SECRET,
           { expiresIn: "7d" }
       );
 

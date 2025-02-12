@@ -9,8 +9,8 @@ const RoleSelection = () => {
   const handleRoleSelection = () => {
     if (role === "Doctor") {
       navigate("/doctor-signin");
-    } else if (role === "Counsellor") {
-      navigate("/counsellor-signin");
+    } else if (role === "User") {
+      navigate("/user-signin");
     } else {
       alert("Please select a role to proceed.");
     }
@@ -36,7 +36,7 @@ const RoleSelection = () => {
       >
         <option value="">-- Select a Role --</option>
         <option value="Doctor">Doctor</option>
-        {/* <option value="Counsellor">Counsellor</option> */}
+        <option value="User">User</option>
       </select>
     </div>
 
