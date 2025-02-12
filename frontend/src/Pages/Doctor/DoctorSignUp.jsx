@@ -3,43 +3,60 @@ import { ToastContainer, toast } from "react-toastify";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
+import DoctorSignIn from "./DoctorSignIn"; // Import the SignIn component
 
-const UserSignUp = () => {
+const DoctorSignUp = () => {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [gender, setGender] = useState("Male");
-  const [age, setAge] = useState("");
-  const [location, setLocation] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [otp, setOtp] = useState("");
+  const [specifications, setSpecifications] = useState([]);
+  const [specificationInput, setSpecificationInput] = useState("");
+  const [yearExp, setYearExp] = useState("");
+  const [availability, setAvailability] = useState([]);
+  const [certifications, setCertifications] = useState(null);
+  const [isSignIn, setIsSignIn] = useState(false); // To toggle between SignUp and SignIn
 
-  async function signUpWithGoogle() {
-    navigate("/up-loading"); // Navigate to loading screen before Google OAuth
-  }
+  const handleAddSpecification = () => {
+    if (specificationInput.trim() !== "") {
+      setSpecifications([...specifications, specificationInput.trim()]);
+      setSpecificationInput("");
+    }
+  };
 
   const handleSignUp = async (e) => {
     e.preventDefault();
 
-    if (!fullName || !email || !username || !password || !age || !location) {
+    if (!fullName || !email || !password || !mobileNumber || !otp || !yearExp) {
       toast.error("All fields are required!");
       return;
     }
 
+    const formData = new FormData();
+    formData.append("fullName", fullName);
+    formData.append("email", email);
+    formData.append("password", password);
+    formData.append("mobileNumber", mobileNumber);
+    formData.append("otp", otp);
+    formData.append("yearExp", yearExp);
+    formData.append("availability", JSON.stringify(availability));
+    formData.append("specifications", JSON.stringify(specifications));
+    if (certifications) {
+      for (let i = 0; i < certifications.length; i++) {
+        formData.append("certifications", certifications[i]);
+      }
+    }
+
     try {
-      const response = await axios.post("http://localhost:8000/api/user/register", {
-        fullName,
-        email,
-        username,
-        password,
-        gender,
-        age,
-        location,
+      const response = await axios.post("http://localhost:8000/api/doctor/register", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       if (response.status === 201) {
         toast.success("Sign-up successful! Redirecting...");
-        setTimeout(() => navigate("/userDashboard"), 2000);
+        setTimeout(() => navigate("/doctorDashboard"), 2000);
       } else {
         toast.error(response.data.message);
       }
@@ -48,99 +65,45 @@ const UserSignUp = () => {
     }
   };
 
+  // If the user clicks on the "Already have an account? Login" link, show the sign-in form
+  if (isSignIn) {
+    return <DoctorSignIn />;
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6">
-      <h1 className="text-4xl font-bold text-blue-500 mb-6">Sign Up</h1>
-      
+      <h1 className="text-4xl font-bold text-blue-500 mb-6">Doctor Sign Up</h1>
       <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg">
-        {/* Google Sign-Up */}
-        <button 
-          onClick={signUpWithGoogle}
-          className="w-full py-2 mb-4 text-lg font-bold text-white bg-red-500 rounded-md hover:bg-red-600 transition-all"
-        >
-          Sign Up with Google
-        </button>
-
-        <div className="text-center text-gray-400 my-2">or</div>
-
-        {/* Email & Password Sign-Up Form */}
         <form onSubmit={handleSignUp} className="space-y-4">
-          <input 
-            type="text" 
-            placeholder="Full Name" 
-            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
-            value={fullName} 
-            onChange={(e) => setFullName(e.target.value)} 
-            required 
-          />
-
-          <input 
-            type="email" 
-            placeholder="Email" 
-            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            required 
-          />
-
-          <input 
-            type="text" 
-            placeholder="Username" 
-            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
-            value={username} 
-            onChange={(e) => setUsername(e.target.value)} 
-            required 
-          />
-
-          <input 
-            type="password" 
-            placeholder="Password" 
-            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            required 
-          />
-
-          <select 
-            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
-            value={gender} 
-            onChange={(e) => setGender(e.target.value)}
-          >
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-          </select>
-
-          <input 
-            type="number" 
-            placeholder="Age" 
-            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
-            value={age} 
-            onChange={(e) => setAge(e.target.value)} 
-            required 
-          />
-
-          <input 
-            type="text" 
-            placeholder="Location (JSON format)" 
-            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
-            value={location} 
-            onChange={(e) => setLocation(e.target.value)} 
-            required 
-          />
-
-          <button 
-            type="submit"
-            className="w-full py-2 text-lg font-bold text-white bg-green-500 rounded-md hover:bg-green-600 transition-all"
-          >
-            Sign Up with Email
-          </button>
+          <input type="text" placeholder="Full Name" className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+          <input type="email" placeholder="Email" className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="password" placeholder="Password" className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <input type="text" placeholder="Mobile Number" className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md" value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value)} required />
+          {/* <input type="text" placeholder="OTP" className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md" value={otp} onChange={(e) => setOtp(e.target.value)} required /> */}
+          <input type="text" placeholder="Years of Experience" className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md" value={yearExp} onChange={(e) => setYearExp(e.target.value)} required />
+          <div className="flex items-center space-x-2">
+            <input type="text" placeholder="Specialization" className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md" value={specificationInput} onChange={(e) => setSpecificationInput(e.target.value)} />
+            <button type="button" onClick={handleAddSpecification} className="p-2 bg-blue-500 rounded-md">Add</button>
+          </div>
+          <div className="text-sm text-gray-300">{specifications.join(", ")}</div>
+          <input type="file" multiple className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md" onChange={(e) => setCertifications(e.target.files)} />
+          <button type="submit" className="w-full py-2 text-lg font-bold text-white bg-green-500 rounded-md hover:bg-green-600 transition-all">Register as Doctor</button>
         </form>
+        <div className="mt-4 text-center">
+          <p className="text-gray-400">
+            Already have an account?{" "}
+            <span
+              className="text-indigo-400 hover:underline cursor-pointer"
+              onClick={() => setIsSignIn(true)} // Toggle to SignIn page
+            >
+              Login here
+            </span>
+          </p>
+        </div>
       </div>
-
       <ToastContainer />
     </div>
   );
 };
 
-export default UserSignUp;
+export default DoctorSignUp;
