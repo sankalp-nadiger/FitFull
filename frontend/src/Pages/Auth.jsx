@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import DoctorSignIn from "./Doctor/DoctorSignIn";
-import UserSignIn from "./User/UserSignIn";
+import DoctorSignIn from "./DoctorSignIn";
+import UserSignIn from "./UserSignIn";
 
-const SignInInterface = () => {
+const Auth = () => {
   const [activeTab, setActiveTab] = useState("doctor");
 
   return (
@@ -37,4 +37,4 @@ const SignInInterface = () => {
   );
 };
 
-export default SignInInterface;
+export default Auth

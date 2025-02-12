@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import DoctorSignUp from "./DoctorSignUp";
 
 const DoctorSignIn = () => {
-  const navigate = useNavigate();
+  const [isSignUp, setIsSignUp] = useState(false); // Toggle between SignIn & SignUp
   const [fullName, setFullName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
@@ -11,7 +11,7 @@ const DoctorSignIn = () => {
   // const [otpSent, setOtpSent] = useState(false);
   // const [otpError, setOtpError] = useState(false);
   // const [otpTimer, setOtpTimer] = useState(30);
-  const [showPassword, setShowPassword] = useState(false); // State for password visibility
+  const [showPassword, setShowPassword] = useState(false);
 
   // const handleSendOtp = async () => {
   //   if (phoneNumber.length === 10) {
@@ -76,21 +76,23 @@ const DoctorSignIn = () => {
         password,
       });
 
-      console.log(response.data);
       if (response.status === 200) {
         const { accessToken } = response.data.data;
         sessionStorage.setItem("accessToken", accessToken);
         alert("Login successful!");
-        navigate("/doctorDashboard");
       }
     } catch (error) {
       alert("Error during login: " + error.response.data.message);
     }
   };
 
+  if (isSignUp) {
+    return <DoctorSignUp />;
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6">
-      <h1 className="text-4xl font-bold text-yellow-600 mb-6">Doctor SignIn</h1>
+      <h1 className="text-4xl font-bold text-yellow-600 mb-6">Doctor Signin</h1>
 
       <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg flex flex-col items-center">
         <form onSubmit={handleSubmit} className="w-full space-y-4">
@@ -175,10 +177,16 @@ const DoctorSignIn = () => {
           </button>
         </form>
 
-        <div className="mt-4">
-          <a href="/doctor-signup" className="text-indigo-400 hover:underline">
-            Don't have an account? Sign Up
-          </a>
+        <div className="mt-4 text-center">
+          <p className="text-gray-400">
+            Don't have an account?{" "}
+            <span
+              className="text-indigo-400 hover:underline cursor-pointer"
+              onClick={() => setIsSignUp(true)} // Toggle to SignUp
+            >
+              Click here to sign up
+            </span>
+          </p>
         </div>
       </div>
     </div>

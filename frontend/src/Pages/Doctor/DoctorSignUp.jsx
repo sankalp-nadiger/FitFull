@@ -1,149 +1,146 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { ToastContainer, toast } from "react-toastify";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import "react-toastify/dist/ReactToastify.css";
 
-const DoctorSignUp = () => {
+const UserSignUp = () => {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [otp, setOtp] = useState("");
-  const [specifications, setSpecifications] = useState(""); // New field for specialization
-  const [otpSent, setOtpSent] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [gender, setGender] = useState("Male");
+  const [age, setAge] = useState("");
+  const [location, setLocation] = useState("");
 
-  const handleSubmit = async (e) => {
+  async function signUpWithGoogle() {
+    navigate("/up-loading"); // Navigate to loading screen before Google OAuth
+  }
+
+  const handleSignUp = async (e) => {
     e.preventDefault();
 
-    if (!otpSent) {
-      try {
-        const response = await axios.post("http://localhost:8000/api/doctor/send-otp", { mobileNumber: phone });
-        if (response.data.success) {
-          setOtpSent(true);
-          alert("OTP sent to your phone.");
-        } else {
-          alert("Failed to send OTP. Please try again.");
-        }
-      } catch (error) {
-        alert("Error sending OTP: " + error.message);
-      }
+    if (!fullName || !email || !username || !password || !age || !location) {
+      toast.error("All fields are required!");
       return;
     }
 
     try {
-      const response = await axios.post("http://localhost:8000/api/doctor/register-doctor", {
-        fullName: name,
+      const response = await axios.post("http://localhost:8000/api/user/register", {
+        fullName,
+        email,
+        username,
         password,
-        mobileNumber: phone,
-        specifications, // Send specifications
-        otp,
+        gender,
+        age,
+        location,
       });
 
       if (response.status === 201) {
-        alert("Doctor Sign-up successful!");
-        navigate("/doctorDashboard");
+        toast.success("Sign-up successful! Redirecting...");
+        setTimeout(() => navigate("/userDashboard"), 2000);
       } else {
-        alert("Registration failed: " + response.data.message);
+        toast.error(response.data.message);
       }
     } catch (error) {
-      alert("Error during registration: " + error.message);
+      toast.error(error.response?.data?.message || "Registration failed!");
     }
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6">
-      <h1 className="text-4xl font-bold text-indigo-400 mb-6">Doctor Sign Up</h1>
+      <h1 className="text-4xl font-bold text-blue-500 mb-6">Sign Up</h1>
+      
+      <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg">
+        {/* Google Sign-Up */}
+        <button 
+          onClick={signUpWithGoogle}
+          className="w-full py-2 mb-4 text-lg font-bold text-white bg-red-500 rounded-md hover:bg-red-600 transition-all"
+        >
+          Sign Up with Google
+        </button>
 
-      <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg flex flex-col items-center">
-        <form onSubmit={handleSubmit} className="w-full space-y-4">
-          <div className="flex flex-col">
-            <label htmlFor="name" className="text-sm font-medium text-gray-300">Full Name</label>
-            <input
-              type="text"
-              id="name"
-              className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              placeholder="Enter your full name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
+        <div className="text-center text-gray-400 my-2">or</div>
 
-          <div className="flex flex-col">
-            <label htmlFor="password" className="text-sm font-medium text-gray-300">Password</label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <button
-                type="button"
-                className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-300"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? "Hide" : "Show"}
-              </button>
-            </div>
-          </div>
+        {/* Email & Password Sign-Up Form */}
+        <form onSubmit={handleSignUp} className="space-y-4">
+          <input 
+            type="text" 
+            placeholder="Full Name" 
+            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
+            value={fullName} 
+            onChange={(e) => setFullName(e.target.value)} 
+            required 
+          />
 
-          <div className="flex flex-col">
-            <label htmlFor="phone" className="text-sm font-medium text-gray-300">Phone Number</label>
-            <input
-              type="tel"
-              id="phone"
-              className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              placeholder="Enter your phone number"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              maxLength={10}
-              required
-            />
-          </div>
+          <input 
+            type="email" 
+            placeholder="Email" 
+            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
+            value={email} 
+            onChange={(e) => setEmail(e.target.value)} 
+            required 
+          />
 
-          <div className="flex flex-col">
-            <label htmlFor="specifications" className="text-sm font-medium text-gray-300">Specialization</label>
-            <input
-              type="text"
-              id="specifications"
-              className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              placeholder="E.g., Cardiologist, Dermatologist"
-              value={specifications}
-              onChange={(e) => setSpecifications(e.target.value)}
-              required
-            />
-          </div>
+          <input 
+            type="text" 
+            placeholder="Username" 
+            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
+            value={username} 
+            onChange={(e) => setUsername(e.target.value)} 
+            required 
+          />
 
-          {otpSent && (
-            <div className="flex flex-col">
-              <label htmlFor="otp" className="text-sm font-medium text-gray-300">OTP</label>
-              <input
-                type="text"
-                id="otp"
-                className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                placeholder="Enter OTP sent to your phone"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                maxLength={6}
-                required
-              />
-            </div>
-          )}
+          <input 
+            type="password" 
+            placeholder="Password" 
+            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            required 
+          />
 
-          <button
-            type="submit"
-            className="w-full px-4 py-2 font-semibold bg-green-500 text-white rounded-md hover:bg-green-600 transition-all disabled:opacity-50"
+          <select 
+            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
+            value={gender} 
+            onChange={(e) => setGender(e.target.value)}
           >
-            {otpSent ? "Complete Sign-Up" : "Send OTP"}
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+
+          <input 
+            type="number" 
+            placeholder="Age" 
+            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
+            value={age} 
+            onChange={(e) => setAge(e.target.value)} 
+            required 
+          />
+
+          <input 
+            type="text" 
+            placeholder="Location (JSON format)" 
+            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
+            value={location} 
+            onChange={(e) => setLocation(e.target.value)} 
+            required 
+          />
+
+          <button 
+            type="submit"
+            className="w-full py-2 text-lg font-bold text-white bg-green-500 rounded-md hover:bg-green-600 transition-all"
+          >
+            Sign Up with Email
           </button>
         </form>
       </div>
+
+      <ToastContainer />
     </div>
   );
 };
 
-export default DoctorSignUp;
+export default UserSignUp;
