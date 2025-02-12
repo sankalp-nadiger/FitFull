@@ -2,8 +2,8 @@ import { ApiError } from "../utils/API_Error.js";
 import asyncHandler from "../utils/asynchandler.utils.js";
 import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
-import { Parent } from "../models/parent.model.js";
-import { Counsellor } from "../models/counsellor.model.js";
+//import { Parent } from "../models/parent.model.js";
+//import { Counsellor } from "../models/counsellor.model.js";
 
 // Helper function
 const verifyJWT = async (token, model, role) => {

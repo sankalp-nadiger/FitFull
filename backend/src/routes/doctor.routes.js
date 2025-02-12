@@ -25,7 +25,7 @@ import { upload } from "../middleware/multer.middleware.js";
 const router = express.Router();
 
 // Auth routes
-router.post("/register", upload.fields([{ name: "certificateImage", maxCount: 1 }]), registerDoctor);
+router.post("/register-doctor", upload.fields([{ name: "certificateImage", maxCount: 1 }]), registerDoctor);
 router.post("/send-otp", sendOTP);
 router.post("/login", loginDoctor);
 router.post("/logout", doctor_verifyJWT, logoutDoctor);

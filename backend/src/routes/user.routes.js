@@ -1,5 +1,5 @@
 import express from "express";
-import { user_verifyJWT } from "../middlewares/auth.middlewares.js";
+import { user_verifyJWT } from "../middlewares/auth.middleware.js";
 import {
   registerUser,
   loginUser,
