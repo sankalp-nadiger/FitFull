@@ -10,14 +10,14 @@ import DoctorSignIn from "./Pages/Doctor/DoctorSignIn";
 import DoctorSignUp from "./Pages/Doctor/DoctorSignUp";
 import SuccessPage from "./Pages/User/Success";
 import HomePage from "./Pages/HomePage";
-import SignInInterface from "./Pages/Auth";
+import Auth from "./Pages/Auth";
 import RoleSelection from "./Pages/RoleSelection";
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<HomePage/>} />
-        <Route path="/auth" element={<SignInInterface/>} />
+        <Route path="/auth" element={<Auth/>} />
         <Route path="/user-signin" element={<UserSignIn />}/>
         <Route path="/user-signup" element={<UserSignUp />} />
         {/* <Route path="/signin-password" element={<PasswordSignIn />} /> */}

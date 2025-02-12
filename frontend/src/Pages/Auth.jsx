@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import DoctorSignIn from "./DoctorSignIn";
-import UserSignIn from "./UserSignIn";
+import DoctorSignIn from "./Doctor/DoctorSignIn";
+import UserSignIn from "./User/UserSignIn";
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("doctor");
