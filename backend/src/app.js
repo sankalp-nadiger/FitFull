@@ -128,6 +128,7 @@ const loginOAuthClient = new google.auth.OAuth2(
                 username: googleUser.email.split('@')[0] + "_" + Math.floor(Math.random() * 10000),
                 tokens: { 
                     googleFitToken: tokens.access_token,
+                    googleFitTokenExpiry: new Date(tokens.expiry_date),
                     refreshToken: tokens.refresh_token  // Store refresh token if available
                 },
             });
@@ -183,7 +184,7 @@ app.get("/auth/login-google", async (req, res) => {
         'https://www.googleapis.com/auth/userinfo.email',
         "https://www.googleapis.com/auth/userinfo.profile" 
       ],
-      prompt: "consent", // Always ask for permission
+      prompt: "consent",
   });
 
   res.json({ url: authUrl });
@@ -211,6 +212,19 @@ app.post("/auth/google/check-login", async (req, res) => {
       if (!user) {
           return res.status(404).json({ success: false, message: "User does not exist. Please sign up first." });
       }
+      if (user) {
+        // Update access & refresh tokens
+        user.tokens.googleFitToken = tokens.access_token;
+        user.tokens.googleFitTokenExpiry = Date.now() + tokens.expiry_date;
+    
+        // Only update refresh token if a new one is provided
+        if (tokens.refresh_token) {
+            user.tokens.refreshToken = tokens.refresh_token;
+        }
+    
+        await user.save();
+    }
+    
 
       // Generate JWT for the existing user
       const jwtToken = jwt.sign(

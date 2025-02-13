@@ -5,6 +5,7 @@ import asyncHandler from "../utils/asynchandler.utils.js";
 import { Prescription } from "../models/prescription.model.js";
 import { TestReport } from "../models/TestReport.model.js";
 import { Diagnosis } from "../models/Diagnoses.model.js";
+import { encryptData, decryptData } from "../utils/security.js";
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
       const user = await User.findById(userId);
@@ -30,14 +31,13 @@ const generateAccessAndRefreshTokens = async (userId) => {
     }
 };
 
-// New function to add family members
 export const addFamilyMembers = asyncHandler(async (req, res) => {
     try {
-        const { familyMembers } = req.body;
-        const userId = req.user._id; // Get the current user's ID from the auth middleware
+        const { familyMembers } = req.body; // Array of emails
+        const userId = req.user._id; // Current user's ID from auth middleware
 
         if (!familyMembers || !Array.isArray(familyMembers)) {
-            throw new ApiError(400, "Family members must be provided as an array");
+            throw new ApiError(400, "Family members must be provided as an array of emails");
         }
 
         // Find the user
@@ -51,34 +51,34 @@ export const addFamilyMembers = asyncHandler(async (req, res) => {
             user.family = [];
         }
 
-        // Validate and add each family member
-        for (const memberId of familyMembers) {
-            // Check if the member exists
-            const memberExists = await User.findById(memberId);
-            if (!memberExists) {
-                throw new ApiError(404, `Family member with ID ${memberId} not found`);
-            }
+        // Find users by email
+        const members = await User.find({ email: { $in: familyMembers } }, "_id");
 
-            // Check if member is already in family
-            if (!user.family.includes(memberId)) {
-                user.family.push(memberId);
-            }
+        if (members.length === 0) {
+            throw new ApiError(404, "No valid family members found");
         }
 
-        // Save the updated user
+        // Extract IDs and filter out duplicates
+        const memberIds = members.map(member => member._id.toString());
+        const newMembers = memberIds.filter(id => !user.family.includes(id));
+
+        if (newMembers.length === 0) {
+            return res.status(200).json(
+                new ApiResponse(200, { user }, "No new family members added (already exist)")
+            );
+        }
+
+        // Add new members and save
+        user.family.push(...newMembers);
         await user.save();
 
         // Fetch the updated user with populated family members
         const updatedUser = await User.findById(userId)
-            .populate('family', 'fullName email username')
-            .select('-password -refreshToken');
+            .populate("family", "fullName email username")
+            .select("-password -refreshToken");
 
         return res.status(200).json(
-            new ApiResponse(
-                200,
-                { user: updatedUser },
-                "Family members added successfully"
-            )
+            new ApiResponse(200, { user: updatedUser }, "Family members added successfully")
         );
     } catch (error) {
         console.error("Error adding family members:", error);
@@ -86,28 +86,42 @@ export const addFamilyMembers = asyncHandler(async (req, res) => {
     }
 });
 
-// Function to remove family members
 export const removeFamilyMember = asyncHandler(async (req, res) => {
     try {
-        const { memberId } = req.body;
+        const { memberEmail } = req.body;
         const userId = req.user._id;
 
-        if (!memberId) {
-            throw new ApiError(400, "Member ID is required");
+        if (!memberEmail) {
+            throw new ApiError(400, "Member email is required");
         }
 
+        // Find the user
         const user = await User.findById(userId);
         if (!user) {
             throw new ApiError(404, "User not found");
         }
 
+        // Find the family member by email
+        const member = await User.findOne({ email: memberEmail }, "_id");
+        if (!member) {
+            throw new ApiError(404, "Family member not found");
+        }
+
         // Remove the member from the family array
+        const memberId = member._id.toString();
+        if (!user.family.includes(memberId)) {
+            return res.status(400).json(
+                new ApiResponse(400, { user }, "Family member not found in your list")
+            );
+        }
+
         user.family = user.family.filter(id => id.toString() !== memberId);
         await user.save();
 
+        // Fetch the updated user with populated family members
         const updatedUser = await User.findById(userId)
-            .populate('family', 'fullName email username')
-            .select('-password -refreshToken');
+            .populate("family", "fullName email username")
+            .select("-password -refreshToken");
 
         return res.status(200).json(
             new ApiResponse(
@@ -121,7 +135,7 @@ export const removeFamilyMember = asyncHandler(async (req, res) => {
         throw new ApiError(500, error.message || "Error removing family member");
     }
 });
-  
+
 const registerUser = asyncHandler(async (req, res) => {
     try {
         const { fullName, email, username, password, gender, age } = req.body;
@@ -301,65 +315,233 @@ export const getFamilyMembers = asyncHandler(async (req, res) => {
     }
 });
 
+export const saveTestReport = async (req, res) => {
+    try {
+        const { testName, result, documentUrl } = req.body;
+
+        const encryptedResult = encryptData(result);
+        const encryptedDocumentUrl = documentUrl ? encryptData(documentUrl) : null;
+
+        const newTestReport = new TestReport({
+            user: req.user._id, // User ID from auth middleware
+            testName,
+            result: encryptedResult,
+            documentUrl: encryptedDocumentUrl
+        });
+
+        await newTestReport.save();
+        res.json({ success: true, message: "Test report saved securely!" });
+    } catch (error) {
+        console.error("Error saving test report:", error);
+        res.status(500).json({ success: false, message: "Failed to save test report" });
+    }
+};
+
+export const savePrescription = async (req, res) => {
+    try {
+        const { doctorName, medication, dosage } = req.body;
+
+        const encryptedMedication = encryptData(medication);
+        const encryptedDosage = encryptData(dosage);
+
+        const newPrescription = new Prescription({
+            user: req.user._id,
+            doctorName,
+            medication: encryptedMedication,
+            dosage: encryptedDosage
+        });
+
+        await newPrescription.save();
+        res.json({ success: true, message: "Prescription saved securely!" });
+    } catch (error) {
+        console.error("Error saving prescription:", error);
+        res.status(500).json({ success: false, message: "Failed to save prescription" });
+    }
+};
+
+export const getPrescription = async (req, res) => {
+    try {
+        const prescriptions = await Prescription.find({ user: req.user._id });
+
+        if (!prescriptions.length) {
+            return res.status(404).json({ message: "No prescriptions found" });
+        }
+
+        res.json(prescriptions.map(prescription => ({
+            doctorName: prescription.doctorName,
+            medication: decryptData(prescription.medication),
+            dosage: decryptData(prescription.dosage),
+            date: prescription.date
+        })));
+        
+    } catch (error) {
+        console.error("Error retrieving prescriptions:", error);
+        res.status(500).json({ success: false, message: "Failed to retrieve prescriptions" });
+    }
+};
 
 /**
- * Get all prescriptions assigned to a specific user
+ * Get all test reports for a logged-in user
  */
-export const getUserPrescriptions = async (req, res) => {
-  try {
-    const userId = req.user.id; // Assuming authentication middleware sets req.user
+export const getTestReport = async (req, res) => {
+    try {
+        const testReports = await TestReport.find({ user: req.user._id });
 
-    const prescriptions = await Prescription.find({ user: userId }).populate("user", "name email");
+        if (!testReports.length) return res.status(404).json({ message: "No test report found" });
 
-    if (!prescriptions.length) {
-      return res.status(404).json({ message: "No prescriptions found for this user." });
+        res.json(testReports.map(testReport => ({
+            testName: testReport.testName,
+            result: decryptData(testReport.result),
+            documentUrl: testReport.documentUrl ? decryptData(testReport.documentUrl) : null,
+            date: testReport.date
+        })));
+    } catch (error) {
+        console.error("Error retrieving test report:", error);
+        res.status(500).json({ success: false, message: "Failed to retrieve test report" });
     }
-
-    res.status(200).json({ success: true, prescriptions });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error", error: error.message });
-  }
 };
 
 
-/**
- * Get all test reports for a specific user
- */
-export const getUserTestReports = async (req, res) => {
-  try {
-    const userId = req.user.id; // Assuming authentication middleware sets req.user
+const DiagnosisReport = require("../models/DiagnosisReport");
 
-    const reports = await TestReport.find({ user: userId }).populate("user", "name email");
+export const addDiagnosisReport = async (req, res) => {
+    try {
+        const { diagnosis, doctorName, notes } = req.body;
 
-    if (!reports.length) {
-      return res.status(404).json({ message: "No test reports found for this user." });
+        const newReport = new DiagnosisReport({
+            user: req.user._id, // User ID from middleware
+            diagnosis: encryptData(diagnosis),
+            doctorName,
+            notes: encryptData(notes)
+        });
+
+        await newReport.save();
+        res.json({ success: true, message: "Diagnosis report saved securely!" });
+    } catch (error) {
+        console.error("Error saving diagnosis report:", error);
+        res.status(500).json({ success: false, message: "Failed to save diagnosis report" });
     }
-
-    res.status(200).json({ success: true, reports });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error", error: error.message });
-  }
 };
 
-
-/**
- * Get all diagnoses for a specific user
- */
-export const getUserDiagnoses = async (req, res) => {
-  try {
-    const userId = req.user.id; // Assuming authentication middleware sets req.user
-
-    const diagnoses = await Diagnosis.find({ user: userId }).populate("user", "name email");
-
-    if (!diagnoses.length) {
-      return res.status(404).json({ message: "No diagnoses found for this user." });
+export const getDiagnosisReport = async (req, res) => {
+    try {
+        const diagnosisReports = await DiagnosisReport.find({ user: req.user._id });
+        if (!diagnosisReports.length) return res.status(404).json({ message: "No diagnosis report found" });
+        res.json(diagnosisReports.map(diagnosis=>({
+            diagnosis: decryptData(diagnosisReport.diagnosis),
+            doctorName: diagnosisReport.doctorName,
+            notes: decryptData(diagnosisReport.notes),
+            date: diagnosisReport.date
+        })));
+    } catch (error) {
+        console.error("Error retrieving diagnosis report:", error);
+        res.status(500).json({ success: false, message: "Failed to retrieve diagnosis report" });
     }
-
-    res.status(200).json({ success: true, diagnoses });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error", error: error.message });
-  }
 };
 
+const getFamilyTest = async (req, res) => {
+    try {
+        const { familyMemberEmail } = req.body; // Email of the family member whose data is requested
+        const requestingUser = req.user; // Authenticated user
 
-export {registerUser, loginUser}
+        // Validate request
+        if (!familyMemberEmail) {
+            return res.status(400).json({ message: "Family member email is required." });
+        }
+
+        // Find the requested family member
+        const requestedUser = await User.findOne({ email: familyMemberEmail });
+        if (!requestedUser) {
+            return res.status(404).json({ message: "Requested user not found." });
+        }
+
+        // Check if the requesting user has access to this user's data
+        if (!requestingUser.family.includes(requestedUser._id)) {
+            return res.status(403).json({ message: "You do not have access to this family member's records." });
+        }
+
+        // Retrieve the test report of the requested user
+        const testReport = await TestReport.findOne({ user: requestedUser._id });
+
+        if (!testReport) return res.status(404).json({ message: "No test report found for this user." });
+
+        res.json({
+            testName: testReport.testName,
+            result: decryptData(testReport.result),
+            documentUrl: testReport.documentUrl ? decryptData(testReport.documentUrl) : null,
+            date: testReport.date
+        });
+    } catch (error) {
+        console.error("Error retrieving test report:", error);
+        res.status(500).json({ success: false, message: "Failed to retrieve test report" });
+    }
+};
+
+const getFamPresc = async (req, res) => {
+    try {
+        const { familyMemberEmail } = req.body; // Email of the family member whose data is requested
+        const requestingUser = req.user; // Authenticated user
+
+        if (!familyMemberEmail) {
+            return res.status(400).json({ message: "Family member email is required." });
+        }
+
+        const requestedUser = await User.findOne({ email: familyMemberEmail });
+        if (!requestedUser) {
+            return res.status(404).json({ message: "Requested user not found." });
+        }
+
+        if (!requestingUser.family.includes(requestedUser._id)) {
+            return res.status(403).json({ message: "You do not have access to this family member's prescriptions." });
+        }
+
+        const prescription = await Prescription.findOne({ user: requestedUser._id });
+
+        if (!prescription) return res.status(404).json({ message: "No prescription found for this user." });
+
+        res.json({
+            doctorName: prescription.doctorName,
+            medication: decryptData(prescription.medication),
+            dosage: decryptData(prescription.dosage),
+            date: prescription.date
+        });
+    } catch (error) {
+        console.error("Error retrieving prescription:", error);
+        res.status(500).json({ success: false, message: "Failed to retrieve prescription" });
+    }
+};
+
+const getFamDiag = async (req, res) => {
+    try {
+        const { familyMemberEmail } = req.body; // Email of the family member whose data is requested
+        const requestingUser = req.user; // Authenticated user
+
+        if (!familyMemberEmail) {
+            return res.status(400).json({ message: "Family member email is required." });
+        }
+
+        const requestedUser = await User.findOne({ email: familyMemberEmail });
+        if (!requestedUser) {
+            return res.status(404).json({ message: "Requested user not found." });
+        }
+
+        if (!requestingUser.family.includes(requestedUser._id)) {
+            return res.status(403).json({ message: "You do not have access to this family member's diagnosis reports." });
+        }
+
+        const diagnosisReport = await DiagnosisReport.findOne({ user: requestedUser._id });
+
+        if (!diagnosisReport) return res.status(404).json({ message: "No diagnosis report found for this user." });
+
+        res.json({
+            diagnosis: decryptData(diagnosisReport.diagnosis),
+            doctorName: diagnosisReport.doctorName,
+            notes: decryptData(diagnosisReport.notes),
+            date: diagnosisReport.date
+        });
+    } catch (error) {
+        console.error("Error retrieving diagnosis report:", error);
+        res.status(500).json({ success: false, message: "Failed to retrieve diagnosis report" });
+    }
+};
+export {registerUser, loginUser, getFamilyTest, getFamPresc, getFamDiag}

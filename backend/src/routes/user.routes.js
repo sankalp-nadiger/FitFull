@@ -8,22 +8,31 @@ import {
   getFamilyMembers,
   getUserPrescriptions,
   getUserTestReports,
-  getUserDiagnoses,
+  getFamDiag, getFamPresc, getDiagnosisReport, getFamilyTest, addDiagnosisReport,
+  savePrescription,
+  saveTestReport
 } from "../controllers/user.controller.js";
-
+import { upload } from "../middlewares/multer.middleware.js";
+import { endSession, joinSession } from "../controllers/doctor.controller.js";
 const router = express.Router();
 
 // Public routes
 router.post("/register", registerUser);
 router.post("/login", loginUser);
-
 // Protected routes - Require JWT authentication
 router.post("/family/add", user_verifyJWT, addFamilyMembers);
 router.delete("/family/remove", user_verifyJWT, removeFamilyMember);
 router.get("/family", user_verifyJWT, getFamilyMembers);
-
+router.post("/addReport",  upload.fields([{ name: "reportImage", maxCount: 1 }]), user_verifyJWT, saveTestReport);
+router.post('/addPresc', user_verifyJWT, savePrescription);
+router.post('/addDiagnosis', user_verifyJWT, addDiagnosisReport);
 router.get("/prescriptions", user_verifyJWT, getUserPrescriptions);
 router.get("/test-reports", user_verifyJWT, getUserTestReports);
-router.get("/diagnoses", user_verifyJWT, getUserDiagnoses);
+router.get("/diagnoses", user_verifyJWT, getDiagnosisReport);
+router.get("/famReport", user_verifyJWT, getFamilyTest);
+router.get("/famPresc", user_verifyJWT, getFamPresc);
+router.get("/famDiagnosis", user_verifyJWT, getFamDiag);
+router.post("/join-session", user_verifyJWT, joinSession);
+router.post("/end", user_verifyJWT, endSession);
 
 export default router;

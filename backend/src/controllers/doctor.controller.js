@@ -6,9 +6,10 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Session } from "../models/session.model.js";
 import { verifyOTP } from "./parent.controller.js";
-import { Diagnosis } from "../models/Diagnoses.model.js";
+import { DiagnosisReport } from "../models/Diagnoses.model.js";
 import { Prescription } from "../models/prescription.model.js"
 import { TestReport } from "../models/TestReport.model.js";
+import { encryptData, decryptData } from "../utils/security.js";
 import app from "../app.js"
 import {server,io} from "../index.js"
 import twilio from "twilio"
@@ -75,47 +76,45 @@ const generateAccessAndRefreshTokens = async (userId) => {
 };
 
 export const requestSession = asyncHandler(async (req, res) => {
-    const { issueDetails } = req.body;
-    const userId=req.user._id;
-    if (!userId || !issueDetails) {
-        throw new ApiError(400, "User ID and issue details are required");
-    }
+  const { issueDetails, appointmentTime, doctorEmail } = req.body;
+  const userId = req.user._id;
 
-    const user = await User.findById(userId);
-    if (!user) {
-        throw new ApiError(404, "User not found");
-    }
+  if (!userId || !issueDetails || !appointmentTime || !doctorEmail) {
+      throw new ApiError(400, "User ID, issue details, appointment time, and doctor email are required");
+  }
 
-    // Find an available doctor
-    const doctor = await Doctor.findOne({ isAvailable: true });
-    if (!doctor) {
-        throw new ApiError(404, "No available doctors at the moment");
-    }
+  const user = await User.findById(userId);
+  if (!user) {
+      throw new ApiError(404, "User not found");
+  }
 
-    // Create a unique room name
-    const roomName = `counseling-${userId}-${doctor._id}-${Date.now()}`;
-    
-    // Create a session
-    const session = await Session.create({
-        user: user._id,
-        doctor: doctor._id,
-        roomName,
-        issueDetails,
-        status: "Pending"
-    });
+  // Find doctor by email
+  const doctor = await Doctor.findOne({ email: doctorEmail });
+  if (!doctor) {
+      throw new ApiError(404, "Doctor not found");
+  }
 
-    res.status(201).json({
-        success: true,
-        message: "Session requested successfully",
-        session: {
-            _id: session._id,
-            roomName,
-            doctorName: doctor.name,
-            doctorId: doctor._id,
-            status: "Pending",
-            issueDetails
-        }
-    });
+  // Create a session
+  const session = await Session.create({
+      user: user._id,
+      doctor: doctor._id,
+      issueDetails,
+      appointmentTime,
+      status: "Pending",
+  });
+
+  res.status(201).json({
+      success: true,
+      message: "Session requested successfully",
+      session: {
+          _id: session._id,
+          doctorName: doctor.name,
+          doctorId: doctor._id,
+          appointmentTime,
+          status: "Pending",
+          issueDetails,
+      },
+  });
 });
 
 export const addNotesToSession = async (req, res) => {
@@ -148,34 +147,80 @@ export const addNotesToSession = async (req, res) => {
 
 // Accept Session (Doctor Side)
 export const acceptSession = asyncHandler(async (req, res) => {
-    const { sessionId } = req.body;
-    const doctorId = req.doctor._id;
-    const doctor = await Doctor.findById(doctorId);
-    const session = await Session.findById(sessionId);
-    if (!session) {
-        throw new ApiError(404, "Session not found");
-    }
+  const { sessionId } = req.body;
+  const doctorId = req.doctor._id;
 
-    if (session.status !== "Pending") {
-        throw new ApiError(400, "Session is not in pending state");
-    }
-    session.doctor = doctorId;
-    // Mark doctor as unavailable
-    doctor.isAvailable = false;
-    await doctor.save();
-    
-    session.status = "Active";
-    await session.save();
+  const session = await Session.findById(sessionId);
+  if (!session) {
+      throw new ApiError(404, "Session not found");
+  }
 
-    res.status(200).json({
-        success: true,
-        message: "Session accepted",
-        session: {
-            _id: session._id,
-            roomName: session.roomName,
-            status: "Active",
-        }
-    });
+  if (session.status !== "Pending") {
+      throw new ApiError(400, "Session is not in pending state");
+  }
+
+  session.status = "Upcoming";
+  await session.save();
+
+  res.status(200).json({
+      success: true,
+      message: "Session accepted",
+      session: {
+          _id: session._id,
+          doctorId,
+          appointmentTime: session.appointmentTime,
+          status: "Upcoming",
+      },
+  });
+});
+
+export const joinSession = asyncHandler(async (req, res) => {
+  const { sessionId } = req.body;
+  const userId = req.user?._id;
+  const doctorId = req.doctor?._id;
+
+  const session = await Session.findById(sessionId);
+  if (!session) {
+      throw new ApiError(404, "Session not found");
+  }
+
+  if (session.status !== "Upcoming") {
+      throw new ApiError(400, "Session is not in upcoming state");
+  }
+
+  // Update fields based on who is joining
+  let updated = false;
+  if (userId && session.user.toString() === userId.toString() && !session.userJoined) {
+      session.userJoined = true;
+      updated = true;
+  }
+
+  if (doctorId && session.doctor.toString() === doctorId.toString() && !session.doctorJoined) {
+      session.doctorJoined = true;
+      updated = true;
+  }
+
+  if (!updated) {
+      throw new ApiError(400, "User/Doctor already joined or unauthorized");
+  }
+
+  // If both have joined, set session to active
+  if (session.userJoined && session.doctorJoined) {
+      session.status = "Active";
+  }
+
+  await session.save();
+
+  res.status(200).json({
+      success: true,
+      message: session.status === "Active" ? "Session is now active" : "Joined successfully",
+      session: {
+          _id: session._id,
+          status: session.status,
+          userJoined: session.userJoined,
+          doctorJoined: session.doctorJoined
+      },
+  });
 });
 
 // End Session
@@ -216,17 +261,17 @@ export const endSession = asyncHandler(async (req, res) => {
 
 // Get Active Sessions (Doctor Side)
 export const getActiveSessions = asyncHandler(async (req, res) => {
-    const doctorId = req.doctor._id;
+  const doctorId = req.doctor._id;
 
-    const sessions = await Session.find({
-        doctor: doctorId,
-        status: { $in: ["Pending", "Active"] }
-    }).populate('user', 'username');
+  const sessions = await Session.find({
+      doctor: doctorId,
+      status: { $in: ["Pending", "Active", "Upcoming"] }
+  }).populate('user', 'username');
 
-    res.status(200).json({
-        success: true,
-        sessions
-    });
+  res.status(200).json({
+      success: true,
+      sessions
+  });
 });
 
 export const registerDoctor = asyncHandler(async (req, res) => {
@@ -253,7 +298,7 @@ export const registerDoctor = asyncHandler(async (req, res) => {
         console.log(req.body.availability);
 
     // Validate fields
-    if ([fullName, email, password, mobileNumber, otp, yearExp].some((field) => field?.trim() === "")) {
+    if ([fullName, email, password, mobileNumber, yearExp].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "All fields are required");
     }
     let certificateImgUrl = null;
@@ -271,10 +316,10 @@ export const registerDoctor = asyncHandler(async (req, res) => {
     }
     console.log(req.body);
     // Verify OTP
-    const otpVerification = await verifyOTP(mobileNumber, otp);
-    if (!otpVerification.success) {
-        throw new ApiError(400, otpVerification.message);
-    }
+    // const otpVerification = await verifyOTP(mobileNumber, otp);
+    // if (!otpVerification.success) {
+    //     throw new ApiError(400, otpVerification.message);
+    // }
 
     // Check if doctor already exists
     const existedDoctor = await Doctor.findOne({
@@ -309,14 +354,14 @@ export const loginDoctor = asyncHandler(async (req, res) => {
     const { password, email, mobileNumber, otp } = req.body;
 
     // Validate user credentials
-    if (!(mobileNumber && otp)) {
-        throw new ApiError(400, "Mobile number and OTP are required");
+    if (!(mobileNumber )) {
+        throw new ApiError(400, "Mobile number  are required");
     }
 
-    const otpVerification = await verifyOTP(mobileNumber, otp);
-    if (!otpVerification.success) {
-        throw new ApiError(400, otpVerification.message);
-    }
+    // const otpVerification = await verifyOTP(mobileNumber, otp);
+    // if (!otpVerification.success) {
+    //     throw new ApiError(400, otpVerification.message);
+    // }
 
     const doctor = await Doctor.findOne({
         $or: [{ email }, { mobileNumber }],
@@ -358,15 +403,15 @@ export const loginDoctor = asyncHandler(async (req, res) => {
 
 // Logout Doctor
 export const logoutDoctor = asyncHandler(async (req, res) => {
-    const { mobileNumber, otp } = req.body;
+    const { mobileNumber} = req.body;
 
-    // Validate OTP if provided
-    if (mobileNumber && otp) {
-        const otpVerification = await verifyOTP(mobileNumber, otp);
-        if (!otpVerification.success) {
-            throw new ApiError(400, otpVerification.message);
-        }
-    }
+    // // Validate OTP if provided
+    // if (mobileNumber && otp) {
+    //     const otpVerification = await verifyOTP(mobileNumber, otp);
+    //     if (!otpVerification.success) {
+    //         throw new ApiError(400, otpVerification.message);
+    //     }
+    // }
 
     // Remove refresh token to logout
     await Doctor.findByIdAndUpdate(
@@ -394,20 +439,20 @@ export const logoutDoctor = asyncHandler(async (req, res) => {
 });
 
 export const updateFeedback = asyncHandler(async (req, res) => {
-    const doctorId = req.doctor._id;
-    const { feedback } = req.body;
+    const { email, feedback } = req.body;
 
     // Validate inputs
-    if (!doctorId || !feedback?.trim()) {
-        throw new ApiError(400, "Doctor ID and feedback are required");
+    if (!email || !feedback?.trim()) {
+        throw new ApiError(400, "Doctor email and feedback are required");
     }
 
-    // Find the doctor and update feedback
-    const doctor = await Doctor.findById(doctorId);
+    // Find the doctor by email
+    const doctor = await Doctor.findOne({ email });
     if (!doctor) {
         throw new ApiError(404, "Doctor not found");
     }
 
+    // Update feedback
     doctor.feedback.push(feedback);
     await doctor.save();
 
@@ -489,135 +534,204 @@ export const updateProfile = asyncHandler(async (req, res) => {
 /**
  * Doctor adds a prescription for a user
  */
-export const addPrescription = async (req, res) => {
+export const addPrescription = asyncHandler(async (req, res) => {
   try {
-    const {  doctorName, medication, dosage } = req.body;
-    const userId = req.user._id;
-    if (!userId || !doctorName || !medication || !dosage) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
+      const { userEmail, medication, dosage } = req.body;
+      const doctorId = req.doctor._id;
 
-    const newPrescription = new Prescription({
-      user: userId,
-      doctorName,
-      medication,
-      dosage,
-    });
+      if (!userEmail || !medication || !dosage) {
+          throw new ApiError(400, "All fields are required");
+      }
 
-    await newPrescription.save();
+      // Find user by email
+      const user = await User.findOne({ email: userEmail });
+      if (!user) {
+          throw new ApiError(404, "User not found");
+      }
 
-    res.status(201).json({ success: true, message: "Prescription added successfully", prescription: newPrescription });
+      // Create new prescription
+      const newPrescription = new Prescription({
+          user: user._id,
+          doctor: doctorId,
+          doctorName: Doctor.findById(doctorId).fullName,
+          medication: encryptData(medication),
+          dosage: encryptData(dosage),
+      });
+
+      await newPrescription.save();
+
+      res.status(201).json({
+          success: true,
+          message: "Prescription added successfully",
+          prescription: newPrescription
+      });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+      console.error("Error adding prescription:", error);
+      throw new ApiError(500, error.message || "Server Error");
   }
-};
+});
 
 /**
  * Get all prescriptions suggested by a specific doctor
  */
-export const getDoctorPrescriptions = async (req, res) => {
+export const getDoctorPrescriptions = asyncHandler(async (req, res) => {
   try {
-    const { doctorName } = req.params;
+      const doctorId = req.doctor._id;
 
-    const prescriptions = await Prescription.find({ doctorName }).populate("user", "name email");
+      // Fetch prescriptions for the logged-in doctor
+      const prescriptions = await Prescription.find({ doctor: doctorId })
+          .populate("user", "fullName email");
 
-    if (!prescriptions.length) {
-      return res.status(404).json({ message: "No prescriptions found for this doctor." });
-    }
+      if (!prescriptions.length) {
+          throw new ApiError(404, "No prescriptions found for this doctor.");
+      }
 
-    res.status(200).json({ success: true, prescriptions });
+      // Decrypt medication and dosage
+      const decryptedPrescriptions = prescriptions.map(prescription => ({
+          ...prescription._doc,
+          medication: decryptData(prescription.medication),
+          dosage: decryptData(prescription.dosage),
+      }));
+
+      res.status(200).json({ success: true, prescriptions: decryptedPrescriptions });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+      console.error("Error fetching prescriptions:", error);
+      throw new ApiError(500, error.message || "Server Error");
   }
-};
-
+});
 
 /**
  * Doctor adds a test report for a user
  */
-export const addTestReport = async (req, res) => {
+export const addTestReport = asyncHandler(async (req, res) => {
   try {
-    const {  testName, result, documentUrl } = req.body;
-     const userId=req.user._id;
-    if (!userId || !testName || !result || !documentUrl) {
-      return res.status(400).json({ message: "All fields are required" });
+    const { userEmail, testName, result, documentUrl } = req.body;
+
+    if (!userEmail || !testName || !result || !documentUrl) {
+      throw new ApiError(400, "User email, test name, result, and document URL are required");
     }
 
+    // Find user by email
+    const user = await User.findOne({ email: userEmail });
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    // Create new test report
     const newTestReport = new TestReport({
-      user: userId,
+      user: user._id,
+      doctor: req.doctor._id,
       testName,
-      result,
-      documentUrl,
+      result: encryptData(result),
+      documentUrl: encryptData(documentUrl),
     });
 
     await newTestReport.save();
 
-    res.status(201).json({ success: true, message: "Test report added successfully", testReport: newTestReport });
+    res.status(201).json({
+      success: true,
+      message: "Test report added successfully",
+      testReport: newTestReport,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+    console.error("Error adding test report:", error);
+    throw new ApiError(500, error.message || "Server Error");
   }
-};
+});
+
 
 /**
  * Get all test reports added by a specific doctor (Optional: If you want to filter by doctor)
  */
-export const getDoctorTestReports = async (req, res) => {
+export const getDoctorTestReports = asyncHandler(async (req, res) => {
   try {
-    const { doctorName } = req.params;
+    const doctorId = req.doctor._id; // Assuming doctor authentication
 
-    const reports = await TestReport.find({ doctorName }).populate("user", "name email");
+    // Find test reports where the doctor is referenced
+    const reports = await TestReport.find({ doctor: doctorId }).populate("user", "fullName email");
 
     if (!reports.length) {
-      return res.status(404).json({ message: "No test reports found for this doctor." });
+      throw new ApiError(404, "No test reports found for this doctor.");
     }
 
-    res.status(200).json({ success: true, reports });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error", error: error.message });
-  }
-};
+    // Decrypt sensitive data
+    const decryptedReports = reports.map(report => ({
+      ...report._doc,
+      result: decryptData(report.result),
+      documentUrl: decryptData(report.documentUrl),
+    }));
 
+    res.status(200).json({ success: true, reports: decryptedReports });
+  } catch (error) {
+    console.error("Error fetching test reports:", error);
+    throw new ApiError(500, error.message || "Server Error");
+  }
+});
 
 /**
  * Doctor adds a diagnosis for a user
  */
-export const addDiagnosis = async (req, res) => {
+export const addDiagnosis = asyncHandler(async (req, res) => {
   try {
-    const {  condition, doctorName } = req.body;
-        const userId=req.user._id
-    if (!userId || !condition || !doctorName) {
-      return res.status(400).json({ message: "All fields are required" });
+    const { condition, userEmail } = req.body;
+
+    if (!userEmail || !condition) {
+      throw new ApiError(400, "All fields are required");
     }
 
-    const newDiagnosis = new Diagnosis({
-      user: userId,
-      condition,
-      doctorName,
+    // Find the user by email
+    const user = await User.findOne({ email: userEmail });
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    // Create new diagnosis report
+    const newDiagnosis = new DiagnosisReport({
+      user: user._id,
+      doctor: req.doctor._id,
+      doctorName: Doctor.findById(req.doctor._id).fullName,
+      condition: encryptData(condition),
     });
 
     await newDiagnosis.save();
 
-    res.status(201).json({ success: true, message: "Diagnosis added successfully", diagnosis: newDiagnosis });
+    res.status(201).json({
+      success: true,
+      message: "Diagnosis added successfully",
+      diagnosis: newDiagnosis,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+    console.error("Error adding diagnosis:", error);
+    throw new ApiError(500, error.message || "Server Error");
   }
-};
+});
 
 /**
  * Get all diagnoses added by a specific doctor
  */
-export const getDoctorDiagnoses = async (req, res) => {
+export const getDoctorDiagnoses = asyncHandler(async (req, res) => {
   try {
-    const { doctorName } = req.params;
-
-    const diagnoses = await Diagnosis.find({ doctorName }).populate("user", "name email");
+    
+    // Fetch diagnoses where doctor is the reference
+    const diagnoses = await DiagnosisReport.find({ doctor: req.doctor._id }).populate("user", "fullName email");
 
     if (!diagnoses.length) {
       return res.status(404).json({ message: "No diagnoses found for this doctor." });
     }
 
-    res.status(200).json({ success: true, diagnoses });
+    // Decrypt conditions before sending response
+    const decryptedDiagnoses = diagnoses.map(diagnosis => ({
+      ...diagnosis._doc,
+      condition: decryptData(diagnosis.condition),
+    }));
+
+    res.status(200).json({
+      success: true,
+      diagnoses: decryptedDiagnoses,
+    });
+
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+    console.error("Error fetching diagnoses:", error);
+    throw new ApiError(500, error.message || "Server Error");
   }
-};
+});

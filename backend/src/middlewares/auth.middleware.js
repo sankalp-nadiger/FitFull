@@ -53,13 +53,13 @@ export const user_verifyJWT = asyncHandler(async (req, _, next) => {
 //   next();
 // });
 
-export const counsellor_verifyJWT = asyncHandler(async (req, _, next) => {
+export const doctor_verifyJWT = asyncHandler(async (req, _, next) => {
   const token =
     req.cookies?.accessToken ||
     req.header("Authorization")?.replace("Bearer ", "");
 
-  const counsellor = await verifyJWT(token, Counsellor, "Counsellor");
-  req.counsellor = counsellor;
-  req.isCounsellor= true
+  const doctor = await verifyJWT(token, Doctor, "Counsellor");
+  req.doctor = doctor;
+  req.isDoctor= true
   next();
 });

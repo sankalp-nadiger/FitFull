@@ -53,6 +53,8 @@ const userSchema = new Schema(
       sparse: true,
     },
     tokens: {
+      googleFitToken: String,
+      googleFitTokenExpiry: Date,
       refreshToken: String, // General refresh token for session handling
       spotifyAccessToken: String, // Spotify access token
       spotifyRefreshToken: String, // Spotify refresh token (to get new access tokens)
