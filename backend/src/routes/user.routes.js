@@ -6,8 +6,8 @@ import {
   addFamilyMembers,
   removeFamilyMember,
   getFamilyMembers,
-  getUserPrescriptions,
-  getUserTestReports,
+  getPrescription,
+  getTestReport,
   getFamDiag, getFamPresc, getDiagnosisReport, getFamilyTest, addDiagnosisReport,
   savePrescription,
   saveTestReport
@@ -23,11 +23,11 @@ router.post("/login", loginUser);
 router.post("/family/add", user_verifyJWT, addFamilyMembers);
 router.delete("/family/remove", user_verifyJWT, removeFamilyMember);
 router.get("/family", user_verifyJWT, getFamilyMembers);
-router.post("/addReport",  upload.fields([{ name: "reportImage", maxCount: 1 }]), user_verifyJWT, saveTestReport);
+router.post("/addReport",  upload.fields([{ name: "document", maxCount: 1 }]), user_verifyJWT, saveTestReport);
 router.post('/addPresc', user_verifyJWT, savePrescription);
 router.post('/addDiagnosis', user_verifyJWT, addDiagnosisReport);
-router.get("/prescriptions", user_verifyJWT, getUserPrescriptions);
-router.get("/test-reports", user_verifyJWT, getUserTestReports);
+router.get("/prescriptions", user_verifyJWT, getPrescription);
+router.get("/test-reports", user_verifyJWT, getTestReport);
 router.get("/diagnoses", user_verifyJWT, getDiagnosisReport);
 router.get("/famReport", user_verifyJWT, getFamilyTest);
 router.get("/famPresc", user_verifyJWT, getFamPresc);

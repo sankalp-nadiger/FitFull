@@ -4,7 +4,8 @@ import ApiResponse from "../utils/API_Response.js";
 import asyncHandler from "../utils/asynchandler.utils.js";
 import { Prescription } from "../models/prescription.model.js";
 import { TestReport } from "../models/TestReport.model.js";
-import { Diagnosis } from "../models/Diagnoses.model.js";
+import { DiagnosisReport } from "../models/Diagnoses.model.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { encryptData, decryptData } from "../utils/security.js";
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -317,9 +318,19 @@ export const getFamilyMembers = asyncHandler(async (req, res) => {
 
 export const saveTestReport = async (req, res) => {
     try {
-        const { testName, result, documentUrl } = req.body;
+        const { testName, result } = req.body;
 
         const encryptedResult = encryptData(result);
+        let documentUrl = null;
+    const documentLocalPath =
+      (req?.files?.document && req.files.document[0]?.path) || null;
+  
+    if (documentLocalPath) {
+      const documentUploaded = await uploadOnCloudinary(documentLocalPath);
+  
+      documentUrl = documentUploaded.url;
+    }
+    console.log(req.body);
         const encryptedDocumentUrl = documentUrl ? encryptData(documentUrl) : null;
 
         const newTestReport = new TestReport({
@@ -340,7 +351,8 @@ export const saveTestReport = async (req, res) => {
 export const savePrescription = async (req, res) => {
     try {
         const { doctorName, medication, dosage } = req.body;
-
+        console.log(medication)
+        console.log(dosage)
         const encryptedMedication = encryptData(medication);
         const encryptedDosage = encryptData(dosage);
 
@@ -401,18 +413,16 @@ export const getTestReport = async (req, res) => {
     }
 };
 
-
-const DiagnosisReport = require("../models/DiagnosisReport");
-
 export const addDiagnosisReport = async (req, res) => {
     try {
-        const { diagnosis, doctorName, notes } = req.body;
+        const { doctorName, condition, notes, date } = req.body;
 
         const newReport = new DiagnosisReport({
             user: req.user._id, // User ID from middleware
-            diagnosis: encryptData(diagnosis),
             doctorName,
-            notes: encryptData(notes)
+            condition: encryptData(condition),
+            notes: encryptData(notes),
+            date
         });
 
         await newReport.save();
@@ -428,10 +438,10 @@ export const getDiagnosisReport = async (req, res) => {
         const diagnosisReports = await DiagnosisReport.find({ user: req.user._id });
         if (!diagnosisReports.length) return res.status(404).json({ message: "No diagnosis report found" });
         res.json(diagnosisReports.map(diagnosis=>({
-            diagnosis: decryptData(diagnosisReport.diagnosis),
-            doctorName: diagnosisReport.doctorName,
-            notes: decryptData(diagnosisReport.notes),
-            date: diagnosisReport.date
+            doctorName: diagnosis.doctorName,
+            condition: decryptData(diagnosis.condition),
+            notes: decryptData(diagnosis.notes),
+            date: diagnosis.date
         })));
     } catch (error) {
         console.error("Error retrieving diagnosis report:", error);
@@ -461,16 +471,16 @@ const getFamilyTest = async (req, res) => {
         }
 
         // Retrieve the test report of the requested user
-        const testReport = await TestReport.findOne({ user: requestedUser._id });
+        const testReports = await TestReport.find({ user: requestedUser._id });
 
-        if (!testReport) return res.status(404).json({ message: "No test report found for this user." });
+        if (!testReports.length) return res.status(404).json({ message: "No test report found for this user." });
 
-        res.json({
+        res.json(testReports.map(testReport=>({
             testName: testReport.testName,
             result: decryptData(testReport.result),
             documentUrl: testReport.documentUrl ? decryptData(testReport.documentUrl) : null,
             date: testReport.date
-        });
+        })));
     } catch (error) {
         console.error("Error retrieving test report:", error);
         res.status(500).json({ success: false, message: "Failed to retrieve test report" });
@@ -495,16 +505,16 @@ const getFamPresc = async (req, res) => {
             return res.status(403).json({ message: "You do not have access to this family member's prescriptions." });
         }
 
-        const prescription = await Prescription.findOne({ user: requestedUser._id });
+        const prescriptions = await Prescription.find({ user: requestedUser._id });
 
-        if (!prescription) return res.status(404).json({ message: "No prescription found for this user." });
+        if (!prescriptions.length) return res.status(404).json({ message: "No prescription found for this user." });
 
-        res.json({
+        res.json(prescriptions.map(prescription=>({
             doctorName: prescription.doctorName,
             medication: decryptData(prescription.medication),
             dosage: decryptData(prescription.dosage),
             date: prescription.date
-        });
+        })));
     } catch (error) {
         console.error("Error retrieving prescription:", error);
         res.status(500).json({ success: false, message: "Failed to retrieve prescription" });
@@ -524,21 +534,21 @@ const getFamDiag = async (req, res) => {
         if (!requestedUser) {
             return res.status(404).json({ message: "Requested user not found." });
         }
-
+        
         if (!requestingUser.family.includes(requestedUser._id)) {
             return res.status(403).json({ message: "You do not have access to this family member's diagnosis reports." });
         }
 
-        const diagnosisReport = await DiagnosisReport.findOne({ user: requestedUser._id });
+        const diagnosisReports = await DiagnosisReport.find({ user: requestedUser._id });
 
-        if (!diagnosisReport) return res.status(404).json({ message: "No diagnosis report found for this user." });
+        if (!diagnosisReports.length) return res.status(404).json({ message: "No diagnosis report found for this user." });
 
-        res.json({
-            diagnosis: decryptData(diagnosisReport.diagnosis),
+        res.json(diagnosisReports.map(diagnosisReport=>({
             doctorName: diagnosisReport.doctorName,
+            condition: decryptData(diagnosisReport.notes),
             notes: decryptData(diagnosisReport.notes),
             date: diagnosisReport.date
-        });
+        })));
     } catch (error) {
         console.error("Error retrieving diagnosis report:", error);
         res.status(500).json({ success: false, message: "Failed to retrieve diagnosis report" });

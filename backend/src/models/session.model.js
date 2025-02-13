@@ -10,6 +10,7 @@ const sessionSchema = new mongoose.Schema({
         enum: ["Pending", "Active", "Upcoming", "Completed"], // added "Active" status for when session is ongoing
         default: "Pending" 
     },
+    appointmentTime: { type: Date, required: true },
     userJoined: {type: Boolean, default: ""},
     doctorJoined: {type: Boolean, default: ""},
     doctorFeedback: { type: String, default: ""},

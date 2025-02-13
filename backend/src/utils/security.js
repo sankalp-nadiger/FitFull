@@ -1,5 +1,6 @@
 import crypto from "crypto"
-
+import dotenv from 'dotenv';
+dotenv.config()
 const secretKey = process.env.ENCRYPTION_KEY || "your-256-bit-secret-key"; // Use an environment variable for security
 
 // Encrypt data

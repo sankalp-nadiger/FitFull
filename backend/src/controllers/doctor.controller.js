@@ -5,7 +5,6 @@ import { Doctor } from "../models/doctor.model.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Session } from "../models/session.model.js";
-import { verifyOTP } from "./parent.controller.js";
 import { DiagnosisReport } from "../models/Diagnoses.model.js";
 import { Prescription } from "../models/prescription.model.js"
 import { TestReport } from "../models/TestReport.model.js";
@@ -35,21 +34,21 @@ try {
 }
 };
 // OTP verification function
-const verifyOTP = async (mobileNumber, enteredOTP) => {
-    console.log('Searching for OTP with mobile number:', mobileNumber);
-    const record = await OTP.findOne({ mobileNumber }).setOptions({ bypassHooks: true }).sort({ createdAt: -1 });
-    console.log(record);
-    if (!record || record.otp !== enteredOTP) {
-        return { success: false, message: 'Invalid OTP' };
-    }
+// const verifyOTP = async (mobileNumber, enteredOTP) => {
+//     console.log('Searching for OTP with mobile number:', mobileNumber);
+//     const record = await OTP.findOne({ mobileNumber }).setOptions({ bypassHooks: true }).sort({ createdAt: -1 });
+//     console.log(record);
+//     if (!record || record.otp !== enteredOTP) {
+//         return { success: false, message: 'Invalid OTP' };
+//     }
 
-    const isExpired = (new Date() - record.createdAt) > 5 * 60 * 1000; // 5 minutes expiry
-    if (isExpired) {
-        return { success: false, message: 'OTP expired' };
-    }
+//     const isExpired = (new Date() - record.createdAt) > 5 * 60 * 1000; // 5 minutes expiry
+//     if (isExpired) {
+//         return { success: false, message: 'OTP expired' };
+//     }
 
-    return { success: true, message: 'OTP verified' };
-};
+//     return { success: true, message: 'OTP verified' };
+// };
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
       const doctor = await Doctor.findById(userId);
@@ -306,7 +305,7 @@ export const registerDoctor = asyncHandler(async (req, res) => {
       (req?.files?.certificateImage && req.files.certificateImage[0]?.path) || null;
   
     if (certificateLocalPath) {
-      const certificateImg = await uploadOnCloudinary(certificateLocalPath, { folder: Mindfull });
+      const certificateImg = await uploadOnCloudinary(certificateLocalPath, { folder: "FitFull" });
   
       if (!certificateImg) {
         throw new ApiError(400, "Certificate upload failed");
@@ -548,12 +547,13 @@ export const addPrescription = asyncHandler(async (req, res) => {
       if (!user) {
           throw new ApiError(404, "User not found");
       }
-
+      const doctor = await Doctor.findById(req.doctor._id);
+      const doctorName = doctor ? doctor.fullName : null; 
       // Create new prescription
       const newPrescription = new Prescription({
           user: user._id,
           doctor: doctorId,
-          doctorName: Doctor.findById(doctorId).fullName,
+          doctorName: doctorName,
           medication: encryptData(medication),
           dosage: encryptData(dosage),
       });
@@ -605,9 +605,8 @@ export const getDoctorPrescriptions = asyncHandler(async (req, res) => {
  */
 export const addTestReport = asyncHandler(async (req, res) => {
   try {
-    const { userEmail, testName, result, documentUrl } = req.body;
-
-    if (!userEmail || !testName || !result || !documentUrl) {
+    const { userEmail, testName, result} = req.body;
+    if (!userEmail || !testName || !result ) {
       throw new ApiError(400, "User email, test name, result, and document URL are required");
     }
 
@@ -616,14 +615,24 @@ export const addTestReport = asyncHandler(async (req, res) => {
     if (!user) {
       throw new ApiError(404, "User not found");
     }
-
+    let documentUrl = null;
+    const documentLocalPath =
+      (req?.files?.document && req.files.document[0]?.path) || null;
+  
+    if (documentLocalPath) {
+      const documentUploaded = await uploadOnCloudinary(documentLocalPath, {folder: "FitFull"});
+  
+      documentUrl = documentUploaded.url;
+    }
+    console.log(req.body);
+        const encryptedDocumentUrl = documentUrl ? encryptData(documentUrl) : null;
     // Create new test report
     const newTestReport = new TestReport({
       user: user._id,
       doctor: req.doctor._id,
       testName,
       result: encryptData(result),
-      documentUrl: encryptData(documentUrl),
+      documentUrl: encryptedDocumentUrl,
     });
 
     await newTestReport.save();
@@ -673,7 +682,7 @@ export const getDoctorTestReports = asyncHandler(async (req, res) => {
  */
 export const addDiagnosis = asyncHandler(async (req, res) => {
   try {
-    const { condition, userEmail } = req.body;
+    const { condition, notes, userEmail } = req.body;
 
     if (!userEmail || !condition) {
       throw new ApiError(400, "All fields are required");
@@ -684,13 +693,16 @@ export const addDiagnosis = asyncHandler(async (req, res) => {
     if (!user) {
       throw new ApiError(404, "User not found");
     }
+    const doctor = await Doctor.findById(req.doctor._id);
+    const doctorName = doctor ? doctor.fullName : null; 
 
     // Create new diagnosis report
     const newDiagnosis = new DiagnosisReport({
       user: user._id,
       doctor: req.doctor._id,
-      doctorName: Doctor.findById(req.doctor._id).fullName,
+      doctorName: doctorName,
       condition: encryptData(condition),
+      notes: encryptData(notes)
     });
 
     await newDiagnosis.save();
@@ -714,6 +726,7 @@ export const getDoctorDiagnoses = asyncHandler(async (req, res) => {
     
     // Fetch diagnoses where doctor is the reference
     const diagnoses = await DiagnosisReport.find({ doctor: req.doctor._id }).populate("user", "fullName email");
+    console.log(diagnoses)
 
     if (!diagnoses.length) {
       return res.status(404).json({ message: "No diagnoses found for this doctor." });
@@ -723,6 +736,7 @@ export const getDoctorDiagnoses = asyncHandler(async (req, res) => {
     const decryptedDiagnoses = diagnoses.map(diagnosis => ({
       ...diagnosis._doc,
       condition: decryptData(diagnosis.condition),
+      notes: decryptData(diagnosis.notes),
     }));
 
     res.status(200).json({

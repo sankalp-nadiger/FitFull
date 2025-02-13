@@ -1,6 +1,5 @@
 import {User} from "../models/user.model.js";
-async function fetchGoogleFitHealthData(userId, selectedDevice) {
-    let accessToken = await refreshGoogleAccessToken(userId);
+async function fetchGoogleFitHealthData(accessToken, selectedDevice) {
     const sources = await getGoogleFitDevices(accessToken);
     
     // Find data sources for selected device
@@ -112,7 +111,7 @@ async function getDeviceInstructions(deviceName) {
     return response.text;
 }
 
-const refreshGoogleAccessToken = async (userId) => {
+export const refreshGoogleAccessToken = async (userId) => {
     try {
         const user = await User.findById(userId);
         if (!user) throw new Error("User not found.");

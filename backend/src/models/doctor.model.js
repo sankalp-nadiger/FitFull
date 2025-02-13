@@ -70,10 +70,10 @@ doctorSchema.pre("save", async function (next) {
     next();
   });
   
-  doctorSchema.methods.isPasswordCorrect = function (password) {
+  doctorSchema.methods.isPasswordCorrect = async function (password) {
     console.log("Entered:", `"${password}"`);
     console.log("Stored:", `"${this.password}"`);
-    return password===this.password;
+    return await bcrypt.compare(password,this.password);
   };
   
   doctorSchema.methods.generateAccessToken = function () {
@@ -101,4 +101,4 @@ doctorSchema.pre("save", async function (next) {
     );
   };
 
-export const doctor= mongoose.model("doctor", doctorSchema);
+export const Doctor= mongoose.model("Doctor", doctorSchema);

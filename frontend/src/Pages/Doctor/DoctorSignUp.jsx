@@ -3,7 +3,7 @@ import { ToastContainer, toast } from "react-toastify";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
-import DoctorSignIn from "./DoctorSignIn"; // Import the SignIn component
+import DoctorSignIn from "./DoctorSignIn";
 
 const DoctorSignUp = () => {
   const navigate = useNavigate();
@@ -16,8 +16,8 @@ const DoctorSignUp = () => {
   const [specificationInput, setSpecificationInput] = useState("");
   const [yearExp, setYearExp] = useState("");
   const [availability, setAvailability] = useState([]);
-  const [certifications, setCertifications] = useState(null);
-  const [isSignIn, setIsSignIn] = useState(false); // To toggle between SignUp and SignIn
+  const [certificateImage, setCertificateImage] = useState([]); // Store multiple files
+  const [isSignIn, setIsSignIn] = useState(false);
 
   const handleAddSpecification = () => {
     if (specificationInput.trim() !== "") {
@@ -26,10 +26,14 @@ const DoctorSignUp = () => {
     }
   };
 
+  const handleFileChange = (e) => {
+    setCertificateImage([...e.target.files]); // Convert FileList to an array
+  };
+
   const handleSignUp = async (e) => {
     e.preventDefault();
 
-    if (!fullName || !email || !password || !mobileNumber || !otp || !yearExp) {
+    if (!fullName || !email || !password || !mobileNumber || !yearExp) {
       toast.error("All fields are required!");
       return;
     }
@@ -43,16 +47,21 @@ const DoctorSignUp = () => {
     formData.append("yearExp", yearExp);
     formData.append("availability", JSON.stringify(availability));
     formData.append("specifications", JSON.stringify(specifications));
-    if (certifications) {
-      for (let i = 0; i < certifications.length; i++) {
-        formData.append("certifications", certifications[i]);
-      }
+
+    if (certificateImage.length > 0) {
+      certificateImage.forEach((file) => {
+        formData.append("certificateImage", file);
+      });
     }
 
     try {
-      const response = await axios.post("http://localhost:8000/api/doctor/register", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const response = await axios.post(
+        "http://localhost:8000/api/doctor/register-doctor",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
 
       if (response.status === 201) {
         toast.success("Sign-up successful! Redirecting...");
@@ -65,7 +74,6 @@ const DoctorSignUp = () => {
     }
   };
 
-  // If the user clicks on the "Already have an account? Login" link, show the sign-in form
   if (isSignIn) {
     return <DoctorSignIn />;
   }
@@ -75,27 +83,76 @@ const DoctorSignUp = () => {
       <h1 className="text-4xl font-bold text-blue-500 mb-6">Doctor Sign Up</h1>
       <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg">
         <form onSubmit={handleSignUp} className="space-y-4">
-          <input type="text" placeholder="Full Name" className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
-          <input type="email" placeholder="Email" className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <input type="password" placeholder="Password" className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          <input type="text" placeholder="Mobile Number" className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md" value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value)} required />
-          {/* <input type="text" placeholder="OTP" className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md" value={otp} onChange={(e) => setOtp(e.target.value)} required /> */}
-          <input type="text" placeholder="Years of Experience" className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md" value={yearExp} onChange={(e) => setYearExp(e.target.value)} required />
+          <input
+            type="text"
+            placeholder="Full Name"
+            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <input
+            type="text"
+            placeholder="Mobile Number"
+            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
+            value={mobileNumber}
+            onChange={(e) => setMobileNumber(e.target.value)}
+            required
+          />
+          <input
+            type="text"
+            placeholder="Years of Experience"
+            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
+            value={yearExp}
+            onChange={(e) => setYearExp(e.target.value)}
+            required
+          />
           <div className="flex items-center space-x-2">
-            <input type="text" placeholder="Specialization" className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md" value={specificationInput} onChange={(e) => setSpecificationInput(e.target.value)} />
-            <button type="button" onClick={handleAddSpecification} className="p-2 bg-blue-500 rounded-md">Add</button>
+            <input
+              type="text"
+              placeholder="Specialization"
+              className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
+              value={specificationInput}
+              onChange={(e) => setSpecificationInput(e.target.value)}
+            />
+            <button type="button" onClick={handleAddSpecification} className="p-2 bg-blue-500 rounded-md">
+              Add
+            </button>
           </div>
           <div className="text-sm text-gray-300">{specifications.join(", ")}</div>
-          <input type="file" multiple className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md" onChange={(e) => setCertifications(e.target.files)} />
-          <button type="submit" className="w-full py-2 text-lg font-bold text-white bg-green-500 rounded-md hover:bg-green-600 transition-all">Register as Doctor</button>
+          <input
+            type="file"
+            multiple
+            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
+            onChange={handleFileChange}
+          />
+          <button
+            type="submit"
+            className="w-full py-2 text-lg font-bold text-white bg-green-500 rounded-md hover:bg-green-600 transition-all"
+          >
+            Register as Doctor
+          </button>
         </form>
         <div className="mt-4 text-center">
           <p className="text-gray-400">
             Already have an account?{" "}
-            <span
-              className="text-indigo-400 hover:underline cursor-pointer"
-              onClick={() => setIsSignIn(true)} // Toggle to SignIn page
-            >
+            <span className="text-indigo-400 hover:underline cursor-pointer" onClick={() => setIsSignIn(true)}>
               Login here
             </span>
           </p>

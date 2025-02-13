@@ -3,7 +3,7 @@ import asyncHandler from "../utils/asynchandler.utils.js";
 import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
 //import { Parent } from "../models/parent.model.js";
-//import { Counsellor } from "../models/counsellor.model.js";
+import { Doctor } from "../models/doctor.model.js";
 
 // Helper function
 const verifyJWT = async (token, model, role) => {
@@ -58,7 +58,7 @@ export const doctor_verifyJWT = asyncHandler(async (req, _, next) => {
     req.cookies?.accessToken ||
     req.header("Authorization")?.replace("Bearer ", "");
 
-  const doctor = await verifyJWT(token, Doctor, "Counsellor");
+  const doctor = await verifyJWT(token, Doctor, "Doctor");
   req.doctor = doctor;
   req.isDoctor= true
   next();

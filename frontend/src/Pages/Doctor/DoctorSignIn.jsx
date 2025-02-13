@@ -4,7 +4,7 @@ import DoctorSignUp from "./DoctorSignUp";
 
 const DoctorSignIn = () => {
   const [isSignUp, setIsSignUp] = useState(false); // Toggle between SignIn & SignUp
-  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   // const [otp, setOtp] = useState("");
@@ -71,7 +71,7 @@ const DoctorSignIn = () => {
 
     try {
       const response = await axios.post("http://localhost:8000/api/doctor/login", {
-        fullName,
+        email,
         mobileNumber: phoneNumber,
         password,
       });
@@ -97,16 +97,16 @@ const DoctorSignIn = () => {
       <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg flex flex-col items-center">
         <form onSubmit={handleSubmit} className="w-full space-y-4">
           <div className="flex flex-col">
-            <label htmlFor="fullName" className="text-sm font-medium text-gray-300">
-              Full Name
+            <label htmlFor="email" className="text-sm font-medium text-gray-300">
+              Email
             </label>
             <input
-              id="fullName"
-              type="text"
+              id="email"
+              type="email"
               className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Enter your full name"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
               required
             />
           </div>

@@ -1,6 +1,14 @@
 import mongoose, { Schema } from "mongoose"
 import bcrypt from 'bcryptjs';
 import jwt from "jsonwebtoken";
+
+const healthDataSchema = new Schema({
+  steps: { type: Number, default: 0 },
+  heartRate: { type: Number, default: 0 },
+  sleep: { type: Number, default: 0 },
+  lastUpdated: { type: Date, default: Date.now },
+});
+
 const userSchema = new Schema(
   {
     username: {
@@ -26,6 +34,7 @@ const userSchema = new Schema(
         return !this.authProvider;
       },
     },
+    healthData: { type: healthDataSchema, default: {} },
     avatar: {
       type: String, // Profile picture URL
     },
@@ -78,6 +87,7 @@ const userSchema = new Schema(
     lastLoginDate: {
       type: Date,
     },
+    selectedDevice: String,
     issues: [
       {
         type: Schema.Types.ObjectId,
