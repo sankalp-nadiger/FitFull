@@ -124,7 +124,7 @@ export const removeFamilyMember = asyncHandler(async (req, res) => {
   
 const registerUser = asyncHandler(async (req, res) => {
     try {
-        const { fullName, email, username, password, gender, age, location } = req.body;
+        const { fullName, email, username, password, gender, age } = req.body;
     
         if ([fullName, email, username, password].some((field) => field?.trim() === "")) {
             return res.status(400).json({ success: false, message: "All fields are required" });
@@ -137,15 +137,15 @@ const registerUser = asyncHandler(async (req, res) => {
         }
   
         // Process location
-        let parsedLocation;
-        try {
-            parsedLocation = JSON.parse(location);
-            if (!parsedLocation.type || !parsedLocation.coordinates) {
-                throw new Error("Invalid location format");
-            }
-        } catch (error) {
-            return res.status(400).json({ success: false, message: "Invalid location JSON format" });
-        }
+        // let parsedLocation;
+        // try {
+        //     parsedLocation = JSON.parse(location);
+        //     if (!parsedLocation.type || !parsedLocation.coordinates) {
+        //         throw new Error("Invalid location format");
+        //     }
+        // } catch (error) {
+        //     return res.status(400).json({ success: false, message: "Invalid location JSON format" });
+        // }
   
         // Create user
         const user = await User.create({
@@ -155,7 +155,7 @@ const registerUser = asyncHandler(async (req, res) => {
             gender,
             age,
             username: username.toLowerCase(),
-            location: parsedLocation,
+            // location: parsedLocation,
             authProvider: "local",
             family: [] // Initialize empty family array
         });
@@ -192,10 +192,10 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 });
 
-const getRandomActivity = () => {
-    const randomIndex = Math.floor(Math.random() * additionalActivities.length);
-    return additionalActivities[randomIndex];
-};
+// const getRandomActivity = () => {
+//     const randomIndex = Math.floor(Math.random() * additionalActivities.length);
+//     return additionalActivities[randomIndex];
+// };
   
 const loginUser = asyncHandler(async (req, res) => {
     const { username, password, email } = req.body;
@@ -243,7 +243,7 @@ const loginUser = asyncHandler(async (req, res) => {
     await user.save();
 
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
-
+     console.log(accessToken)
     const loggedInUser = await User.findById(user._id)
         .select("-password -refreshToken")
         .populate('family', 'fullName email username'); // Populate family members
@@ -253,7 +253,7 @@ const loginUser = asyncHandler(async (req, res) => {
         secure: true,
     };
 
-    const randomActivity = getRandomActivity();
+    //const randomActivity = getRandomActivity();
 
     const responseMessage = passwordSet
         ? "Password has been set and user logged in successfully"
@@ -270,7 +270,7 @@ const loginUser = asyncHandler(async (req, res) => {
                 refreshToken,
                 streak: user.streak,
                 maxStreak: user.maxStreak,
-                suggestedActivity: randomActivity,
+                //suggestedActivity: randomActivity,
             }, responseMessage),
         );
 });

@@ -13,7 +13,7 @@ const UserSignUp = () => {
     password: "",
     gender: "Male",
     age: "",
-    location: "",
+    
   });
   const [loading, setLoading] = useState(false);
 
@@ -33,7 +33,7 @@ const UserSignUp = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:8000/api/auth/register", formData, {
+      const response = await axios.post("http://localhost:8000/api/users/register", formData, {
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
       });
@@ -112,7 +112,7 @@ const UserSignUp = () => {
             className="w-full p-2 border rounded-md bg-gray-800 text-white"
             required
           />
-          <input
+          {/* <input
             type="text"
             name="location"
             value={formData.location}
@@ -121,7 +121,7 @@ const UserSignUp = () => {
             className="w-full p-2 border rounded-md bg-gray-800 text-white"
             required
           />
-          
+           */}
           <button
             type="submit"
             className="w-full py-2 text-lg font-bold text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-all"

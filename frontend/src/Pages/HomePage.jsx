@@ -70,11 +70,11 @@ export default function HomePage() {
                 <p className="text-lg max-w-2xl mb-6">
                     Connect with **certified doctors** in real-time, get instant **health advice**, and track your prescriptions seamlessly.
                 </p>
-                <img 
-                    src="/images/telemedicine.jpg" // Replace with an actual image
+                {/* <img 
+                    // src="/images/telemedicine.jpg" // Replace with an actual image
                     alt="Telemedicine"
                     className="w-full md:w-2/3 rounded-lg shadow-lg"
-                />
+                /> */}
             </section>
 
             {/* Testimonials */}
@@ -117,32 +117,32 @@ const features = [
     {
         title: "Wearable Integration",
         description: "Sync your smartwatch & track real-time fitness data.",
-        image: "/images/wearable.png" // Replace with actual image
+        image: "https://tse2.mm.bing.net/th?id=OIP.vqtlY_mynVQL_hwpcV6eVwHaD5&pid=Api&P=0&h=180" // Replace with actual image
     },
     {
         title: "Telemedicine",
         description: "Consult with doctors online & get instant prescriptions.",
-        image: "/images/telemedicine-icon.png" // Replace with actual image
+        image: "https://tse1.mm.bing.net/th?id=OIP.XNfVRaUpn8IyY17U9A7oQQHaE8&pid=Api&P=0&h=180" // Replace with actual image
     },
     {
         title: "Personalized Recommendations",
         description: "AI-driven health tips based on your fitness data.",
-        image: "/images/recommendation.png" // Replace with actual image
+        image: "https://tse3.mm.bing.net/th?id=OIP.gO16jJtEafX96qISiszIHgHaDF&pid=Api&P=0&h=180" // Replace with actual image
     },
     {
         title: "Mental Wellness",
         description: "Meditation & self-care resources for better mental health.",
-        image: "/images/mental-health.png" // Replace with actual image
+        image: "https://tse3.mm.bing.net/th?id=OIP.s4DV8nqjcu4Qid9B1S-NEgHaGl&pid=Api&P=0&h=180" // Replace with actual image
     },
     {
         title: "Medicine Reminders",
         description: "Get SMS reminders for your medicine schedules.",
-        image: "/images/medicine-reminder.png" // Replace with actual image
+        image: "https://tse2.mm.bing.net/th?id=OIP.qM8RHpdoJVfSgKFdG8moYQHaFI&pid=Api&P=0&h=180" // Replace with actual image
     },
     {
         title: "Volunteer Network",
         description: "Connect with MBBS graduates & health volunteers.",
-        image: "/images/volunteer.png" // Replace with actual image
+        image: "/https://tse2.mm.bing.net/th?id=OIP.4jQxicHcDeAeQ33LstrBDAHaGC&pid=Api&P=0&h=180" // Replace with actual image
     }
 ];
 
