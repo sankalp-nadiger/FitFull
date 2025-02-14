@@ -1,4 +1,9 @@
 import {User} from "../models/user.model.js";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+dotenv.config();
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 async function fetchGoogleFitHealthData(accessToken, selectedDevice) {
     const sources = await getGoogleFitDevices(accessToken);
     
@@ -91,6 +96,7 @@ async function fetchGoogleFitSleep(accessToken, dataSourceId) {
 }
 
 async function getAIInsights(healthData) {
+    try{
     const prompt = `
         Based on the following health data:
         Steps: ${healthData.steps}
@@ -99,17 +105,61 @@ async function getAIInsights(healthData) {
 
         Generate a personalized health recommendation.
     `;
+    
+    // Generate content using the model
+    const result = await model.generateContent(prompt);
 
-    const response = await gemini.generateText({ prompt });
-    return response.text;
-}
+    // Extract the text (which may be a function or a string)
+    let aiSuggestions = result.response.text;
+    if (typeof aiSuggestions === "function") {
+        aiSuggestions = aiSuggestions();
+      }
+  
+      // If it's a string, split it into individual topics and rejoin them as a single string
+      const suggestions = typeof aiSuggestions === "string" 
+        ? aiSuggestions.split("\n").filter(Boolean).join("\n") 
+        : "";
+  
+      //console.log(suggestions); // Debugging
+  
+      res.status(200).json({
+        message: "AI suggestions generated successfully",
+        suggestions, // Send as string now
+      });
+    } catch (error) {
+      console.error("Error generating AI suggestions:", error);
+      res.status(500).json({ message: "Error generating AI suggestions", error: error.message });
+    }
+  };
 
 async function getDeviceInstructions(deviceName) {
-    const prompt = `How do I connect a ${deviceName} to Google Fit?`;
+    try{
+    const prompt = `How do I connect a ${deviceName} to Google Fit? Give me step by step instructions.`;
     
-    const response = await gemini.generateText({ prompt });
-    return response.text;
-}
+    const result = await model.generateContent(prompt);
+
+    // Extract the text (which may be a function or a string)
+    let aiSuggestions = result.response.text;
+    if (typeof aiSuggestions === "function") {
+        aiSuggestions = aiSuggestions();
+      }
+  
+      // If it's a string, split it into individual topics and rejoin them as a single string
+      const suggestions = typeof aiSuggestions === "string" 
+        ? aiSuggestions.split("\n").filter(Boolean).join("\n") 
+        : "";
+  
+      //console.log(suggestions); // Debugging
+  
+      res.status(200).json({
+        message: "AI suggestions generated successfully",
+        suggestions, // Send as string now
+      });
+    } catch (error) {
+      console.error("Error generating AI suggestions:", error);
+      res.status(500).json({ message: "Error generating AI suggestions", error: error.message });
+    }
+  };
 
 export const refreshGoogleAccessToken = async (userId) => {
     try {

@@ -3,7 +3,7 @@ import { Bot, User, LogOut } from 'lucide-react';
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
-  
+   
   const handleBot = () => {
     window.location.href = 'https://fda5defddbb8db552a.gradio.live/';
   };
@@ -40,12 +40,11 @@ function Navbar() {
 
   return (
     <>
-      <div style={{ backgroundColor: "black" }}>
-        <header className="text-gray-200 body-font">
+      <div className="bg-zinc-900 opacity-100 z-10">
+        <header className="text-gray-200 body-font z-10">
           <div className="container mx-auto flex flex-wrap p-5 flex-col md:flex-row items-center">
-            {/* Logo */}
             <a className="flex title-font font-medium items-center text-gray-900 mb-4 md:mb-0" href="/">
-              <img src="plant.png" alt="Logo" style={{ height: "30px", width: "30px" }} />
+              <img src="../FitFull logo wo text.png" alt="Logo" style={{ height: "50px", width: "50px" }} />
               <span className="ml-3 text-xl text-blue-400">FitFull</span>
             </a>
 
