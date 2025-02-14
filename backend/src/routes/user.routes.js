@@ -1,5 +1,5 @@
 import express from "express";
-import { user_verifyJWT } from "../middlewares/auth.middleware.js";
+import { user_verifyJWT} from "../middlewares/auth.middleware.js";
 import {
   registerUser,
   loginUser,
@@ -11,7 +11,7 @@ import {
   getFamDiag, getFamPresc, getDiagnosisReport, getFamilyTest, addDiagnosisReport,
   savePrescription,
   saveTestReport,
-  getUsers
+  // getUsers
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { endSession, joinSession } from "../controllers/doctor.controller.js";
@@ -35,6 +35,6 @@ router.get("/famPresc", user_verifyJWT, getFamPresc);
 router.get("/famDiagnosis", user_verifyJWT, getFamDiag);
 router.post("/join-session", user_verifyJWT, joinSession);
 router.post("/end", user_verifyJWT, endSession);
-router.get('/users', doctor_verifyJWT, getUsers);
+
 
 export default router;

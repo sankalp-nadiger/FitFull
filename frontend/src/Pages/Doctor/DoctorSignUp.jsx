@@ -65,7 +65,7 @@ const DoctorSignUp = () => {
 
       if (response.status === 201) {
         toast.success("Sign-up successful! Redirecting...");
-        setTimeout(() => navigate("/doctorDashboard"), 2000);
+        setTimeout(() => navigate("/doctor-dashboard"), 2000);
       } else {
         toast.error(response.data.message);
       }

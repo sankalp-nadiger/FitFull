@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const PatientDashboard = () => {
+const PatientData = () => {
   const [patients, setPatients] = useState([]);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ const PatientDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold mb-6">Patient Dashboard</h1>
+      <h1 className="text-3xl font-bold mb-6">Patient Data</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {patients.map(patient => (
           <div key={patient.id} className="bg-white shadow-lg rounded-lg p-4">
@@ -73,4 +73,4 @@ const PatientDashboard = () => {
   );
 };
 
-export default PatientDashboard;
+export default PatientData;

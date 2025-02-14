@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
 import DoctorSignUp from "./DoctorSignUp";
+import { useNavigate } from "react-router-dom";
+import { use } from "react";
 
 const DoctorSignIn = () => {
   const [isSignUp, setIsSignUp] = useState(false); // Toggle between SignIn & SignUp
@@ -12,6 +14,7 @@ const DoctorSignIn = () => {
   // const [otpError, setOtpError] = useState(false);
   // const [otpTimer, setOtpTimer] = useState(30);
   const [showPassword, setShowPassword] = useState(false);
+  const navigate=useNavigate();
 
   // const handleSendOtp = async () => {
   //   if (phoneNumber.length === 10) {
@@ -80,6 +83,7 @@ const DoctorSignIn = () => {
         const { accessToken } = response.data.data;
         sessionStorage.setItem("accessToken", accessToken);
         alert("Login successful!");
+        navigate("/doctor-dashboard");
       }
     } catch (error) {
       alert("Error during login: " + error.response.data.message);
