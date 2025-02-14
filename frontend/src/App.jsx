@@ -12,6 +12,9 @@ import SuccessPage from "./Pages/User/Success";
 import HomePage from "./Pages/HomePage";
 import Auth from "./Pages/Auth";
 import RoleSelection from "./Pages/RoleSelection";
+import DoctorDashBoard from "./Pages/Doctor/DoctorDashBoard";
+import Appointments from "./Pages/Doctor/Appointments";
+import PatientDashboard from "./Pages/Doctor/Patient";
 function App() {
   return (
     <Router>
@@ -29,6 +32,9 @@ function App() {
         <Route path="/up-loading" element={<SignUpLoadingPage/>}/>
         <Route path="/doctor-signin" element={<DoctorSignIn/>}/>
         <Route path="/doctor-signup" element={<DoctorSignUp/>}/>
+        <Route path="/doctor-dashboard" element={<DoctorDashBoard/>}/>
+        <Route path="/appointments" element={<Appointments/>}/>
+        <Route path="/patient-dashboard" element={<PatientDashboard/>}/>
       </Routes>
     </Router>
   );

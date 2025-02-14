@@ -486,7 +486,15 @@ const getFamilyTest = async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to retrieve test report" });
     }
 };
-
+export const getUsers = asyncHandler(async (req, res) => {
+    try {
+      const users = await User.find({}, 'name email'); // Fetch only necessary fields
+      res.status(200).json({ users });
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      throw new ApiError(500, 'Failed to fetch users');
+    }
+  });
 const getFamPresc = async (req, res) => {
     try {
         const { familyMemberEmail } = req.body; // Email of the family member whose data is requested
