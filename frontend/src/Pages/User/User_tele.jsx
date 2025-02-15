@@ -3,6 +3,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { TextField, Card, CardContent, Button, Dialog, DialogTitle, DialogContent } from "@mui/material";
 import { motion } from "framer-motion";
+import Navbar from "../Navbar";
 
 const doctors = [
   { id: 1, name: "Dr. Alice Johnson", specialty: "Cardiologist", image: "https://via.placeholder.com/150" },
@@ -22,7 +23,9 @@ export default function UserTelemedicine() {
     }
   };
 
-  return (
+  return (<>
+ 
+    <Navbar/>
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
       <h1 className="text-3xl font-bold mb-6">Telemedicine Booking</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -67,5 +70,6 @@ export default function UserTelemedicine() {
         </DialogContent>
       </Dialog>
     </div>
+ </>
   );
 }

@@ -86,12 +86,12 @@ function Navbar() {
                 AI Chatbot <Bot size={24} />
               </button>
               {/* Profile Avatar */}
-              <a href="/profile" className="ml-4 cursor-pointer">
+              <a href="/user-profile" className="ml-4 cursor-pointer">
                 <User size={28} className="text-gray-300 hover:text-gray-500" />
               </a>
               {/* Logout Button */}
               <button
-                onClick={handleLogout}
+                onClick={() => navigate('/auth')}
                 className="ml-4 text-red-500 hover:text-red-700 flex items-center gap-2"
               >
                 Logout <LogOut size={24} />

@@ -19,6 +19,9 @@ import Detail from "./Pages/Doctor/Detail";
 import MainPage from "./MainPage/MainPage"
 import UserTelemedicine from "./Pages/User/User_tele";
 import DeviceList from "./Pages/DeviceList";
+import CommunityChat from "./Community/community";
+import UserProfile from "./Pages/User/User_profile";
+import User_reports from "./Pages/User/User_reports";
 // import OnboardingPhase from "./Pages/User/OnBoardingPhase";
 function App() {
   return (
@@ -44,7 +47,10 @@ function App() {
         <Route path="/main-page" element={<MainPage/>}/>
         <Route path="/user-tele" element={<UserTelemedicine/>}/>
         <Route path="/wearables" element={<DeviceList/>}/>
+        <Route path="/community" element={<CommunityChat/>}/>
+        <Route path="/user-profile" element={<UserProfile/>}/>
         {/* <Route path="/onboard" element={<OnboardingPhase/>}/> */}
+        <Route path="/user-reports" element={<User_reports/>}/>
       </Routes>
     </Router>
   );

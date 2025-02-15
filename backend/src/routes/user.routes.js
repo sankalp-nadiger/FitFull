@@ -11,6 +11,7 @@ import {
   getFamDiag, getFamPresc, getDiagnosisReport, getFamilyTest, addDiagnosisReport,
   savePrescription,
   saveTestReport,
+  //getCurrentUser,
   // getUsers
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -35,6 +36,7 @@ router.get("/famPresc", user_verifyJWT, getFamPresc);
 router.get("/famDiagnosis", user_verifyJWT, getFamDiag);
 router.post("/join-session", user_verifyJWT, joinSession);
 router.post("/end", user_verifyJWT, endSession);
+//router.get("/current", user_verifyJWT, getCurrentUser); 
 
 
 export default router;

@@ -400,7 +400,8 @@ export const getTestReport = async (req, res) => {
     try {
         const testReports = await TestReport.find({ user: req.user._id });
 
-        if (!testReports.length) return res.status(404).json({ message: "No test report found" });
+        // Ensure an empty array is returned if no test reports are found
+        if (!testReports.length) return res.json([]);
 
         res.json(testReports.map(testReport => ({
             testName: testReport.testName,
@@ -410,9 +411,10 @@ export const getTestReport = async (req, res) => {
         })));
     } catch (error) {
         console.error("Error retrieving test report:", error);
-        res.status(500).json({ success: false, message: "Failed to retrieve test report" });
+        res.status(500).json([]); // Ensure array response even on failure
     }
 };
+
 
 export const addDiagnosisReport = async (req, res) => {
     try {
