@@ -13,14 +13,14 @@ dotenv.config();
 import userRouter from './routes/user.routes.js';
 //import resourceRouter from "./routes/resource.routes.js";
 //import activityRouter from "./routes/activity.routes.js";
-// import communityRouter from "./routes/community.routes.js";
+ import communityRouter from "./routes/community.routes.js";
 import doctorRouter from "./routes/doctor.routes.js";
 // import dm_chatRouter from "./routes/dm_chat.routes.js";
 // import journalRouter from "./routes/journal.routes.js";
 // import storyRouter from "./routes/story.routes.js";
 // import postsRouter from "./routes/posts.routes.js";
 // import recomendations from "./routes/recommendations.route.js";
-
+import wearableRouter from "./routes/wearable.routes.js" 
 const app = express();
 
 // Middleware
@@ -43,13 +43,14 @@ app.use("/api/users", userRouter);
 // app.use("/api/resources", resourceRouter);
 // app.use("/api/journals", journalRouter);
 // app.use("/api/activity", activityRouter);
-// app.use("/api/community", communityRouter);
+ app.use("/api/community", communityRouter);
 app.use("/api/doctor", doctorRouter);
 // app.use("/api/dm_chat", dm_chatRouter);
 // //app.use("/api/parent", parentRouter);
 // app.use("/api/story", storyRouter);
 // app.use("/api/post", postsRouter);
 // app.use("/api/recommendations", recomendations);
+app.use("/api/wearbleDevices",wearableRouter)
 
 const SIGNUP_REDIRECT_URI = "http://localhost:5173/up-loading";
 const LOGIN_REDIRECT_URI = "http://localhost:5173/in-loading";
