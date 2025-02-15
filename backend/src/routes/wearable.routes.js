@@ -23,6 +23,6 @@ router.get("/health-data", user_verifyJWT, fetchAndStoreHealthData);
 router.get("/ai-insights", user_verifyJWT, AiInsights);
 
 // Route to get device-specific instructions
-router.post("/device/instructions", user_verifyJWT, addInstructions);
+router.get("/device/instructions", addInstructions);
 
 export default router;

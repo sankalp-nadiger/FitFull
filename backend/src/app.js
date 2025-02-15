@@ -77,6 +77,9 @@ const loginOAuthClient = new google.auth.OAuth2(
       scope: ["https://www.googleapis.com/auth/fitness.activity.read",
         'https://www.googleapis.com/auth/userinfo.profile',
     'https://www.googleapis.com/auth/userinfo.email',
+    "https://www.googleapis.com/auth/fitness.activity.read",
+    "https://www.googleapis.com/auth/fitness.heart_rate.read",
+    "https://www.googleapis.com/auth/fitness.sleep.read"
       ],
     });
   
@@ -150,7 +153,7 @@ const loginOAuthClient = new google.auth.OAuth2(
             process.env.ACCESS_TOKEN_SECRET, 
             { expiresIn: "7d" }
         );
-
+        console.log(jwtToken);
         res.json({ 
             success: true, 
             jwt: jwtToken, 
@@ -185,7 +188,10 @@ app.get("/auth/login-google", async (req, res) => {
       access_type: "offline",
       scope: ["https://www.googleapis.com/auth/fitness.activity.read",
         'https://www.googleapis.com/auth/userinfo.email',
-        "https://www.googleapis.com/auth/userinfo.profile" 
+        "https://www.googleapis.com/auth/userinfo.profile",
+        "https://www.googleapis.com/auth/fitness.activity.read",
+        "https://www.googleapis.com/auth/fitness.heart_rate.read",
+        "https://www.googleapis.com/auth/fitness.sleep.read"
       ],
       prompt: "consent",
   });
@@ -231,11 +237,12 @@ app.post("/auth/google/check-login", async (req, res) => {
 
       // Generate JWT for the existing user
       const jwtToken = jwt.sign(
-          { userId: user._id },
-          process.env.ACCESS_TOKEN_SECRET,
-          { expiresIn: "7d" }
-      );
-
+        { _id: user._id },  // Ensure _id is used to match the verifyJWT function
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "7d" }
+    );
+    
+      console.log(jwtToken)
       res.json({ success: true, jwt: jwtToken, user });
 
   } catch (error) {

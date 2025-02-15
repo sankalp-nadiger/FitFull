@@ -6,6 +6,7 @@ const healthDataSchema = new Schema({
   steps: { type: Number, default: 0 },
   heartRate: { type: Number, default: 0 },
   sleep: { type: Number, default: 0 },
+  calories: { type: Number, default: 0 },
   lastUpdated: { type: Date, default: Date.now },
 });
 
