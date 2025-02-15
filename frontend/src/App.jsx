@@ -3,7 +3,7 @@ import UserSignIn from "./Pages/User/UserSignIn";
 import UserSignUp from "./Pages/User/UserSignUp";
 //import PasswordSignIn from "./Pages/PasswordSignIn";
 //import GoogleSignIn from "./Pages/GoogleSignIn";
-import Onboarding from "./Pages/User/OnBoardingPhase";
+import OnboardingPhase from "./Pages/User/OnBoardingPhase";
 import SignInLoadingPage from "./Pages/User/SignInLoading";
 import SignUpLoadingPage from "./Pages/User/SignUpLoading";
 import DoctorSignIn from "./Pages/Doctor/DoctorSignIn";
@@ -17,6 +17,7 @@ import Appointments from "./Pages/Doctor/Appointments";
 import FinalPatient from "./Pages/Doctor/FinalPatient";
 import Detail from "./Pages/Doctor/Detail";
 import MainPage from "./MainPage/MainPage"
+// import OnboardingPhase from "./Pages/User/OnBoardingPhase";
 function App() {
   return (
     <Router>
@@ -27,7 +28,7 @@ function App() {
         <Route path="/user-signup" element={<UserSignUp />} />
         {/* <Route path="/signin-password" element={<PasswordSignIn />} /> */}
         {/* <Route path="/signin-google" element={<GoogleSignIn />} /> */}
-        <Route path="/Onboard" element={<Onboarding/>}/>
+        <Route path="/Onboard" element={<OnboardingPhase/>}/>
         <Route path="/success" element={<SuccessPage/>}/>
         <Route path="/roleselect" element={<RoleSelection/>}/>
         <Route path="/in-loading" element={<SignInLoadingPage/>}/>
@@ -39,6 +40,7 @@ function App() {
         <Route path="/patient-dashboard" element={<FinalPatient/>}/>
         <Route path="/details" element={<Detail/>}/>
         <Route path="/Main-page" element={<MainPage/>}/>
+        {/* <Route path="/onboard" element={<OnboardingPhase/>}/> */}
       </Routes>
     </Router>
   );
