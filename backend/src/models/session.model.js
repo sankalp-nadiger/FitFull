@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const sessionSchema = new mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // changed from student to user
     doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", required: true },
+    type: {type:String, enum: ['Appointment', 'Chat'], required: true},
     roomName: { type: String, required: true },
     issueDetails: { type: String, required: true },
     status: { 

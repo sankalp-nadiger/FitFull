@@ -18,7 +18,8 @@ import {
     registerDoctor,
     loginDoctor,
     logoutDoctor,
-    joinSession
+    joinSession,
+    getPatientsByDoctor
 } from "../controllers/doctor.controller.js";
 // import { sendOTP } from "../controllers/parent.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -53,5 +54,8 @@ router.get("/test-reports", doctor_verifyJWT, getDoctorTestReports);
 
 router.post("/diagnosis", doctor_verifyJWT, addDiagnosis);
 router.get("/diagnoses", doctor_verifyJWT, getDoctorDiagnoses);
+
+
+router.get("/patients", doctor_verifyJWT, getPatientsByDoctor);
 
 export default router;

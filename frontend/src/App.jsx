@@ -15,7 +15,7 @@ import RoleSelection from "./Pages/RoleSelection";
 import DoctorDashBoard from "./Pages/Doctor/DoctorDashBoard";
 import Appointments from "./Pages/Doctor/Appointments";
 import FinalPatient from "./Pages/Doctor/FinalPatient";
-import Details from "./Pages/Doctor/Detail";
+import Detail from "./Pages/Doctor/Detail";
 import MainPage from "./MainPage/MainPage"
 function App() {
   return (
@@ -37,9 +37,9 @@ function App() {
         <Route path="/doctor-dashboard" element={<DoctorDashBoard/>}/>
         <Route path="/appointments" element={<Appointments/>}/>
         <Route path="/patient-dashboard" element={<FinalPatient/>}/>
-        <Route path="/details" element={<Details/>}/>
-        <Route path="/mainPage" element={<MainPage/>}/>
-       </Routes>
+        <Route path="/details" element={<Detail/>}/>
+        <Route path="/Main-page" element={<MainPage/>}/>
+      </Routes>
     </Router>
   );
 }

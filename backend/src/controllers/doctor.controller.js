@@ -749,3 +749,29 @@ export const getDoctorDiagnoses = asyncHandler(async (req, res) => {
     throw new ApiError(500, error.message || "Server Error");
   }
 });
+
+const Session = require("../models/Session");
+const User = require("../models/User");
+
+export const getPatientsByDoctor = async (req, res) => {
+    try {
+        const doctorId = req.doctor._id;
+
+        // Find all sessions where this doctor was involved
+        const sessions = await Session.find({ doctor: doctorId }).select("user").lean();
+
+        // Extract unique user IDs
+        const uniqueUserIds = [...new Set(sessions.map(session => session.user.toString()))];
+
+        // Fetch user details
+        const patients = await User.find({ _id: { $in: uniqueUserIds } })
+            .select("fullName avatar email")
+            .lean();
+
+        return res.status(200).json({ success: true, patients });
+    } catch (error) {
+        console.error("Error fetching patients:", error);
+        return res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+

@@ -7,6 +7,7 @@ import { TestReport } from "../models/TestReport.model.js";
 import { DiagnosisReport } from "../models/Diagnoses.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { encryptData, decryptData } from "../utils/security.js";
+import { Doctor } from "../models/doctor.model.js";
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
       const user = await User.findById(userId);
@@ -495,6 +496,17 @@ export const getUsers = asyncHandler(async (req, res) => {
       throw new ApiError(500, 'Failed to fetch users');
     }
   });
+
+  export const getDoctors = asyncHandler(async (req, res) => {
+    try {
+      const doctors = await Doctor.find({}, 'name email'); // Fetch only necessary fields
+      res.status(200).json({ doctors });
+    } catch (error) {
+      console.error('Error fetching doctors:', error);
+      throw new ApiError(500, 'Failed to fetch users');
+    }
+  });
+
 const getFamPresc = async (req, res) => {
     try {
         const { familyMemberEmail } = req.body; // Email of the family member whose data is requested

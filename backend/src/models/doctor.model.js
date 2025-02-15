@@ -13,6 +13,7 @@ const doctorSchema= new Schema({
       required: true,
       trim: true,
     },
+    about: String,
     email: {
       type: String,
       //required: true,

@@ -24,7 +24,7 @@ const DoctorDashboard = () => {
           <button className="flex items-center w-full px-4  rounded-xl py-2 text-left hover:bg-sky-100" onClick={() => navigate('/appointments')} >
             <FaUserMd className="mr-3 text-blue-800" /> <span className='text-blue-800 font-bold'>Appointments</span>
           </button>
-          <button className="flex items-center w-full px-4 py-2 rounded-xl text-left hover:bg-sky-100" onClick={() => navigate('/patient-dashboard')}>
+          <button className="flex items-center w-full px-4 py-2 rounded-xl text-left hover:bg-sky-100" onClick={() => navigate('/details')}>
             <FaUser className="mr-3 text-blue-800" /> <span className='text-blue-800 font-bold'>Patients</span>
           </button>
           <button className="flex items-center w-full px-4 py-2 rounded-xl text-left hover:bg-sky-100">
