@@ -1,5 +1,5 @@
-import { User } from "../models/user.model";
-import asyncHandler from "../utils/asynchandler.utils";
+import { User } from "../models/user.model.js";
+import asyncHandler from "../utils/asynchandler.utils.js";
 import {fetchGoogleFitHealthData, getAIInsights, getDeviceInstructions, refreshGoogleAccessToken }  from "../services/googleFitService.js";
 
 export const addDevices = asyncHandler(async (req, res) => {

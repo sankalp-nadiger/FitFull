@@ -21,7 +21,7 @@ import doctorRouter from "./routes/doctor.routes.js";
 // import postsRouter from "./routes/posts.routes.js";
 // import recomendations from "./routes/recommendations.route.js";
 import wearableRouter from "./routes/wearable.routes.js" 
-import healthQuestionnaireController from "./controllers/healthQuestionare.controller.js";
+import healthRouter from "./routes/healthData.routes.js";
 const app = express();
 
 // Middleware
@@ -51,8 +51,8 @@ app.use("/api/doctor", doctorRouter);
 // app.use("/api/story", storyRouter);
 // app.use("/api/post", postsRouter);
 // app.use("/api/recommendations", recomendations);
-app.use("/api/health",healthQuestionnaireController);
-app.use("/api/wearbleDevices",wearableRouter)
+app.use("/api/health", healthRouter);
+app.use("/api/wearables",wearableRouter)
 
 const SIGNUP_REDIRECT_URI = "http://localhost:5173/up-loading";
 const LOGIN_REDIRECT_URI = "http://localhost:5173/in-loading";

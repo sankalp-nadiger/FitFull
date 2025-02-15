@@ -1,6 +1,6 @@
 // controllers/healthQuestionnaireController.js
-import { User } from "../models/User.js";
-import { Doctor } from "../models/Doctor.js";
+import { User } from "../models/user.model.js";
+import { Doctor } from "../models/doctor.model.js";
 
 const healthQuestionnaireController = {
   // Save health questionnaire data

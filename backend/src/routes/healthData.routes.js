@@ -1,7 +1,6 @@
-// routes/healthQuestionnaireRoutes.js
 import express from 'express';
-import healthQuestionnaireController from '../controllers/healthQuestionnaireController.js';
-import { user_verifyJWT, user_verifyJWTverifyJWT } from '../middlewares/auth.middleware.js';
+import healthQuestionnaireController from '../controllers/healthQuestionnaire.controller.js';
+import { user_verifyJWT } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
