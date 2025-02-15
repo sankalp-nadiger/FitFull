@@ -76,8 +76,8 @@ function Navbar() {
             >
               <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/community">Community</a>
               <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/activity">Activities</a>
-              <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/wearable">Wearables</a>
-              <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/User-tele">Telemedicine</a>
+              <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/wearables">Wearables</a>
+              <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/user-tele">Telemedicine</a>
               {/* <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/Leaderboard"></a> */}
               <button
                 onClick={handleBot}

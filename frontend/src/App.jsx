@@ -18,6 +18,7 @@ import FinalPatient from "./Pages/Doctor/FinalPatient";
 import Detail from "./Pages/Doctor/Detail";
 import MainPage from "./MainPage/MainPage"
 import UserTelemedicine from "./Pages/User/User_tele";
+import DeviceList from "./Pages/DeviceList";
 // import OnboardingPhase from "./Pages/User/OnBoardingPhase";
 function App() {
   return (
@@ -40,8 +41,9 @@ function App() {
         <Route path="/appointments" element={<Appointments/>}/>
         <Route path="/patient-dashboard" element={<FinalPatient/>}/>
         <Route path="/details" element={<Detail/>}/>
-        <Route path="/Main-page" element={<MainPage/>}/>
-        <Route path="/User-tele" element={<UserTelemedicine/>}/>
+        <Route path="/main-page" element={<MainPage/>}/>
+        <Route path="/user-tele" element={<UserTelemedicine/>}/>
+        <Route path="/wearables" element={<DeviceList/>}/>
         {/* <Route path="/onboard" element={<OnboardingPhase/>}/> */}
       </Routes>
     </Router>
