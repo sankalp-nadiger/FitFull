@@ -9,9 +9,9 @@ function Navbar() {
   };
 
   const handleLogout = async () => {
-    const token = sessionStorage.getItem("accessToken"); // Ensure correct key
+    const token = sessionStorage.getItem("accessToken");
     if (!token) return;
-  
+
     try {
       const response = await fetch("http://localhost:8000/api/users/logout", {
         method: "POST",
@@ -19,12 +19,12 @@ function Navbar() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        credentials: "include", // Remove this if not using cookies
+        credentials: "include",
       });
-  
+
       if (response.ok) {
-        sessionStorage.removeItem("accessToken"); // Correct key
-        window.location.href = "/"; // Redirect after successful logout
+        sessionStorage.removeItem("accessToken");
+        window.location.href = "/";
       } else {
         console.error("Logout request failed:", response.statusText);
       }
@@ -32,7 +32,6 @@ function Navbar() {
       console.error("Logout failed", error);
     }
   };
-  
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -40,8 +39,8 @@ function Navbar() {
 
   return (
     <>
-      <div className="bg-zinc-900 opacity-100 z-10">
-        <header className="text-gray-200 body-font z-10">
+      <div className="bg-zinc-900 opacity-100 z-50 fixed top-0 left-0 w-full shadow-md">
+        <header className="text-gray-200 body-font">
           <div className="container mx-auto flex flex-wrap p-5 flex-col md:flex-row items-center">
             <a className="flex title-font font-medium items-center text-gray-900 mb-4 md:mb-0" href="/">
               <img src="../FitFull logo wo text.png" alt="Logo" style={{ height: "50px", width: "50px" }} />
@@ -98,6 +97,8 @@ function Navbar() {
           </div>
         </header>
       </div>
+      {/* Add padding to prevent content overlap */}
+      <div className="pt-20"></div>
     </>
   );
 }

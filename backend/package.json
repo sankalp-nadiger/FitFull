@@ -29,7 +29,6 @@
     "nodemon": "^3.1.9",
     "prettier": "^3.5.0",
     "querystring": "^0.2.1",
-    "socket.io": "^4.8.1",
-    "twilio": "^5.4.4"
+    "socket.io": "^4.8.1"
   }
 }
