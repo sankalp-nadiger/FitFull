@@ -19,8 +19,9 @@ export default function HomePage() {
                     Welcome to FitFull
                 </motion.h1>
                 <p className="text-lg mb-6 max-w-xl">
-                    Your all-in-one platform for **physical & mental wellness**. Track your health, consult doctors, and stay fit.
-                </p>
+    Your all-in-one platform for <span className="font-bold italic">physical wellness</span>. Track your health, consult doctors, and stay fit.
+</p>
+
                 <Button 
                     className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold shadow-md hover:bg-gray-200"
                     onClick={() => navigate("/auth")}

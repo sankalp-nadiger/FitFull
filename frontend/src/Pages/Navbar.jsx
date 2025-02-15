@@ -72,10 +72,10 @@ function Navbar() {
                 menuOpen ? "flex" : "hidden"
               } flex-col md:flex md:flex-row gap-2 md:ml-auto items-center text-base justify-center`}
             >
-              {/* <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/community">Community</a>
+              <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/community">Community</a>
               <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/activity">Activities</a>
-              <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/journals">Wearables</a>
-              <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/doctor">Telemedicine</a> */}
+              <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/wearable">Wearables</a>
+              <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/telemedicine">Telemedicine</a>
               {/* <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/Leaderboard"></a> */}
               <button
                 onClick={handleBot}
