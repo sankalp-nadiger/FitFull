@@ -269,7 +269,11 @@ export const getActiveSessions = asyncHandler(async (req, res) => {
 
   res.status(200).json({
       success: true,
-      sessions
+      sessions: sessions.map(session => ({
+          _id: session._id,
+          user: session.user,
+          status: session.status
+      }))
   });
 });
 
