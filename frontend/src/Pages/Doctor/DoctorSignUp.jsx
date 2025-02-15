@@ -77,6 +77,9 @@ const DoctorSignUp = () => {
   if (isSignIn) {
     return <DoctorSignIn />;
   }
+  const signUpWithGoogle = async () => {
+    navigate("/up-loading"); // Redirecting to Google OAuth flow
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6">
@@ -136,12 +139,14 @@ const DoctorSignUp = () => {
             </button>
           </div>
           <div className="text-sm text-gray-300">{specifications.join(", ")}</div>
-          <input
-            type="file"
-            multiple
-            className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
-            onChange={handleFileChange}
-          />
+          <label className="block text-white text-sm font-semibold mb-1">Certifications</label>
+<input
+  type="file"
+  multiple
+  className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
+  onChange={handleFileChange}
+/>
+
           <button
             type="submit"
             className="w-full py-2 text-lg font-bold text-white bg-green-500 rounded-md hover:bg-green-600 transition-all"
@@ -149,6 +154,13 @@ const DoctorSignUp = () => {
             Register as Doctor
           </button>
         </form>
+       
+        <button
+          onClick={signUpWithGoogle}
+          className="w-full py-2 text-lg font-bold text-white bg-red-500 rounded-md hover:bg-red-600 transition-all"
+        >
+          Sign Up with Google
+        </button>
         <div className="mt-4 text-center">
           <p className="text-gray-400">
             Already have an account?{" "}

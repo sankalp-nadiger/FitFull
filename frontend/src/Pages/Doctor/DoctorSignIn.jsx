@@ -68,6 +68,9 @@ const DoctorSignIn = () => {
   //     alert("Error verifying OTP: " + error.response.data.message);
   //   }
   // };
+  async function signInWithGoogle() {
+    navigate("/in-loading");
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -155,6 +158,7 @@ const DoctorSignIn = () => {
               </button>
             </div>
           </div>
+          
 
           {/* OTP Field (Commented out for now) */}
           {/* {otpSent && (
@@ -173,15 +177,22 @@ const DoctorSignIn = () => {
               {otpError && <span className="text-red-500 text-sm">Invalid OTP. Please try again.</span>}
             </div>
           )} */}
-
+          
           <button
             type="submit"
             className="w-full px-4 py-2 font-semibold bg-green-500 text-white rounded-md hover:bg-green-600 transition-all"
           >
             Submit
           </button>
-        </form>
-
+        </form> 
+        <div className="mt-4 text-center">
+          <button
+            onClick={signInWithGoogle}
+            className="w-full py-2 text-lg font-bold text-white bg-red-500 rounded-md hover:bg-red-600 transition-all mt-2"
+          >
+            Sign in with Google
+          </button>
+        </div>
         <div className="mt-4 text-center">
           <p className="text-gray-400">
             Don't have an account?{" "}

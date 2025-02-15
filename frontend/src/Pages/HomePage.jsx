@@ -39,7 +39,7 @@ export default function HomePage() {
 
             {/* Features Section */}
             <section className="py-12 px-6">
-                <h2 className="text-4xl font-semibold text-center mb-8">Our Key Features</h2>
+                <h2 className="text-4xl font-semibold text-center-white mb-8">Our Key Features</h2>
                 <div className="grid md:grid-cols-3 gap-6">
                     {features.map((feature, index) => (
                         <motion.div 
