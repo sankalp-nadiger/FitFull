@@ -7,6 +7,7 @@ import { google } from 'googleapis';
 import { User } from './models/user.model.js';
 import dotenv, { configDotenv } from 'dotenv';
 import jwt from 'jsonwebtoken';
+import multer from 'multer';
 dotenv.config();
 
 // Router imports
@@ -34,7 +35,8 @@ app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
-
+const upload = multer(); // Handles multipart/form-data
+app.use(upload.none()); 
 const SPOTIFY_CLIENT_ID = 'YOUR_SPOTIFY_CLIENT_ID';
 const SPOTIFY_CLIENT_SECRET = 'YOUR_SPOTIFY_CLIENT_SECRET';
 const SPOTIFY_REDIRECT_URI = 'http://localhost:5173/loading';
