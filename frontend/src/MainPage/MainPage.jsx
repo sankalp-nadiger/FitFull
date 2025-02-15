@@ -3,6 +3,7 @@ import { BackgroundLines } from "./BackgroundLines";
 //import { BackgroundLines } from "./BackgroundLines";
 import Navbar from "../Pages/Navbar";
 export default function MainPage() {
+ 
 
 
   return (
