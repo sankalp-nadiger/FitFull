@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaHome, FaCalendarAlt, FaUserMd, FaClipboardList, FaCog, FaBook, FaSignOutAlt } from 'react-icons/fa';
+import { FaHome, FaUserMd, FaUser, FaSignOutAlt} from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 function Appointments() {
@@ -7,50 +7,33 @@ function Appointments() {
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className="w-1/5 bg-gradient-to-b from-green-400 to-green-600 text-white p-6 flex flex-col">
-        <div className="flex flex-col items-center mb-6">
-          <img
-            src="https://via.placeholder.com/80"
-            alt="Profile"
-            className="w-20 h-20 rounded-full mb-2"
-          />
-          <h2 className="text-lg font-semibold">Hi, Christan Gray</h2>
-          <div className="mt-2 flex space-x-2">
-            <button className="bg-white text-green-600 px-3 py-1 rounded-full text-xs">Profile</button>
-            <button className="bg-white text-green-600 px-3 py-1 rounded-full text-xs relative">
-              Notifications <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs px-1 rounded-full">2</span>
-            </button>
-          </div>
-        </div>
-        <nav className="flex-1">
-          <ul className="space-y-4">
-            <li className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/doctor-dashboard')}>
-              <FaHome /> <span>Home</span>
-            </li>
-            <li className="flex items-center space-x-2 cursor-pointer">
-              <FaCalendarAlt /> <span>My Availability</span>
-            </li>
-            <li className="flex items-center space-x-2 cursor-pointer">
-              <FaUserMd /> <span>Doctor Database</span>
-            </li>
-            <li className="flex items-center space-x-2 cursor-pointer">
-              <FaClipboardList /> <span>Consultations</span>
-            </li>
-            <li className="flex items-center space-x-2 cursor-pointer">
-              <FaCog /> <span>Account</span>
-            </li>
-            <li className="flex items-center space-x-2 cursor-pointer">
-              <FaBook /> <span>Patient Education</span>
-            </li>
-            <li className="flex items-center space-x-2 cursor-pointer">
-              <FaSignOutAlt /> <span>Logout</span>
-            </li>
-          </ul>
-        </nav>
-      </div>
-
+       <div className="w-1/4 bg-white text-blue p-6 flex flex-col items-center">
+              <div className="mb-6">
+                <img 
+                  src="/doctor.jpg" 
+                  alt="Doctor Avatar" 
+                  className="w-40 h-50 mb-4 " 
+                />
+                <h2 className="text-xl font-semibold">Dr. John Smith</h2>
+                <p className="text-sm text-blue-600">Cardiologist</p>
+              </div>
+              <div className="space-y-4 w-full" >
+                <button className="flex items-center w-full rounded-xl px-4 py-2 text-left hover:bg-sky-100" onClick={() => navigate('/doctor-dashboard')}>
+                  <FaHome className="mr-3 text-blue-800" /> <span className='text-blue-800 font-bold'>Home</span>
+                </button>
+                <button className="flex items-center w-full px-4  rounded-xl py-2 text-left hover:bg-sky-100" onClick={() => navigate('/appointments')} >
+                  <FaUserMd className="mr-3 text-blue-800" /> <span className='text-blue-800 font-bold'>Appointments</span>
+                </button>
+                <button className="flex items-center w-full px-4 py-2 rounded-xl text-left hover:bg-sky-100" onClick={() => navigate('/details')}>
+                  <FaUser className="mr-3 text-blue-800" /> <span className='text-blue-800 font-bold'>Patients</span>
+                </button>
+                <button className="flex items-center w-full px-4 py-2 rounded-xl text-left hover:bg-sky-100">
+                  <FaSignOutAlt className="mr-3 text-blue-800" /> <span className='text-blue-800 font-bold'>Logout</span>
+                </button>
+              </div>
+            </div>
       {/* Main Content */}
-      <div className="w-4/5 p-6">
+      <div className="w-3/4 p-6">
         {/* Overview Cards */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-red-100 p-4 rounded-xl text-center">
@@ -74,10 +57,10 @@ function Appointments() {
             {['13', '14', '15', '16', '17', '18', '19'].map((day, index) => (
               <div
                 key={index}
-                className={`flex flex-col items-center ${day === '16' ? 'text-green-600' : 'text-gray-700'}`}
+                className={`flex flex-col items-center ${day === '16' ? 'text-blue-800' : 'text-gray-700'}`}
               >
                 <div
-                  className={`w-10 h-10 flex items-center justify-center rounded-full ${day === '16' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
+                  className={`w-10 h-10 flex items-center justify-center rounded-full ${day === '16' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
                 >
                   {day}
                 </div>
@@ -97,7 +80,7 @@ function Appointments() {
                   <h4 className="font-medium">{consultation.name}</h4>
                   <p className="text-sm text-gray-500">{consultation.time}</p>
                 </div>
-                <span className="text-green-500">Completed</span>
+                <span className="text-blue-500">Completed</span>
               </div>
             ))}
           </div>
@@ -113,7 +96,7 @@ function Appointments() {
                   <p className="text-sm text-gray-500">{consultation.time}</p>
                 </div>
                 <div className="flex justify-center">
-            <button className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-blue-500">Accept</button>
+            <button className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-green-500">Accept</button>
           </div>    
               </div>
             ))}

@@ -17,6 +17,7 @@ import Appointments from "./Pages/Doctor/Appointments";
 import FinalPatient from "./Pages/Doctor/FinalPatient";
 import Detail from "./Pages/Doctor/Detail";
 import MainPage from "./MainPage/MainPage"
+import UserTelemedicine from "./Pages/User/User_tele";
 // import OnboardingPhase from "./Pages/User/OnBoardingPhase";
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
         <Route path="/patient-dashboard" element={<FinalPatient/>}/>
         <Route path="/details" element={<Detail/>}/>
         <Route path="/Main-page" element={<MainPage/>}/>
+        <Route path="/User-tele" element={<UserTelemedicine/>}/>
         {/* <Route path="/onboard" element={<OnboardingPhase/>}/> */}
       </Routes>
     </Router>

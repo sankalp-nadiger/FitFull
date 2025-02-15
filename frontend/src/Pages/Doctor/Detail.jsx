@@ -157,11 +157,11 @@ function Detail() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-100">
       {/* Left Navbar */}
-      <div className="w-1/4 bg-white text-blue p-6 flex flex-col items-center shadow-md">
+      <div className="w-1/4 bg-white text-blue p-6 flex flex-col items-center">
         <div className="mb-6">
-          <img src="/doctor.jpg" alt="Doctor Avatar" className="w-40 h-50 mb-4 rounded-lg shadow-sm" />
+          <img src="/doctor.jpg" alt="Doctor Avatar" className="w-40 h-50 mb-4" />
           <h2 className="text-xl font-semibold">Dr. John Smith</h2>
           <p className="text-sm text-blue-600">Cardiologist</p>
         </div>
@@ -193,10 +193,10 @@ function Detail() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-8">
+      <div className="w-3/4 p-6 ">
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-800">Patient Records</h1>
+            <h1 className="text-2xl font-bold mb-6 text-blue-900">Patient Records</h1>
           </div>
 
           {/* Patient Cards Grid */}

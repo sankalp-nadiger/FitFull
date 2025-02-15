@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaHome, FaUserMd, FaUser, FaSignOutAlt, FaMapMarkerAlt, FaEnvelope, FaPhone, FaVideo } from 'react-icons/fa';
+import { FaHome, FaUserMd, FaUser, FaSignOutAlt, FaMapMarkerAlt, FaEnvelope, FaPhone} from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 const DoctorDashboard = () => {
