@@ -79,42 +79,48 @@ export const requestSession = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
   if (!userId || !issueDetails || !appointmentTime || !doctorEmail) {
-      throw new ApiError(400, "User ID, issue details, appointment time, and doctor email are required");
+    throw new ApiError(400, "User ID, issue details, appointment time, and doctor email are required");
   }
 
   const user = await User.findById(userId);
   if (!user) {
-      throw new ApiError(404, "User not found");
+    throw new ApiError(404, "User not found");
   }
 
-  // Find doctor by email
   const doctor = await Doctor.findOne({ email: doctorEmail });
   if (!doctor) {
-      throw new ApiError(404, "Doctor not found");
+    throw new ApiError(404, "Doctor not found");
   }
 
-  // Create a session
+  // ✅ Fix: Ensure missing fields are either optional or get default values
   const session = await Session.create({
-      user: user._id,
-      doctor: doctor._id,
-      issueDetails,
-      appointmentTime,
-      status: "Pending",
+    user: user._id,
+    doctor: doctor._id,
+    issueDetails,
+    appointmentTime,
+    status: "Pending",
+    userJoined: false, // ✅ Explicitly setting boolean values
+    doctorJoined: false,
+    startTime: appointmentTime, // ✅ Assume it starts at the appointment time
+    endTime: null, // ✅ Can be set later when session ends
+    roomName: `room_${user._id}_${doctor._id}`, // ✅ Generate a room name
+    type: "video", // ✅ Default type for video consultation
   });
 
   res.status(201).json({
-      success: true,
-      message: "Session requested successfully",
-      session: {
-          _id: session._id,
-          doctorName: doctor.name,
-          doctorId: doctor._id,
-          appointmentTime,
-          status: "Pending",
-          issueDetails,
-      },
+    success: true,
+    message: "Session requested successfully",
+    session: {
+      _id: session._id,
+      doctorName: doctor.name,
+      doctorId: doctor._id,
+      appointmentTime,
+      status: "Pending",
+      issueDetails,
+    },
   });
 });
+
 
 export const addNotesToSession = async (req, res) => {
     const { sessionId, notes } = req.body;
@@ -143,35 +149,69 @@ export const addNotesToSession = async (req, res) => {
       return res.status(500).json({ message: "Failed to add notes. Please try again." });
     }
 };
+export const getPendingConsultations = asyncHandler(async (req, res) => {
+  const doctorId = req.doctor._id; // Assuming doctor is logged in
 
-// Accept Session (Doctor Side)
-export const acceptSession = asyncHandler(async (req, res) => {
-  const { sessionId } = req.body;
-  const doctorId = req.doctor._id;
-
-  const session = await Session.findById(sessionId);
-  if (!session) {
-      throw new ApiError(404, "Session not found");
-  }
-
-  if (session.status !== "Pending") {
-      throw new ApiError(400, "Session is not in pending state");
-  }
-
-  session.status = "Upcoming";
-  await session.save();
+  const pendingConsultations = await Session.find({
+    doctor: doctorId,
+    status: "Pending",
+  }).populate("user", "name");
 
   res.status(200).json({
+    success: true,
+    consultations: pendingConsultations.map((session) => ({
+      id: session._id,
+      name: session.user.name,
+      time: `${new Date(session.startTime).toLocaleTimeString()} - ${new Date(session.endTime).toLocaleTimeString()}`,
+    })),
+  });
+});
+
+// Accept Session (Doctor Side)
+// import asyncHandler from "../utils/asynchandler.utils.js";
+// import Session from "../models/session.model.js";
+// import ApiError from "../utils/apiError.utils.js";
+
+export const acceptSession = asyncHandler(async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    const doctorId = req.doctor._id;
+
+    console.log("Received sessionId:", sessionId); // Debugging log
+
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      console.error("Session not found:", sessionId);
+      return res.status(404).json({ success: false, message: "Session not found" });
+    }
+
+    if (session.status !== "Pending") {
+      return res.status(400).json({ success: false, message: "Session is not in pending state" });
+    }
+
+    session.status = "Upcoming";
+    session.jitsiLink = `https://meet.jit.si/consultation_${sessionId}`;
+    await session.save();
+
+    return res.status(200).json({
       success: true,
       message: "Session accepted",
       session: {
-          _id: session._id,
-          doctorId,
-          appointmentTime: session.appointmentTime,
-          status: "Upcoming",
+        _id: session._id,
+        doctorId,
+        appointmentTime: session.appointmentTime,
+        status: "Upcoming",
+        jitsiLink: session.jitsiLink,
       },
-  });
+    });
+  } catch (error) {
+    console.error("Error in acceptSession:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
 });
+
+
+
 
 export const joinSession = asyncHandler(async (req, res) => {
   const { sessionId } = req.body;
@@ -264,7 +304,7 @@ export const getActiveSessions = asyncHandler(async (req, res) => {
 
   const sessions = await Session.find({
       doctor: doctorId,
-      status: { $in: ["Pending", "Active", "Upcoming"] }
+      status: { $in: ["Active", "Upcoming", "Completed"] }
   }).populate('user', 'username');
 
   res.status(200).json({
@@ -276,6 +316,22 @@ export const getActiveSessions = asyncHandler(async (req, res) => {
       }))
   });
 });
+// import asyncHandler from "express-async-handler";
+// import { Doctor } from "../models/doctorModel.js";
+
+// @desc   Get all registered doctors
+// @route  GET /api/doctors
+// @access Public
+export const getAllDoctors = asyncHandler(async (req, res) => {
+  const doctors = await Doctor.find().select("fullName specification email image"); // Fetch necessary details
+
+  if (doctors.length > 0) {
+    res.json(doctors);
+  } else {
+    res.status(404).json({ message: "No doctors found" });
+  }
+});
+
 
 export const registerDoctor = asyncHandler(async (req, res) => {
     if (typeof req.body.availability === 'string') {

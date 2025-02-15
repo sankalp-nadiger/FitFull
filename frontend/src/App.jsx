@@ -25,6 +25,7 @@ import User_reports from "./Pages/User/User_reports";
 // import OnboardingPhase from "./Pages/User/OnBoardingPhase";
 function App() {
   return (
+  //  <Layout>
     <Router>
       <Routes>
         <Route path="/" element={<HomePage/>} />
@@ -53,6 +54,7 @@ function App() {
         <Route path="/user-reports" element={<User_reports/>}/>
       </Routes>
     </Router>
+    //  </Layout>
   );
 }
 

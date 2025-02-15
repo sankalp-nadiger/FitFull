@@ -19,7 +19,9 @@ import {
     loginDoctor,
     logoutDoctor,
     joinSession,
-    getPatientsByDoctor
+    getPatientsByDoctor,
+    getAllDoctors,
+    getPendingConsultations
 } from "../controllers/doctor.controller.js";
 // import { sendOTP } from "../controllers/parent.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -35,10 +37,21 @@ router.post("/logout", doctor_verifyJWT, logoutDoctor);
 // Session management
 router.post("/request", user_verifyJWT, requestSession);
 router.post("/join-session", doctor_verifyJWT, joinSession);
-router.post("accept", doctor_verifyJWT, acceptSession);
+router.post("/accept", doctor_verifyJWT, acceptSession);
 router.post("/end", doctor_verifyJWT, endSession);
 router.get("/active", doctor_verifyJWT, getActiveSessions);
 router.post("/notes", doctor_verifyJWT, addNotesToSession);
+router.get("/pending-consultations", doctor_verifyJWT, getPendingConsultations);
+
+// import express from "express";
+// import { getAllDoctors } from "../controllers/doctorController.js";
+
+// const router = express.Router();
+
+router.get("/", getAllDoctors); // Get all registered doctors
+
+
+
 
 // Doctor profile and stats
 router.post("/feedback", doctor_verifyJWT, updateFeedback);

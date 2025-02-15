@@ -57,7 +57,6 @@ export const doctor_verifyJWT = asyncHandler(async (req, _, next) => {
   const token =
     req.cookies?.accessToken ||
     req.header("Authorization")?.replace("Bearer ", "");
-
   const doctor = await verifyJWT(token, Doctor, "Doctor");
   req.doctor = doctor;
   req.isDoctor= true

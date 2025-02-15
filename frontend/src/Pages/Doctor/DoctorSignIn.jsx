@@ -82,6 +82,7 @@ const DoctorSignIn = () => {
       if (response.status === 200) {
         const { accessToken } = response.data.data;
         sessionStorage.setItem("accessToken", accessToken);
+        console.log(accessToken)
         alert("Login successful!");
         navigate("/doctor-dashboard");
       }
