@@ -750,9 +750,6 @@ export const getDoctorDiagnoses = asyncHandler(async (req, res) => {
   }
 });
 
-const Session = require("../models/Session");
-const User = require("../models/User");
-
 export const getPatientsByDoctor = async (req, res) => {
     try {
         const doctorId = req.doctor._id;

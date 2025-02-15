@@ -179,7 +179,6 @@ function Detail() {
             <FaUserMd className="mr-3 text-blue-800" /> <span className="text-blue-800 font-bold">Appointments</span>
           </button>
           <button 
-            onClick={() => handleNavigate('patients')}
             className="flex items-center w-full px-4 py-2 rounded-xl text-left hover:bg-sky-100"
           >
             <FaUser className="mr-3 text-blue-800" /> <span className="text-blue-800 font-bold">Patients</span>

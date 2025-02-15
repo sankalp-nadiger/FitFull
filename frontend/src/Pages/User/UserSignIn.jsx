@@ -57,7 +57,7 @@ const UserSignIn = () => {
           Max streak: ${maxStreak}`);
 
         // Redirect to dashboard
-        navigate("/MainPage");
+        navigate("/Main-page");
       } else {
         alert("Login failed. Please try again.");
       }
