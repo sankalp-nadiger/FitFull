@@ -23,35 +23,32 @@ function Detail() {
   });
   const navigate=useNavigate();
   useEffect(() => {
-  const fetchPatients = async () => {
-    try {
-      const accessToken = sessionStorage.getItem("accessToken");
-      if (!accessToken) {
-        throw new Error("No access token found");
+    const fetchPatients = async () => {
+      try {
+        const accessToken = sessionStorage.getItem("accessToken");
+        if (!accessToken) {
+          throw new Error("No access token found");
+        }
+
+        const response = await axios.get("http://localhost:8000/api/doctor/patients", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (response.data && response.data.patients) {
+          setPatientsList(response.data.patients);
+        } else if (Array.isArray(response.data)) {
+          setPatientsList(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching patients:", error);
+        setPatientsList([]);
       }
+    };
 
-      const response = await axios.get("http://localhost:8000/api/doctor/patients", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      console.log('API Response:', response.data); // Add this line
-
-      if (response.status === 200) {
-        // Ensure we're setting an array
-        const patients = Array.isArray(response.data) ? response.data : response.data.patients || [];
-        setPatientsList(patients);
-      }
-    } catch (error) {
-      console.error("Error fetching patients:", error);
-      setPatientsList([]); // Set empty array on error
-    }
-  };
-
-  fetchPatients();
-}, []);
-
+    fetchPatients();
+  }, []);
   const openModal = (modalType, patient) => {
     setSelectedPatient(patient);
     setFormData({
@@ -167,7 +164,7 @@ function Detail() {
       <div className="w-1/4 bg-white text-blue p-6 flex flex-col items-center">
         <div className="mb-6">
           <img src="/doctor.jpg" alt="Doctor Avatar" className="w-40 h-50 mb-4" />
-          <h2 className="text-xl font-semibold">Dr. John Smith</h2>
+          <h2 className="text-xl font-semibold">Dr.Girish</h2>
           <p className="text-sm text-blue-600">Cardiologist</p>
         </div>
         <div className="space-y-4 w-full">
@@ -209,21 +206,21 @@ function Detail() {
             {patientsList.map((patient) => (
               <div key={patient.id} className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all p-8 max-w-xl w-full">
                 <div className="flex items-center gap-6 mb-6">
-                  <img src={patient.image} alt={patient.name} className="w-24 h-24 rounded-full object-cover border-2 border-gray-300" />
+                  <img 
+                    src="/api/placeholder/96/96" 
+                    alt={patient.fullName} 
+                    className="w-24 h-24 rounded-full object-cover border-2 border-gray-300" 
+                  />
                   <div>
-                    <h3 className="text-2xl font-semibold text-gray-800">{patient.name}</h3>
-                    <p className="text-lg text-gray-600">Age: {patient.age}</p>
+                    <h3 className="text-2xl font-semibold text-gray-800">{patient.fullName}</h3>
+                    <p className="text-lg text-gray-600">{patient.email}</p>
                   </div>
                 </div>
 
                 <div className="space-y-4 text-lg">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Last Visit:</span>
-                    <span className="text-gray-900 font-medium">{patient.lastVisit}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Condition:</span>
-                    <span className="text-gray-900 font-medium">{patient.condition}</span>
+                    <span className="text-gray-600">Patient ID:</span>
+                    <span className="text-gray-900 font-medium">{patient.id}</span>
                   </div>
                 </div>
 

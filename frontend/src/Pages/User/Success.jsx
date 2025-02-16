@@ -13,7 +13,7 @@ const SuccessPage = () => {
 
     // Navigate to home page after the animation ends
     setTimeout(() => {
-      navigate('/mainPage'); 
+      navigate('/Main-page'); 
         }, 2500); // Adjust the time based on your animation duration
   }, [navigate]);
 

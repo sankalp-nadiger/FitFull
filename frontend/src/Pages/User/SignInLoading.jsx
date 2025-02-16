@@ -73,22 +73,22 @@ function SignInLoadingPage() {
         }
     }
 
-    if (error) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen p-4">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md">
-                    <h2 className="text-xl font-semibold text-red-700 mb-2">Authentication Error</h2>
-                    <p className="text-red-600">{error}</p>
-                    <button 
-                        onClick={() => window.location.href = '/user-signin'}
-                        className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                    >
-                        Try Again
-                    </button>
-                </div>
-            </div>
-        );
-    }
+    // if (error) {
+    //     return (
+    //         <div className="flex flex-col items-center justify-center min-h-screen p-4">
+    //             <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md">
+    //                 <h2 className="text-xl font-semibold text-red-700 mb-2">Authentication Error</h2>
+    //                 <p className="text-red-600">{error}</p>
+    //                 <button 
+    //                     onClick={() => window.location.href = '/user-signin'}
+    //                     className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+    //                 >
+    //                     Try Again
+    //                 </button>
+    //             </div>
+    //         </div>
+    //     );
+    // }
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4">

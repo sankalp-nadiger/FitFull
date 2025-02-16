@@ -100,7 +100,7 @@ const DoctorSignIn = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6">
-      <h1 className="text-4xl font-bold text-yellow-600 mb-6">Doctor Signin</h1>
+      <h1 className="text-4xl font-bold text-green-600 mb-6">Doctor Sign</h1>
 
       <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg flex flex-col items-center">
         <form onSubmit={handleSubmit} className="w-full space-y-4">
@@ -188,7 +188,7 @@ const DoctorSignIn = () => {
         <div className="mt-4 text-center">
           <button
             onClick={signInWithGoogle}
-            className="w-full py-2 text-lg font-bold text-white bg-red-500 rounded-md hover:bg-red-600 transition-all mt-2"
+            className="w-full py-2 px-16 text-lg font-bold text-white bg-red-500 rounded-md hover:bg-red-600 transition-all mt-2"
           >
             Sign in with Google
           </button>

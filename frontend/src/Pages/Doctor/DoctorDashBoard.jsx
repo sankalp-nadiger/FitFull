@@ -14,7 +14,7 @@ const DoctorDashboard = () => {
             alt="Doctor Avatar" 
             className="w-40 h-50 mb-4 " 
           />
-          <h2 className="text-xl font-semibold">Dr. John Smith</h2>
+          <h2 className="text-xl font-semibold">Dr. Girish</h2>
           <p className="text-sm text-blue-600">Cardiologist</p>
         </div>
         <div className="space-y-4 w-full" >
@@ -73,15 +73,15 @@ const DoctorDashboard = () => {
         <div className="bg-white shadow-md rounded-lg p-6 mb-6 flex flex-col space-y-2">
           <div className="flex items-center">
             <FaEnvelope className="text-blue-700 mr-3" />
-            <p className="text-gray-700">john.smith@email.com</p>
+            <p className="text-gray-700">girish@email.com</p>
           </div>
           <div className="flex items-center">
             <FaPhone className="text-blue-700 mr-3" />
-            <p className="text-gray-700">+1 234 567 890</p>
+            <p className="text-gray-700">+999999999</p>
           </div>
           <div className="flex items-center">
             <FaMapMarkerAlt className="text-blue-700 mr-3" />
-            <p className="text-gray-700">New York, USA</p>
+            <p className="text-gray-700">Mysore,Karnataka</p>
           </div>
         </div>
       </div>

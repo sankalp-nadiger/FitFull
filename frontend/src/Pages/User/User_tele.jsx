@@ -205,7 +205,7 @@ const UserTelemedicine = () => {
     <div className="flex flex-col items-center justify-center min-h-screen w-full bg-gradient-to-r from-purple-500 to-blue-500">
       {/* Back Button */}
       <button 
-        onClick={() => navigate('/MainPage')}
+        onClick={() => navigate('/Main-page')}
         className="absolute top-4 left-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
       >
         Back To Main Page

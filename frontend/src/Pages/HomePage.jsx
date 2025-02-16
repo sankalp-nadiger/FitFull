@@ -3,27 +3,29 @@ import { Card, CardContent } from "../components/ui/Card";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
+
 export default function HomePage() {
     const navigate = useNavigate();
+    
 
     return (
         <div className="min-h-screen flex flex-col">
             {/* Hero Section */}
-            <section className="relative flex flex-col items-center justify-center text-center p-10 bg-blue-600 text-white">
+            <section className="relative flex flex-col items-center justify-center text-center p-10 text-blue">
                 <motion.h1 
-                    className="text-5xl font-bold mb-4"
+                    className="text-5xl font-bold mb-4 z-10 text-white"
                     initial={{ opacity: 0, y: -20 }} 
                     animate={{ opacity: 1, y: 0 }} 
                     transition={{ duration: 0.6 }}
                 >
                     Welcome to FitFull
                 </motion.h1>
-                <p className="text-lg mb-6 max-w-xl">
+                <p className="text-lg mb-6 max-w-xl z-10 text-white">
     Your all-in-one platform for <span className="font-bold italic">physical wellness</span>. Track your health, consult doctors, and stay fit.
 </p>
 
                 <Button 
-                    className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold shadow-md hover:bg-gray-200"
+                    className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold shadow-md hover:bg-gray-200 z-10"
                     onClick={() => navigate("/auth")}
                 >
                     Get Started
@@ -31,15 +33,15 @@ export default function HomePage() {
 
                 {/* Background Health Image */}
                 <img 
-                    src="/images/fitness-hero.jpg" // Replace with an actual image
+                    src="/dumbell2.jpg" // Replace with an actual image
                     alt="Healthy Lifestyle"
-                    className="absolute bottom-0 right-0 w-1/3 opacity-30"
+                    className="absolute w-full h-full object-cover opacity-100 "
                 />
             </section>
 
             {/* Features Section */}
-            <section className="py-12 px-6">
-                <h2 className="text-4xl font-semibold text-center-white mb-8">Our Key Features</h2>
+            <section className="py-12 px-6 bg-neutral-600">
+                <h2 className="text-4xl font-semibold text-center mb-8 text-white">Our Key Features</h2>
                 <div className="grid md:grid-cols-3 gap-6">
                     {features.map((feature, index) => (
                         <motion.div 
@@ -69,7 +71,7 @@ export default function HomePage() {
             <section className="flex flex-col items-center justify-center text-center p-10 bg-gray-100">
                 <h2 className="text-4xl font-semibold mb-6">Instant Telemedicine Consultation</h2>
                 <p className="text-lg max-w-2xl mb-6">
-                    Connect with **certified doctors** in real-time, get instant **health advice**, and track your prescriptions seamlessly.
+                    Connect with *certified doctors* in real-time, get instant *health advice*, and track your prescriptions seamlessly.
                 </p>
                 {/* <img 
                     // src="/images/telemedicine.jpg" // Replace with an actual image
