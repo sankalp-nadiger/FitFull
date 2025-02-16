@@ -33,7 +33,11 @@ const UserSignUp = () => {
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
       });
-
+      const { user, accessToken, suggestedActivity } =
+          response.data.data;
+      sessionStorage.setItem("accessToken", accessToken);
+      sessionStorage.setItem("user", JSON.stringify(user));
+      sessionStorage.setItem("activity", JSON.stringify(suggestedActivity));
       toast.success("User registered successfully!");
       console.log("Registration Success:", response.data);
       navigate("/dashboard");

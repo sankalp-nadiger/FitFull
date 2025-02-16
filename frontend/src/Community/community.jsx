@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import Navbar from '../Pages/Navbar';
 
 const CommunityChat = () => {
   const [rooms, setRooms] = useState([]);
@@ -189,21 +190,22 @@ const CommunityChat = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white p-6">
-      <div className="max-w-6xl mx-auto my-10 p-6 bg-gradient-to-br from-indigo-800 to-purple-600 rounded-lg shadow-lg">
+    <div className="min-h-screen bg-gray-900 text-white p-6">
+      <Navbar />
+      <div className="max-w-6xl mx-auto my-10 p-6 bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl shadow-xl">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-white">Community Chat</h2>
+          <h2 className="text-4xl font-extrabold text-white">Community Chat</h2>
           {!joinedRoom && (
-            <div className="mt-4 space-x-4">
+            <div className="mt-4 flex justify-center gap-4">
               <button
                 onClick={() => setShowCreateRoomModal(true)}
-                className="p-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                className="px-6 py-3 bg-green-600 text-white rounded-xl shadow-lg transition-transform transform hover:scale-105"
               >
                 Create a Room
               </button>
               <button
                 onClick={() => setShowJoinRoomModal(true)}
-                className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-6 py-3 bg-blue-800 text-white rounded-xl shadow-lg transition-transform transform hover:scale-105"
               >
                 Join by ID
               </button>
@@ -213,17 +215,15 @@ const CommunityChat = () => {
 
         {/* Room list view */}
         {!joinedRoom && !loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {rooms.map((room) => (
-              <div key={room._id} className="bg-gray-800 p-4 rounded-lg">
-                <div className="text-white">
-                  <h3 className="text-xl font-bold">{room.name}</h3>
-                  <p className="text-gray-300 mt-2">{room.description}</p>
-                  <p className="text-gray-400 text-sm mt-2">Room ID: {room._id}</p>
-                </div>
+              <div key={room._id} className="p-5 bg-white bg-opacity-10 backdrop-blur-md rounded-xl shadow-md">
+                <h3 className="text-xl font-bold text-white">{room.name}</h3>
+                <p className="text-gray-300 mt-2">{room.description}</p>
+                <p className="text-gray-400 text-sm mt-2">Room ID: {room._id}</p>
                 <button
                   onClick={() => joinRoom(room._id)}
-                  className="mt-4 w-full p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                  className="mt-4 w-full p-3 bg-violet-600 hover:bg-green-600 text-white rounded-xl shadow-lg transition-transform transform hover:scale-105"
                 >
                   Join Room
                 </button>
@@ -234,138 +234,72 @@ const CommunityChat = () => {
 
         {/* Chat room view */}
         {joinedRoom && currentRoom && (
-          <div className="bg-gray-900 rounded-lg p-4">
+          <div className="bg-white bg-opacity-10 backdrop-blur-md p-6 rounded-2xl shadow-lg">
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h3 className="text-xl font-bold">{currentRoom.name}</h3>
+                <h3 className="text-2xl font-bold text-white">{currentRoom.name}</h3>
                 <p className="text-gray-300">{currentRoom.description}</p>
                 <p className="text-gray-400 text-sm">Room ID: {currentRoom._id}</p>
               </div>
               <button
                 onClick={() => setJoinedRoom(null)}
-                className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
               >
                 Leave Room
               </button>
             </div>
-            
-            <div className="bg-gray-800 rounded-lg h-96 overflow-auto p-4 mb-4">
-  {messages?.map((msg, idx) => {
-    const storedUserId = userId || localStorage.getItem("userId"); // Ensure userId is never null
-    const isCurrentUser = msg.sender && storedUserId && msg.sender.toString() === storedUserId.toString();
-    //console.log(senderUsername)
 
-    return (
-      <div key={idx} className={`flex w-full mb-2 ${isCurrentUser ? "justify-end" : "justify-start"}`}>
-        <div
-          className={`p-3 max-w-[70%] rounded-xl shadow-md ${
-            isCurrentUser ? "bg-green-500 text-white rounded-br-none" : "bg-gray-200 text-black rounded-bl-none"
-          }`}
-        >
-          <p className="text-xs font-medium mb-0.5 text-opacity-80">
-            {isCurrentUser ? "You" : `${senderUsername}`}
-          </p>
-          <p className="text-sm">{msg.message}</p>
-          <p className="text-[11px] text-opacity-80 text-right mt-0.5">
-            {new Date(msg.timestamp).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: true,
-            })}
-          </p>
-        </div>
-      </div>
-    );
-  })}
-  <div ref={messagesEndRef} />
-</div>
+            <div className="bg-gray-800 rounded-xl h-96 overflow-auto p-4 mb-4">
+              {messages?.map((msg, idx) => {
+                const storedUserId = userId || localStorage.getItem("userId");
+                const isCurrentUser = msg.sender && storedUserId && msg.sender.toString() === storedUserId.toString();
 
-            <form onSubmit={sendMessage} className="flex gap-2">
+                return (
+                  <div key={idx} className={`flex w-full mb-2 ${isCurrentUser ? "justify-end" : "justify-start"}`}>
+                    <div
+                      className={`p-3 max-w-[70%] rounded-xl shadow-md ${
+                        isCurrentUser ? "bg-green-400 text-white rounded-br-none" : "bg-gray-200 text-black rounded-bl-none"
+                      }`}
+                    >
+                      <p className="text-xs font-medium mb-0.5 text-opacity-80">
+                        {isCurrentUser ? "You" : `${senderUsername}`}
+                      </p>
+                      <p className="text-sm">{msg.message}</p>
+                      <p className="text-[11px] text-opacity-80 text-right mt-0.5">
+                        {new Date(msg.timestamp).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <form onSubmit={sendMessage} className="flex gap-3">
               <input
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Type a message..."
-                className="flex-1 p-3 rounded-lg bg-gray-700 text-white"
+                className="flex-1 p-3 rounded-xl bg-gray-700 text-white"
               />
               <button
                 type="submit"
-                className="p-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                className="p-3 bg-green-500 text-white rounded-xl shadow-lg transition-transform transform hover:scale-105"
               >
                 Send
               </button>
             </form>
           </div>
         )}
-
-        {/* Create Room Modal */}
-        {showCreateRoomModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-            <div className="bg-gray-800 p-6 rounded-lg shadow-lg w-96">
-              <h3 className="text-2xl font-bold mb-4">Create a New Room</h3>
-              <input
-                type="text"
-                value={newRoomName}
-                onChange={(e) => setNewRoomName(e.target.value)}
-                placeholder="Enter room name"
-                className="w-full p-3 mb-4 rounded-lg bg-gray-700 text-white"
-              />
-              <textarea
-                value={newRoomDescription}
-                onChange={(e) => setNewRoomDescription(e.target.value)}
-                placeholder="Enter room description"
-                className="w-full p-3 mb-4 rounded-lg bg-gray-700 text-white"
-              />
-              <div className="flex justify-between">
-                <button
-                  onClick={() => setShowCreateRoomModal(false)}
-                  className="p-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={createRoom}
-                  className="p-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                >
-                  Create Room
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Join Room Modal */}
-        {showJoinRoomModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-            <div className="bg-gray-800 p-6 rounded-lg shadow-lg w-96">
-              <h3 className="text-2xl font-bold mb-4">Join Room by ID</h3>
-              <input
-                type="text"
-                value={roomIdToJoin}
-                onChange={(e) => setRoomIdToJoin(e.target.value)}
-                placeholder="Enter room ID"
-                className="w-full p-3 mb-4 rounded-lg bg-gray-700 text-white"
-              />
-              <div className="flex justify-between">
-                <button
-                  onClick={() => setShowJoinRoomModal(false)}
-                  className="p-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => joinRoom(roomIdToJoin)}
-                  className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Join Room
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
+
 };
 
 export default CommunityChat;

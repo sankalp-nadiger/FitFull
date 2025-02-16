@@ -46,7 +46,7 @@ const ChatBox = ({ onClose }) => {
 
       const errorMessage = error.response?.data?.error || 
                           error.response?.data?.details ||
-                          "AI is not responding. Please try again.";
+                          "Not able to process. Please try again.";
 
       setMessages([...newMessages, { 
         role: "assistant", 
@@ -67,8 +67,8 @@ const ChatBox = ({ onClose }) => {
   return (
     <div className="fixed top-1/2 transform  -translate-y-1/2 w-[500px] bg-white shadow-lg border rounded-lg">
       {/* Header */}
-      <div className="p-4 bg-green-600 text-white flex justify-between rounded-t-lg">
-        <span className="font-bold">Chat with Gemini AI</span>
+      <div className="p-4 bg-[#14072d] text-white flex justify-between rounded-t-lg">
+        <span className="font-bold">Your Health Assistant</span>
         <button 
           onClick={onClose}
           className="hover:bg-neutral-700 rounded-full w-6 h-6 flex items-center justify-center"
@@ -108,7 +108,7 @@ const ChatBox = ({ onClose }) => {
         <input
           type="text"
           className="flex-1 p-2 border rounded-lg text-black"
-          placeholder="Type a message..."
+          placeholder="Shoot away..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={handleKeyPress}
@@ -116,7 +116,7 @@ const ChatBox = ({ onClose }) => {
         />
         <button
           onClick={sendMessage}
-          className="ml-2 bg-green-500 text-white px-4 py-2 rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="ml-2 bg-[#14072d] hover:bg-green-800 text-white px-4 py-2 rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
           disabled={loading || !input.trim()}
         >
           Send

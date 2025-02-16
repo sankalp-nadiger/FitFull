@@ -8,6 +8,117 @@ import { DiagnosisReport } from "../models/Diagnoses.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { encryptData, decryptData } from "../utils/security.js";
 import { Doctor } from "../models/doctor.model.js";
+
+const additionalActivities = [
+    // Cardio & Endurance
+    {
+      title: "Brisk Walking",
+      type: "Cardio & Endurance",
+      content: "A simple way to improve heart health and stamina. Example: Walk for 30 minutes daily.",
+    },
+    {
+      title: "Jogging or Running",
+      type: "Cardio & Endurance",
+      content: "Boosts endurance and strengthens the heart. Example: Jog for 20 minutes at a moderate pace.",
+    },
+    {
+      title: "Skipping Rope",
+      type: "Cardio & Endurance",
+      content: "Enhances coordination and cardiovascular fitness. Example: Do 100 skips per session.",
+    },
+    {
+      title: "Cycling",
+      type: "Cardio & Endurance",
+      content: "A low-impact way to strengthen leg muscles and improve endurance. Example: Cycle for 5 km daily.",
+    },
+    {
+      title: "Swimming",
+      type: "Cardio & Endurance",
+      content: "A full-body workout that improves lung capacity and muscle strength. Example: Swim for 30 minutes twice a week.",
+    },
+  
+    // Strength & Muscle Building
+    {
+      title: "Bodyweight Exercises",
+      type: "Strength & Muscle Building",
+      content: "Simple strength training without equipment. Example: 3 sets of push-ups, squats, and lunges.",
+    },
+    {
+      title: "Resistance Band Workouts",
+      type: "Strength & Muscle Building",
+      content: "Strengthens muscles without heavy weights. Example: Do bicep curls and shoulder presses.",
+    },
+    {
+      title: "Core Workouts",
+      type: "Strength & Muscle Building",
+      content: "Builds a strong foundation and improves posture. Example: Plank for 60 seconds daily.",
+    },
+    {
+      title: "Dumbbell Exercises",
+      type: "Strength & Muscle Building",
+      content: "Helps in muscle toning and fat loss. Example: Perform shoulder presses and bicep curls.",
+    },
+    {
+      title: "Calisthenics",
+      type: "Strength & Muscle Building",
+      content: "Uses body weight for functional strength training. Example: Pull-ups, dips, and leg raises.",
+    },
+  
+    // Flexibility & Mobility
+    {
+      title: "Dynamic Stretching",
+      type: "Flexibility & Mobility",
+      content: "Prepares muscles for workouts and reduces stiffness. Example: Arm circles, leg swings, and torso twists.",
+    },
+    {
+      title: "Yoga",
+      type: "Flexibility & Mobility",
+      content: "Improves flexibility, balance, and mental well-being. Example: Hold a downward dog pose for 30 seconds.",
+    },
+    {
+      title: "Foam Rolling",
+      type: "Flexibility & Mobility",
+      content: "Relieves muscle tightness and improves circulation. Example: Roll out your back and legs for 5 minutes.",
+    },
+    {
+      title: "Pilates",
+      type: "Flexibility & Mobility",
+      content: "Focuses on core strength and controlled movements. Example: Try 10 minutes of basic Pilates exercises.",
+    },
+    {
+      title: "Tai Chi",
+      type: "Flexibility & Mobility",
+      content: "A gentle martial art that enhances balance and coordination. Example: Practice slow Tai Chi movements for 15 minutes.",
+    },
+  
+    // Recovery & Relaxation
+    {
+      title: "Post-Workout Stretching",
+      type: "Recovery & Relaxation",
+      content: "Prevents soreness and promotes muscle recovery. Example: Stretch each muscle group for 20 seconds.",
+    },
+    {
+      title: "Hydration & Nutrition",
+      type: "Recovery & Relaxation",
+      content: "Replenish fluids and nutrients post-exercise. Example: Drink a protein smoothie after workouts.",
+    },
+    {
+      title: "Massage Therapy",
+      type: "Recovery & Relaxation",
+      content: "Relaxes muscles and reduces tension. Example: Use a massage ball to relieve tight spots.",
+    },
+    {
+      title: "Cold & Heat Therapy",
+      type: "Recovery & Relaxation",
+      content: "Reduces inflammation and aids muscle recovery. Example: Apply an ice pack to sore muscles.",
+    },
+    {
+      title: "Deep Breathing & Meditation",
+      type: "Recovery & Relaxation",
+      content: "Helps in muscle relaxation and stress reduction. Example: Try deep belly breathing for 5 minutes.",
+    }
+  ];
+  
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
       const user = await User.findById(userId);
@@ -188,7 +299,7 @@ const registerUser = asyncHandler(async (req, res) => {
             secure: false,
             sameSite: "lax",
         };
-  
+        const randomActivity = getRandomActivity();
         return res
             .status(201)
             .cookie("accessToken", accessToken, options)
@@ -199,6 +310,7 @@ const registerUser = asyncHandler(async (req, res) => {
                 data: {
                     user: await User.findById(user._id).select("-password"),
                     accessToken,
+                    suggestedActivity: randomActivity
                 },
             });
   
@@ -208,10 +320,10 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 });
 
-// const getRandomActivity = () => {
-//     const randomIndex = Math.floor(Math.random() * additionalActivities.length);
-//     return additionalActivities[randomIndex];
-// };
+const getRandomActivity = () => {
+    const randomIndex = Math.floor(Math.random() * additionalActivities.length);
+    return additionalActivities[randomIndex];
+};
   
 const loginUser = asyncHandler(async (req, res) => {
     const { username, password, email } = req.body;
@@ -269,7 +381,7 @@ const loginUser = asyncHandler(async (req, res) => {
         secure: true,
     };
 
-    //const randomActivity = getRandomActivity();
+    const randomActivity = getRandomActivity();
 
     const responseMessage = passwordSet
         ? "Password has been set and user logged in successfully"
@@ -286,7 +398,7 @@ const loginUser = asyncHandler(async (req, res) => {
                 refreshToken,
                 streak: user.streak,
                 maxStreak: user.maxStreak,
-                //suggestedActivity: randomActivity,
+                suggestedActivity: randomActivity,
             }, responseMessage),
         );
 });

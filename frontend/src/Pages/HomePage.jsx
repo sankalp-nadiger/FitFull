@@ -71,7 +71,7 @@ export default function HomePage() {
             <section className="flex flex-col items-center justify-center text-center p-10 bg-gray-100">
                 <h2 className="text-4xl font-semibold mb-6">Instant Telemedicine Consultation</h2>
                 <p className="text-lg max-w-2xl mb-6">
-                    Connect with *certified doctors* in real-time, get instant *health advice*, and track your prescriptions seamlessly.
+                    Connect with Certified Doctors in real-time, get instant Health Advice, and track your prescriptions seamlessly.
                 </p>
                 {/* <img 
                     // src="/images/telemedicine.jpg" // Replace with an actual image
@@ -132,21 +132,21 @@ const features = [
         description: "AI-driven health tips based on your fitness data.",
         image: "https://tse3.mm.bing.net/th?id=OIP.gO16jJtEafX96qISiszIHgHaDF&pid=Api&P=0&h=180" // Replace with actual image
     },
-    {
-        title: "Mental Wellness",
-        description: "Meditation & self-care resources for better mental health.",
-        image: "https://tse3.mm.bing.net/th?id=OIP.s4DV8nqjcu4Qid9B1S-NEgHaGl&pid=Api&P=0&h=180" // Replace with actual image
-    },
-    {
-        title: "Medicine Reminders",
-        description: "Get SMS reminders for your medicine schedules.",
-        image: "https://tse2.mm.bing.net/th?id=OIP.qM8RHpdoJVfSgKFdG8moYQHaFI&pid=Api&P=0&h=180" // Replace with actual image
-    },
-    {
-        title: "Volunteer Network",
-        description: "Connect with MBBS graduates & health volunteers.",
-        image: "/https://tse2.mm.bing.net/th?id=OIP.4jQxicHcDeAeQ33LstrBDAHaGC&pid=Api&P=0&h=180" // Replace with actual image
-    }
+    // {
+    //     title: "Mental Wellness",
+    //     description: "Meditation & self-care resources for better mental health.",
+    //     image: "https://tse3.mm.bing.net/th?id=OIP.s4DV8nqjcu4Qid9B1S-NEgHaGl&pid=Api&P=0&h=180" // Replace with actual image
+    // },
+    // {
+    //     title: "Medicine Reminders",
+    //     description: "Get SMS reminders for your medicine schedules.",
+    //     image: "https://tse2.mm.bing.net/th?id=OIP.qM8RHpdoJVfSgKFdG8moYQHaFI&pid=Api&P=0&h=180" // Replace with actual image
+    // },
+    // {
+    //     title: "Volunteer Network",
+    //     description: "Connect with MBBS graduates & health volunteers.",
+    //     image: "/https://tse2.mm.bing.net/th?id=OIP.4jQxicHcDeAeQ33LstrBDAHaGC&pid=Api&P=0&h=180" // Replace with actual image
+    // }
 ];
 
 /* Testimonials Data */

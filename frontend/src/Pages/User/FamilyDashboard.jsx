@@ -20,6 +20,10 @@ const FamilyReportsSection = ({
   const [error, setError] = useState({});
   const [familyLoading, setFamilyLoading] = useState(false);
 const [familyError, setFamilyError] = useState('');
+useEffect(() => {
+  fetchFamilyMembers();
+}, []);
+
 const fetchFamilyMembers = async () => {
     setFamilyLoading(true);
     setFamilyError('');
@@ -227,19 +231,28 @@ const fetchFamilyMembers = async () => {
         <h2 className="text-xl font-bold text-gray-800">Family Medical Records</h2>
         <div className="flex gap-4 items-center">
         <div className="relative">
-  <select
-    value={selectedMember}
-    onChange={(e) => setSelectedMember(e.target.value)}
-    onClick={fetchFamilyMembers}
-    className="p-2 border rounded-lg w-64 bg-white"
-  >
-    <option value="">Select Family Member</option>
-    {familyMembers.map((member) => (
-      <option key={member._id} value={member.email}>
-        {`${member.fullName} (${member.email})`}
-      </option>
-    ))}
-  </select>
+        <select
+  value={selectedMember}
+  onChange={(e) => setSelectedMember(e.target.value)}
+  className="p-2 border rounded-lg w-64 bg-white"
+>
+  {familyLoading ? (
+    <option>Loading...</option>
+  ) : (
+    <>
+      <option value="">Select Family Member</option>
+      {familyMembers.length > 0 ? (
+        familyMembers.map((member) => (
+          <option key={member._id} value={member.email}>
+            {`${member.fullName} (${member.email})`}
+          </option>
+        ))
+      ) : (
+        <option disabled>No members found</option>
+      )}
+    </>
+  )}
+</select>
   {/* {familyLoading && (
     <div className="absolute right-10 top-1/2 transform -translate-y-1/2">
       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
@@ -254,7 +267,7 @@ const fetchFamilyMembers = async () => {
           </button>
         </div>
       </div>
-
+    
       {selectedMember && (
         <>
           <div className="flex border-b mb-6">
@@ -296,21 +309,24 @@ const fetchFamilyMembers = async () => {
         </>
       )}
 
-      <Dialog open={isFamilyModalOpen} onClose={() => setIsFamilyModalOpenState(false)} className="relative z-50">
-        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-        <div className="fixed inset-0 flex items-center justify-center p-4">
-          <div className="relative bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-lg">
-            <button 
-              onClick={() => setIsFamilyModalOpenState(false)} 
-              className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
-            >
-              ❌
-            </button>
-            <DialogTitle className="text-xl font-bold mb-6">Add Family Members</DialogTitle>
-            <FamilyForm />
-          </div>
-        </div>
-      </Dialog>
+<Dialog open={isFamilyModalOpen} onClose={() => setIsFamilyModalOpenState(false)} className="relative z-50">
+  <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+  <div className="fixed inset-0 flex items-center justify-center p-4">
+    <div className="relative bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-lg">
+      <button 
+        onClick={() => setIsFamilyModalOpenState(false)} 
+        className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+      >
+        ❌
+      </button>
+      <DialogTitle className="text-xl font-bold mb-6">Add Family Members</DialogTitle>
+      {/* ✅ Pass fetchFamilyMembers function to FamilyForm */}
+      <FamilyForm onFamilyAdded={fetchFamilyMembers} setFamilyMembers={setFamilyMember}
+  closeModal={() => setIsFamilyModalOpenState(false)} />
+    </div>
+  </div>
+</Dialog>
+
     </div>
   );
 };

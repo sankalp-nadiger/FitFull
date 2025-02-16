@@ -1,12 +1,11 @@
 import { useState } from "react";
 import axios from "axios";
 
-const FamilyForm = () => {
+const FamilyForm = ({ onFamilyAdded, setFamilyMember, closeModal }) => {
   const [familyEmails, setFamilyEmails] = useState([""]);
   const [addingFamily, setAddingFamily] = useState(false);
   const [error, setError] = useState("");
 
-  // Handle input change
   const handleEmailChange = (index, value) => {
     const updatedEmails = [...familyEmails];
     updatedEmails[index] = value;
@@ -22,8 +21,6 @@ const FamilyForm = () => {
   const removeEmailField = (index) => {
     setFamilyEmails(familyEmails.filter((_, i) => i !== index));
   };
-
-  // Submit form
   const handleAddFamilyMember = async (e) => {
     e.preventDefault();
     setAddingFamily(true);
@@ -43,8 +40,22 @@ const FamilyForm = () => {
         }
       );
 
-      alert(response.data.message); // Show success message
-      setFamilyEmails([""]); // Reset form
+      // Update the family members list directly
+      if (setFamilyMember) {
+        setFamilyMember(prev => [...prev, ...response.data.addedMembers]);
+      }
+
+      // Call the onFamilyAdded callback for refetching if needed
+      await onFamilyAdded();
+      
+      // Reset form
+      setFamilyEmails([""]); 
+      
+      // Close the modal
+      closeModal();
+
+      // Show success message
+      alert(response.data.message);
     } catch (err) {
       setError(err.response?.data?.message || "Error adding family members");
     } finally {

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { FaTrash, FaStar, FaBellSlash, FaPlus, FaCheck, FaTimes } from "react-icons/fa";
+import Navbar from "./Navbar";
 
 const API_BASE_URL = "http://localhost:8000/api/wearables";
 
@@ -14,7 +15,7 @@ const DeviceList = () => {
   const [deviceName, setDeviceName] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiInsights, setAiInsights] = useState("");
-  const [showModal, setShowModal] = useState(false); // 🚀 State for modal visibility
+  const [showModal, setShowModal] = useState(false);
   const [messages, setMessages] = useState([]);
 
   const accessToken = sessionStorage.getItem("accessToken");
@@ -47,7 +48,6 @@ const DeviceList = () => {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
 
-      console.log("Health Data Response:", response);
       if (response.data.success) {
         setHealthData(response.data.healthData);
       } else {
@@ -79,12 +79,11 @@ const DeviceList = () => {
 
       if (botResponse) {
         setAiInsights(botResponse);
-        setShowModal(true); // 🚀 Open modal after fetching insights
+        setShowModal(true);
       } else {
         throw new Error("Empty response from AI");
       }
     } catch (error) {
-      console.error("Error fetching AI insights:", error);
       setError("⚠ Failed to fetch AI insights.");
     } finally {
       setAiLoading(false);
@@ -92,96 +91,99 @@ const DeviceList = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-3xl font-bold text-gray-800">Connected Devices</h2>
-          <p className="text-gray-500">Manage your wearable devices</p>
+    <div className="min-h-screen bg-gray-900 p-6 text-gray-200">
+      <Navbar />
+  
+      {/* Add padding below the Navbar */}
+      <div className="mt-6 space-y-4">
+        {/* Header */}
+        <div className="flex flex-col gap-2 justify-between mb-6">
+          <h2 className="text-3xl font-bold">Connected Devices</h2>
+          <p className="text-gray-400">Manage your wearable devices</p>
         </div>
+  
         <button
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition"
+          className="flex items-center gap-2 bg-violet-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-800 transition"
           onClick={() => setShowInput(true)}
         >
           <FaPlus /> Add Device
         </button>
-      </div>
-
-      {loading && <p className="text-gray-600">Loading...</p>}
-      {error && <p className="text-red-500">{error}</p>}
-
-      {/* Device List */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {devices.length > 0 ? (
-          devices.map((device, index) => (
-            <div key={index} className="bg-white p-4 rounded-xl shadow-md">
-              <h3 className="text-lg font-semibold text-gray-800">{device.model || "Unknown Device"}</h3>
-              <p className="text-sm text-gray-500">{device.manufacturer || "Unknown"}</p>
-              <button 
-                onClick={() => setSelectedDevice(device.model)} 
-                className={`mt-4 py-2 px-5 w-full text-sm font-semibold rounded-lg 
-                  ${selectedDevice === device.model ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-800 hover:bg-blue-500 hover:text-white'}`}>
-                {selectedDevice === device.model ? "Selected ✅" : "Select"}
-              </button>
-            </div>
-          ))
-        ) : (
-          <p className="text-gray-500">No devices connected. Please add a device.</p>
-        )}
-      </div>
-
-      {/* Health Data and AI Insights Section */}
-      {selectedDevice && (
-        <div className="mt-6 p-4 bg-white shadow-md rounded-lg">
-          <h3 className="text-xl font-semibold text-gray-800">Health Data</h3>
-          {healthData ? (
-            <div className="mt-4">
-              <p><strong>Heart Rate:</strong> {healthData.heartRate} bpm</p>
-              <p><strong>Steps:</strong> {healthData.steps}</p>
-              <p><strong>Calories Burned:</strong> {healthData.totalCalories} kcal</p>
-            </div>
+  
+        {loading && <p className="text-gray-400">Loading...</p>}
+        {error && <p className="text-red-400">{error}</p>}
+  
+        {/* Device List */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {devices.length > 0 ? (
+            devices.map((device, index) => (
+              <div key={index} className="bg-gray-800 p-4 rounded-xl shadow-md">
+                <h3 className="text-lg font-semibold">{device.model || "Unknown Device"}</h3>
+                <p className="text-sm text-gray-400">{device.manufacturer || "Unknown"}</p>
+                <button 
+                  onClick={() => setSelectedDevice(device.model)} 
+                  className={`mt-4 py-2 px-5 w-full text-sm font-semibold rounded-lg 
+                    ${selectedDevice === device.model ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-200 hover:bg-blue-600'}`}>
+                  {selectedDevice === device.model ? "Selected ✅" : "Select"}
+                </button>
+              </div>
+            ))
           ) : (
-            <button 
-              onClick={fetchHealthData} 
-              className="py-2 px-5 text-sm font-semibold rounded-lg bg-blue-500 text-white hover:bg-blue-600"
-              disabled={loading}
-            >
-              {loading ? "Fetching..." : "Fetch Health Data"}
-            </button>
-          )}
-
-          {healthData && (
-            <button 
-              onClick={sendMessage} 
-              className="mt-4 py-2 px-5 text-sm font-semibold rounded-lg bg-blue-500 text-white hover:bg-blue-600"
-              disabled={aiLoading}
-            >
-              {aiLoading ? "Analyzing..." : "Fetch AI Insights"}
-            </button>
+            <p className="text-gray-400">No devices connected. Please add a device.</p>
           )}
         </div>
-      )}
-
-      {/* 🚀 AI Insights Modal */}
-      {showModal && (
-  <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-    <div className="bg-white p-6 rounded-lg shadow-lg w-[60%] h-[80%] flex flex-col">
-      <h2 className="text-xl font-semibold text-gray-800">AI Insights</h2>
-      <div className="flex-grow overflow-y-auto mt-4">
-        <p className="text-gray-700">{aiInsights}</p>
+  
+        {/* Health Data and AI Insights Section */}
+        {selectedDevice && (
+          <div className="mt-6 p-4 bg-gray-800 shadow-md rounded-lg">
+            <h3 className="text-xl font-semibold">Health Data</h3>
+            {healthData ? (
+              <div className="mt-4">
+                <p><strong>Heart Rate:</strong> {healthData.heartRate} bpm</p>
+                <p><strong>Steps:</strong> {healthData.steps}</p>
+                <p><strong>Calories Burned:</strong> {healthData.totalCalories} kcal</p>
+              </div>
+            ) : (
+              <button 
+                onClick={fetchHealthData} 
+                className="py-2 px-5 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                disabled={loading}
+              >
+                {loading ? "Fetching..." : "Fetch Health Data"}
+              </button>
+            )}
+  
+            {healthData && (
+              <button 
+                onClick={sendMessage} 
+                className="mt-4 py-2 px-5 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                disabled={aiLoading}
+              >
+                {aiLoading ? "Analyzing..." : "Fetch AI Insights"}
+              </button>
+            )}
+          </div>
+        )}
       </div>
-      <button
-        onClick={() => setShowModal(false)}
-        className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 self-end"
-      >
-        Close
-      </button>
-    </div>
-  </div>
-)}
-
+  
+      {/* AI Insights Modal */}
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-70">
+          <div className="bg-gray-800 p-6 rounded-lg shadow-lg w-[60%] h-[80%] flex flex-col">
+            <h2 className="text-xl font-semibold">AI Insights</h2>
+            <div className="flex-grow overflow-y-auto mt-4">
+              <p className="text-gray-300">{aiInsights}</p>
+            </div>
+            <button
+              onClick={() => setShowModal(false)}
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 self-end"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
-};
+};  
 
 export default DeviceList;

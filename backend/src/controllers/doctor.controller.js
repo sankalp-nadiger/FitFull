@@ -14,26 +14,24 @@ import {server,io} from "../index.js"
 import twilio from "twilio"
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 import mongoose from "mongoose";
-// import { Doctor } from "./doctorModel.js"; // Adjust the path as needed
 
 const doctorsData = [
-  { fullName: "Dr. John Smith", specialization: ["Cardiologist"], mobileNumber: 9876543210, yearexp: 15, hospitals: ["City Hospital"], password: "password123", isAvailable: true },
-  { fullName: "Dr. Jane Doe", specialization: ["Dermatologist"], mobileNumber: 9123456780, yearexp: 10, hospitals: ["Skin Care Clinic"], password: "password123", isAvailable: false },
-  { fullName: "Dr. Mark Wilson", specialization: ["Neurologist"], mobileNumber: 9234567890, yearexp: 12, hospitals: ["Brain Institute"], password: "password123", isAvailable: true },
-  { fullName: "Dr. Emily Carter", specialization: ["Pediatrician"], mobileNumber: 9345678901, yearexp: 8, hospitals: ["Children's Hospital"], password: "password123", isAvailable: false },
-  { fullName: "Dr. William Brown", specialization: ["Orthopedic Surgeon"], mobileNumber: 9456789012, yearexp: 20, hospitals: ["OrthoCare Center"], password: "password123", isAvailable: true },
-  { fullName: "Dr. Sophia Martinez", specialization: ["Oncologist"], mobileNumber: 9567890123, yearexp: 18, hospitals: ["Cancer Research Center"], password: "password123", isAvailable: false },
-  { fullName: "Dr. Michael Johnson", specialization: ["Endocrinologist"], mobileNumber: 9678901234, yearexp: 14, hospitals: ["Diabetes Clinic"], password: "password123", isAvailable: true },
-  { fullName: "Dr. Olivia Taylor", specialization: ["Gynecologist"], mobileNumber: 9789012345, yearexp: 16, hospitals: ["Women's Hospital"], password: "password123", isAvailable: false },
-  { fullName: "Dr. James Anderson", specialization: ["Psychiatrist"], mobileNumber: 9890123456, yearexp: 9, hospitals: ["Mental Health Center"], password: "password123", isAvailable: true },
-  { fullName: "Dr. Emma Wilson", specialization: ["Urologist"], mobileNumber: 9901234567, yearexp: 11, hospitals: ["Urology Institute"], password: "password123", isAvailable: false },
-  { fullName: "Dr. Daniel Thomas", specialization: ["Pulmonologist"], mobileNumber: 9012345678, yearexp: 13, hospitals: ["Lung Health Center"], password: "password123", isAvailable: true },
-  { fullName: "Dr. Ava Harris", specialization: ["Nephrologist"], mobileNumber: 9123456789, yearexp: 7, hospitals: ["Kidney Care Unit"], password: "password123", isAvailable: false },
-  { fullName: "Dr. Benjamin Scott", specialization: ["Hematologist"], mobileNumber: 9234567891, yearexp: 19, hospitals: ["Blood Disorder Clinic"], password: "password123", isAvailable: true },
-  { fullName: "Dr. Isabella Moore", specialization: ["Ophthalmologist"], mobileNumber: 9345678912, yearexp: 10, hospitals: ["Vision Center"], password: "password123", isAvailable: false },
-  { fullName: "Dr. Lucas White", specialization: ["Gastroenterologist"], mobileNumber: 9456789123, yearexp: 12, hospitals: ["Digestive Health Clinic"], password: "password123", isAvailable: true },
+  { fullName: "Dr. Rajesh Sharma", specialization: ["Cardiologist"], mobileNumber: 9876543210, yearexp: 15, hospitals: ["Apollo Hospital"], email: "rajesh.sharma@apollo.com", password: "password" },
+  { fullName: "Dr. Priya Iyer", specialization: ["Dermatologist"], mobileNumber: 9123456780, yearexp: 10, hospitals: ["Skin Glow Clinic"], email: "priya.iyer@skinglow.com", password: "password123" },
+  { fullName: "Dr. Anil Verma", specialization: ["Neurologist"], mobileNumber: 9234567890, yearexp: 12, hospitals: ["Fortis Neuro Center"], email: "anil.verma@fortis.com", password: "password123" },
+  { fullName: "Dr. Kavita Nair", specialization: ["Pediatrician"], mobileNumber: 9345678901, yearexp: 8, hospitals: ["Rainbow Children's Hospital"], email: "kavita.nair@rainbow.com", password: "password123" },
+  { fullName: "Dr. Vikram Patil", specialization: ["Orthopedic Surgeon"], mobileNumber: 9456789012, yearexp: 20, hospitals: ["Sancheti Hospital"], email: "vikram.patil@sancheti.com", password: "password123" },
+  { fullName: "Dr. Sneha Menon", specialization: ["Oncologist"], mobileNumber: 9567890123, yearexp: 18, hospitals: ["Tata Memorial Hospital"], email: "sneha.menon@tatamemorial.com", password: "password123" },
+  { fullName: "Dr. Ramesh Reddy", specialization: ["Endocrinologist"], mobileNumber: 9678901234, yearexp: 14, hospitals: ["Manipal Diabetes Center"], email: "ramesh.reddy@manipal.com", password: "password123" },
+  { fullName: "Dr. Aarti Deshmukh", specialization: ["Gynecologist"], mobileNumber: 9789012345, yearexp: 16, hospitals: ["Cloudnine Hospital"], email: "aarti.deshmukh@cloudnine.com", password: "password123" },
+  { fullName: "Dr. Sandeep Gupta", specialization: ["Psychiatrist"], mobileNumber: 9890123456, yearexp: 9, hospitals: ["NIMHANS"], email: "sandeep.gupta@nimhans.com", password: "password123" },
+  { fullName: "Dr. Pooja Joshi", specialization: ["Urologist"], mobileNumber: 9901234567, yearexp: 11, hospitals: ["Kokilaben Dhirubhai Ambani Hospital"], email: "pooja.joshi@kokilaben.com", password: "password123" },
+  { fullName: "Dr. Manish Kulkarni", specialization: ["Pulmonologist"], mobileNumber: 9012345678, yearexp: 13, hospitals: ["Medanta Lung Center"], email: "manish.kulkarni@medanta.com", password: "password123" },
+  { fullName: "Dr. Neha Choudhary", specialization: ["Nephrologist"], mobileNumber: 9123456789, yearexp: 7, hospitals: ["Max Super Specialty Hospital"], email: "neha.choudhary@maxhospital.com", password: "password123" },
+  { fullName: "Dr. Arvind Mehta", specialization: ["Hematologist"], mobileNumber: 9234567891, yearexp: 19, hospitals: ["AIIMS"], email: "arvind.mehta@aiims.com", password: "password123" },
+  { fullName: "Dr. Meera Pillai", specialization: ["Ophthalmologist"], mobileNumber: 9345678912, yearexp: 10, hospitals: ["Shankar Netralaya"], email: "meera.pillai@shankarnetralaya.com", password: "password123" },
+  { fullName: "Dr. Rohan Saxena", specialization: ["Gastroenterologist"], mobileNumber: 9456789123, yearexp: 12, hospitals: ["Jaslok Hospital"], email: "rohan.saxena@jaslok.com", password: "password123" },
 ];
-
 export const insertDoctors = async () => {
   try {
     //await mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -45,8 +43,6 @@ export const insertDoctors = async () => {
     //mongoose.connection.close();
   }
 };
-
-//insertDoctors();
 
 const sendOTP = async (req, res) => {
     const mobileNumber= req.body.mobileNumber;

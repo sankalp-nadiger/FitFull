@@ -43,9 +43,9 @@ function Navbar() {
       <div className="bg-zinc-900 opacity-100 z-50 fixed top-0 left-0 w-full shadow-md">
         <header className="text-gray-200 body-font">
           <div className="container mx-auto flex flex-wrap p-5 flex-col md:flex-row items-center">
-            <a className="flex title-font font-medium items-center text-gray-900 mb-4 md:mb-0" href="/">
-              <img src="../FitFull logo wo text.png" alt="Logo" style={{ height: "50px", width: "50px" }} />
-              <span className="ml-3 text-xl text-blue-400">FitFull</span>
+            <a className="flex title-font font-medium items-center text-gray-900 mb-4 md:mb-0" href="/main-page">
+              <img src="../FitFull logo wo text.png" alt="Logo" style={{ height: "60px", width: "60px" }} />
+              <span className="ml-3 text-3xl text-violet-500">FitFull</span>
             </a>
 
             {/* Hamburger Menu Icon */}
@@ -79,7 +79,7 @@ function Navbar() {
               {/* <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/Leaderboard"></a> */}
               <button
                 onClick={()=> setIsChatOpen(true)}
-                className="inline-flex items-center gap-2 text-black bg-green-500 border-0 py-2 px-5 focus:outline-none hover:bg-green-800 hover:text-white rounded text-base"
+                className="inline-flex items-center gap-2 text-black bg-violet-500 border-0 py-2 px-5 focus:outline-none hover:bg-green-800 hover:text-white rounded text-base"
               >
                 AI Chatbot <Bot size={24} />
               </button>
