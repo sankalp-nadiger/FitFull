@@ -1,5 +1,5 @@
 import express from "express";
-import { doctor_verifyJWT, user_verifyJWT } from "../middlewares/auth.middleware.js";
+import { doctor_verifyJWT, user_verifyJWT, verifyUserOrDoctor } from "../middlewares/auth.middleware.js";
 import {
     requestSession,
     acceptSession,
@@ -36,11 +36,11 @@ router.post("/logout", doctor_verifyJWT, logoutDoctor);
 
 // Session management
 router.post("/request", user_verifyJWT, requestSession);
-router.post("/join-session", doctor_verifyJWT, joinSession);
+router.post("/:sessionId/join-session", verifyUserOrDoctor, joinSession);
 router.post("/accept", doctor_verifyJWT, acceptSession);
-router.post("/end", doctor_verifyJWT, endSession);
-router.get("/active", doctor_verifyJWT, getActiveSessions);
-router.post("/notes", doctor_verifyJWT, addNotesToSession);
+router.post("/:sessionId/end", verifyUserOrDoctor, endSession);
+router.get("/active", verifyUserOrDoctor, getActiveSessions);
+router.post("/notes", user_verifyJWT, addNotesToSession);
 router.get("/pending-consultations", doctor_verifyJWT, getPendingConsultations);
 
 // import express from "express";
@@ -49,9 +49,6 @@ router.get("/pending-consultations", doctor_verifyJWT, getPendingConsultations);
 // const router = express.Router();
 
 router.get("/", getAllDoctors); // Get all registered doctors
-
-
-
 
 // Doctor profile and stats
 router.post("/feedback", doctor_verifyJWT, updateFeedback);

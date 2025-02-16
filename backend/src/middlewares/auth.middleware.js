@@ -41,18 +41,6 @@ export const user_verifyJWT = asyncHandler(async (req, _, next) => {
   next();
 });
 
-
-// export const parent_verifyJWT = asyncHandler(async (req, _, next) => {
-//   const token =
-//     req.cookies?.accessToken ||
-//     req.header("Authorization")?.replace("Bearer ", "");
-
-//   const parent = await verifyJWT(token, Parent, "Parent");
-//   req.parent = parent;
-//   req.isParent = true; // Flag the request as from a parent
-//   next();
-// });
-
 export const doctor_verifyJWT = asyncHandler(async (req, _, next) => {
   const token =
     req.cookies?.accessToken ||
@@ -61,4 +49,30 @@ export const doctor_verifyJWT = asyncHandler(async (req, _, next) => {
   req.doctor = doctor;
   req.isDoctor= true
   next();
+});
+
+export const verifyUserOrDoctor = asyncHandler(async (req, _, next) => {
+  const token =
+    req.cookies?.accessToken ||
+    req.header("Authorization")?.replace("Bearer ", "");
+
+  try {
+    // Try doctor authentication first
+    const doctor = await verifyJWT(token, Doctor, "Doctor");
+    req.doctor = doctor;
+    req.isDoctor = true;
+    req.isUser = false;
+    next();
+  } catch (error) {
+    try {
+      // If doctor auth fails, try user authentication
+      const user = await verifyJWT(token, User, "User");
+      req.user = user;
+      req.isUser = true;
+      req.isDoctor = false;
+      next();
+    } catch (userError) {
+      throw new ApiError(401, "Invalid token or unauthorized");
+    }
+  }
 });

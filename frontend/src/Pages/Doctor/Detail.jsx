@@ -23,29 +23,34 @@ function Detail() {
   });
   const navigate=useNavigate();
   useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        const accessToken = sessionStorage.getItem("accessToken");
-        if (!accessToken) {
-          throw new Error("No access token found");
-        }
-
-        const response = await axios.get("http://localhost:8000/api/doctor/patients", {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-
-        if (response.status === 200) {
-          setPatientsList(response.data);
-        }
-      } catch (error) {
-        console.error("Error fetching patients:", error);
+  const fetchPatients = async () => {
+    try {
+      const accessToken = sessionStorage.getItem("accessToken");
+      if (!accessToken) {
+        throw new Error("No access token found");
       }
-    };
 
-    fetchPatients();
-  }, []);
+      const response = await axios.get("http://localhost:8000/api/doctor/patients", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      console.log('API Response:', response.data); // Add this line
+
+      if (response.status === 200) {
+        // Ensure we're setting an array
+        const patients = Array.isArray(response.data) ? response.data : response.data.patients || [];
+        setPatientsList(patients);
+      }
+    } catch (error) {
+      console.error("Error fetching patients:", error);
+      setPatientsList([]); // Set empty array on error
+    }
+  };
+
+  fetchPatients();
+}, []);
 
   const openModal = (modalType, patient) => {
     setSelectedPatient(patient);

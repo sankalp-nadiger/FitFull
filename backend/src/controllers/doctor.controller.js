@@ -75,11 +75,11 @@ const generateAccessAndRefreshTokens = async (userId) => {
 };
 
 export const requestSession = asyncHandler(async (req, res) => {
-  const { issueDetails, appointmentTime, doctorEmail } = req.body;
+  const { issueDetails} = req.body;
   const userId = req.user._id;
 
-  if (!userId || !issueDetails || !appointmentTime || !doctorEmail) {
-    throw new ApiError(400, "User ID, issue details, appointment time, and doctor email are required");
+  if (!userId || !issueDetails ) {
+    throw new ApiError(400, "User ID, issue detail and doctor email are required");
   }
 
   const user = await User.findById(userId);
@@ -87,23 +87,20 @@ export const requestSession = asyncHandler(async (req, res) => {
     throw new ApiError(404, "User not found");
   }
 
-  const doctor = await Doctor.findOne({ email: doctorEmail });
-  if (!doctor) {
-    throw new ApiError(404, "Doctor not found");
-  }
+  // const doctor = await Doctor.findOne({ email: doctorEmail });
+  // if (!doctor) {
+  //   throw new ApiError(404, "Doctor not found");
+  // }
 
   // ✅ Fix: Ensure missing fields are either optional or get default values
   const session = await Session.create({
     user: user._id,
-    doctor: doctor._id,
-    issueDetails,
-    appointmentTime,
     status: "Pending",
+    issueDetails,
     userJoined: false, // ✅ Explicitly setting boolean values
     doctorJoined: false,
-    startTime: appointmentTime, // ✅ Assume it starts at the appointment time
-    endTime: null, // ✅ Can be set later when session ends
-    roomName: `room_${user._id}_${doctor._id}`, // ✅ Generate a room name
+ // ✅ Can be set later when session ends
+    roomName: `room_${user._id}`, // ✅ Generate a room name
     type: "video", // ✅ Default type for video consultation
   });
 
@@ -112,9 +109,6 @@ export const requestSession = asyncHandler(async (req, res) => {
     message: "Session requested successfully",
     session: {
       _id: session._id,
-      doctorName: doctor.name,
-      doctorId: doctor._id,
-      appointmentTime,
       status: "Pending",
       issueDetails,
     },
@@ -174,6 +168,14 @@ export const getPendingConsultations = asyncHandler(async (req, res) => {
 
 export const acceptSession = asyncHandler(async (req, res) => {
   try {
+    // Check if the request is from a doctor
+    if (!req.isDoctor) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Only doctors can accept sessions" 
+      });
+    }
+
     const { sessionId } = req.body;
     const doctorId = req.doctor._id;
 
@@ -182,11 +184,25 @@ export const acceptSession = asyncHandler(async (req, res) => {
     const session = await Session.findById(sessionId);
     if (!session) {
       console.error("Session not found:", sessionId);
-      return res.status(404).json({ success: false, message: "Session not found" });
+      return res.status(404).json({ 
+        success: false, 
+        message: "Session not found" 
+      });
+    }
+
+    // Verify that the doctor accepting the session is the assigned doctor
+    if (session.doctor.toString() !== doctorId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to accept this session"
+      });
     }
 
     if (session.status !== "Pending") {
-      return res.status(400).json({ success: false, message: "Session is not in pending state" });
+      return res.status(400).json({ 
+        success: false, 
+        message: "Session is not in pending state" 
+      });
     }
 
     session.status = "Upcoming";
@@ -206,115 +222,157 @@ export const acceptSession = asyncHandler(async (req, res) => {
     });
   } catch (error) {
     console.error("Error in acceptSession:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.status(500).json({ 
+      success: false, 
+      message: "Internal server error" 
+    });
   }
 });
 
-
-
-
 export const joinSession = asyncHandler(async (req, res) => {
-  const { sessionId } = req.body;
-  const userId = req.user?._id;
-  const doctorId = req.doctor?._id;
+  const { sessionId } = req.params;
+  const userId = req.isUser ? req.user._id : null;
+  const doctorId = req.isDoctor ? req.doctor._id : null;
+
+  console.log({
+    sessionId,
+    userId,
+    doctorId,
+    isUser: req.isUser,
+    isDoctor: req.isDoctor
+  });
 
   const session = await Session.findById(sessionId);
   if (!session) {
-      throw new ApiError(404, "Session not found");
+    throw new ApiError(404, "Session not found");
   }
 
+  console.log({
+    session: {
+      user: session.user.toString(),
+      doctor: session.doctor.toString(),
+      userJoined: session.userJoined,
+      doctorJoined: session.doctorJoined,
+      status: session.status
+    }
+  });
+
   if (session.status !== "Upcoming") {
-      throw new ApiError(400, "Session is not in upcoming state");
+    throw new ApiError(400, "Session is not in upcoming state");
   }
 
   // Update fields based on who is joining
   let updated = false;
+  
   if (userId && session.user.toString() === userId.toString() && !session.userJoined) {
-      session.userJoined = true;
-      updated = true;
+    session.userJoined = true;
+    updated = true;
+    console.log("User joined successfully");
   }
 
   if (doctorId && session.doctor.toString() === doctorId.toString() && !session.doctorJoined) {
-      session.doctorJoined = true;
-      updated = true;
+    session.doctorJoined = true;
+    updated = true;
+    console.log("Doctor joined successfully");
   }
 
+  console.log({ updated, userJoined: session.userJoined, doctorJoined: session.doctorJoined });
+
   if (!updated) {
-      throw new ApiError(400, "User/Doctor already joined or unauthorized");
+    throw new ApiError(400, "User/Doctor already joined or unauthorized");
   }
 
   // If both have joined, set session to active
   if (session.userJoined && session.doctorJoined) {
-      session.status = "Active";
+    session.status = "Active";
   }
 
   await session.save();
 
   res.status(200).json({
-      success: true,
-      message: session.status === "Active" ? "Session is now active" : "Joined successfully",
-      session: {
-          _id: session._id,
-          status: session.status,
-          userJoined: session.userJoined,
-          doctorJoined: session.doctorJoined
-      },
+    success: true,
+    message: session.status === "Active" ? "Session is now active" : "Joined successfully",
+    session: {
+      _id: session._id,
+      status: session.status,
+      userJoined: session.userJoined,
+      doctorJoined: session.doctorJoined
+    },
   });
 });
-
 // End Session
 export const endSession = asyncHandler(async (req, res) => {
-    const { sessionId } = req.body;
-    let userId;
-    if(!req.isDoctor){
-    userId = req.user._id;}
-    else{
-     userId = req.doctor._id;
-    }
-    const session = await Session.findById(sessionId);
-    if (!session) {
-        throw new ApiError(404, "Session not found");
-    }
-    console.log(session.doctor.toString())
-    console.log(userId)
-    // Verify that the user ending the session is either the doctor or the user
-    if (![session.doctor.toString(), session.user.toString()].includes(userId.toString())) {
-        throw new ApiError(403, "Not authorized to end this session");
-    }
-    
-    session.status = "Completed";
-    await session.save();
-    io.emit(`sessionEnded-${sessionId}`, { sessionId });
-    // Make doctor available again
-    const doctor = await Doctor.findById(session.doctor);
-    if (doctor) {
-        doctor.isAvailable = true;
-        await doctor.save();
-    }
+  const { sessionId } = req.body;
+  const userId = req.isDoctor ? req.doctor._id : req.user._id;
 
-    res.status(200).json({
-        success: true,
-        message: "Session ended successfully"
-    });
+  const session = await Session.findById(sessionId);
+  if (!session) {
+    throw new ApiError(404, "Session not found");
+  }
+
+ session.status = "Completed";
+  await session.save();
+
+  io.emit(`sessionEnded-${sessionId}`, { sessionId });
+
+  // Make doctor available again
+  const doctor = await Doctor.findById(session.doctor);
+  if (doctor) {
+    doctor.isAvailable = true;
+    await doctor.save();
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Session ended successfully"
+  });
 });
 
 // Get Active Sessions (Doctor Side)
 export const getActiveSessions = asyncHandler(async (req, res) => {
-  const doctorId = req.doctor._id;
+  let query = {
+      status: { $in: ["Active", "Upcoming"] }
+  };
 
-  const sessions = await Session.find({
-      doctor: doctorId,
-      status: { $in: ["Active", "Upcoming", "Completed"] }
-  }).populate('user', 'username');
+  // Add user or doctor filter based on who is requesting
+  if (req.isDoctor) {
+      query.doctor = req.doctor._id;
+      // For doctors, populate user details
+      const sessions = await Session.find(query)
+          .populate('user', 'username');
 
-  res.status(200).json({
-      success: true,
-      sessions: sessions.map(session => ({
-          _id: session._id,
-          user: session.user,
-          status: session.status
-      }))
-  });
+      return res.status(200).json({
+          success: true,
+          sessions: sessions.map(session => ({
+              _id: session._id,
+              user: session.user,
+              status: session.status,
+              appointmentTime: session.appointmentTime,
+              jitsiLink: session.jitsiLink
+          }))
+      });
+  } else if (req.isUser) {
+      query.user = req.user._id;
+      // For users, populate doctor details
+      const sessions = await Session.find(query)
+          .populate('doctor', 'name specialization');
+
+      return res.status(200).json({
+          success: true,
+          sessions: sessions.map(session => ({
+              _id: session._id,
+              doctor: session.doctor,
+              status: session.status,
+              appointmentTime: session.appointmentTime,
+              jitsiLink: session.jitsiLink
+          }))
+      });
+  } else {
+      return res.status(403).json({
+          success: false,
+          message: "Unauthorized access"
+      });
+  }
 });
 // import asyncHandler from "express-async-handler";
 // import { Doctor } from "../models/doctorModel.js";
