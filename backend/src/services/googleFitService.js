@@ -62,16 +62,8 @@ async function fetchGoogleFitSteps(accessToken, dataSourceId) {
     const url = "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate";
 
     const now = new Date();
-    const istOffset = 5.5 * 60 * 60 * 1000; 
-
-    const yesterdayMidnightIST = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0);
-    const yesterdayMidnightUTC = new Date(yesterdayMidnightIST.getTime() - istOffset);
-    
-    const todayMidnightIST = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-    const todayMidnightUTC = new Date(todayMidnightIST.getTime() - istOffset);
-
-    const startTime = yesterdayMidnightUTC.getTime();
-    const endTime = todayMidnightUTC.getTime();
+    const todayMidnightIST = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
+    const endOfDayIST = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).getTime();
 
     const requestBody = {
         "aggregateBy": [{
@@ -79,8 +71,8 @@ async function fetchGoogleFitSteps(accessToken, dataSourceId) {
             "dataTypeName": "com.google.step_count.delta",
         }],
         "bucketByTime": { "durationMillis": 86400000 },
-        "startTimeMillis": startTime,
-        "endTimeMillis": endTime,
+        "startTimeMillis": todayMidnightIST,
+        "endTimeMillis": endOfDayIST,
         "flush": true 
     };
 
@@ -127,14 +119,14 @@ async function fetchGoogleFitSteps(accessToken, dataSourceId) {
 async function fetchGoogleFitHeartRate(accessToken) {
     const url = "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate";
     const now = new Date();
-    const yesterdayMidnightIST = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0).getTime();
     const todayMidnightIST = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
+    const endOfDayIST = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).getTime();
 
     const requestBody = {
         "aggregateBy": [{ "dataTypeName": "com.google.heart_rate.bpm" }],
         "bucketByTime": { "durationMillis": 60000 },
-        "startTimeMillis": yesterdayMidnightIST,
-        "endTimeMillis": todayMidnightIST,
+        "startTimeMillis": todayMidnightIST,
+        "endTimeMillis": endOfDayIST,
         "flush": true 
     };
 
@@ -183,14 +175,14 @@ async function fetchGoogleFitHeartRate(accessToken) {
 async function fetchGoogleFitSleep(accessToken) {
     const url = "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate";
     const now = new Date();
-    const yesterdayMidnightIST = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0).getTime();
     const todayMidnightIST = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
+    const endOfDayIST = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).getTime();
 
     const requestBody = {
         "aggregateBy": [{ "dataTypeName": "com.google.sleep.segment" }],
         "bucketByTime": { "durationMillis": 86400000 },
-        "startTimeMillis": yesterdayMidnightIST,
-        "endTimeMillis": todayMidnightIST,
+        "startTimeMillis": todayMidnightIST,
+        "endTimeMillis": endOfDayIST,
         "flush": true 
     };
 
@@ -238,17 +230,16 @@ async function fetchGoogleFitSleep(accessToken) {
 async function fetchGoogleFitCalories(accessToken) {
     const url = "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate";
 
-    // Get start time as 12 AM IST today
     const now = new Date();
     const todayMidnightIST = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
-    const nowIST = now.getTime(); // Current time in IST
+    const endOfDayIST = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).getTime();
 
     const requestBody = {
         "aggregateBy": [{ "dataTypeName": "com.google.calories.expended" }],
-        "bucketByTime": { "durationMillis": 86400000 }, // Aggregate daily
-        "startTimeMillis": todayMidnightIST, // From 12 AM IST today
-        "endTimeMillis": nowIST, // Up to now
-        "flush": true // Force fresh data from Google Fit
+        "bucketByTime": { "durationMillis": 86400000 },
+        "startTimeMillis": todayMidnightIST,
+        "endTimeMillis": endOfDayIST,
+        "flush": true 
     };
 
     try {
@@ -278,7 +269,7 @@ async function fetchGoogleFitCalories(accessToken) {
                     bucket.dataset.forEach(dataset => {
                         dataset.point.forEach(point => {
                             if (point.value?.[0]?.fpVal !== undefined) {
-                                totalCalories += point.value[0].fpVal; // Get the total calories burned
+                                totalCalories += point.value[0].fpVal;
                             }
                         });
                     });
@@ -287,7 +278,7 @@ async function fetchGoogleFitCalories(accessToken) {
         }
 
         console.log(`Total Calories Burned: ${totalCalories}`);
-        return {totalCalories }; // Return just the calorie value
+        return { totalCalories };
     } catch (error) {
         console.error("Error fetching Google Fit calorie data:", error);
         return { calories: 0 };
