@@ -112,6 +112,13 @@ const userSchema = new Schema(
     achievements: {
       type: String,
     },
+    devices: [
+      {
+        model: String,  // Stores the device model
+        addedAt: { type: Date, default: Date.now }  // Stores the timestamp
+      }
+    ],
+  
     onboardingData: {
       symptoms: { type: [String], default: [] },
       chronicIllnesses: { type: [String], default: [] },

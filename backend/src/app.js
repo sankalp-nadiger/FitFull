@@ -40,6 +40,7 @@ app.use(upload.none());
 const SPOTIFY_CLIENT_ID = 'YOUR_SPOTIFY_CLIENT_ID';
 const SPOTIFY_CLIENT_SECRET = 'YOUR_SPOTIFY_CLIENT_SECRET';
 const SPOTIFY_REDIRECT_URI = 'http://localhost:5173/loading';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 // Routes
 app.use("/api/users", userRouter);
@@ -87,7 +88,54 @@ const loginOAuthClient = new google.auth.OAuth2(
   
     res.json({url});
   });
+  //CHATBOT
+
   
+
+  app.post("/api/chat", async (req, res) => {
+    try {
+        const { message } = req.body;
+        console.log("User message:", message);
+
+        if (!message) {
+            return res.status(400).json({ error: "Message is required" });
+        }
+
+        if (!GEMINI_API_KEY) {
+            return res.status(500).json({ error: "Gemini API key is not configured" });
+        }
+
+        const response = await axios.post(
+            `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
+            {
+                contents: [{ role: "user", parts: [{ text: message }] }],
+            }
+        );
+
+        console.log("Full API Response:", JSON.stringify(response.data, null, 2));
+
+        const botResponse = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!botResponse) {
+            return res.status(500).json({ error: "No response from Gemini API" });
+        }
+
+        console.log("Extracted bot response:", botResponse);
+        res.json({ botResponse });
+    } catch (error) {
+        console.error("Detailed error:", {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status
+        });
+
+        res.status(500).json({ 
+            error: "Internal Server Error", 
+            details: error.response?.data || error.message 
+        });
+    }
+});
+
   // Route to Handle Google OAuth Callback
   app.post("/auth/google/callback", async (req, res) => {
     const { code } = req.body;

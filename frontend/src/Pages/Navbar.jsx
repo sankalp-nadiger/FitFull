@@ -1,14 +1,12 @@
 import React, { useState } from "react";
 import { Bot, User, LogOut } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import ChatBox from "./ChatBox";
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
    
-  const handleBot = () => {
-    window.location.href = 'https://fda5defddbb8db552a.gradio.live/';
-  };
 
   const handleLogout = async () => {
     const token = sessionStorage.getItem("accessToken");
@@ -80,11 +78,12 @@ function Navbar() {
               <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/user-tele">Telemedicine</a>
               {/* <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/Leaderboard"></a> */}
               <button
-                onClick={handleBot}
+                onClick={()=> setIsChatOpen(true)}
                 className="inline-flex items-center gap-2 text-black bg-green-500 border-0 py-2 px-5 focus:outline-none hover:bg-green-800 hover:text-white rounded text-base"
               >
                 AI Chatbot <Bot size={24} />
               </button>
+              {isChatOpen && <ChatBox onClose={() => setIsChatOpen(false)} />}
               {/* Profile Avatar */}
               <a href="/user-profile" className="ml-4 cursor-pointer">
                 <User size={28} className="text-gray-300 hover:text-gray-500" />

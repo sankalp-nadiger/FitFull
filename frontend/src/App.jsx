@@ -22,6 +22,7 @@ import DeviceList from "./Pages/DeviceList";
 import CommunityChat from "./Community/community";
 import UserProfile from "./Pages/User/User_profile";
 import User_reports from "./Pages/User/User_reports";
+import PhysicalActivity from "./Pages/Activity/Activity";
 // import OnboardingPhase from "./Pages/User/OnBoardingPhase";
 function App() {
   return (
@@ -52,6 +53,7 @@ function App() {
         <Route path="/user-profile" element={<UserProfile/>}/>
         {/* <Route path="/onboard" element={<OnboardingPhase/>}/> */}
         <Route path="/user-reports" element={<User_reports/>}/>
+        <Route path="/activity" element={<PhysicalActivity/>}/>
       </Routes>
     </Router>
     //  </Layout>

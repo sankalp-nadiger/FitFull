@@ -61,40 +61,30 @@ async function fetchGoogleFitSteps(accessToken, dataSourceId) {
 
     const url = "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate";
 
-    // Get current date & time in IST (UTC+5:30)
     const now = new Date();
-    const istOffset = 5.5 * 60 * 60 * 1000; // IST offset in milliseconds
+    const istOffset = 5.5 * 60 * 60 * 1000; 
 
-    // Get today's date at 12:00 AM IST
+    const yesterdayMidnightIST = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0);
+    const yesterdayMidnightUTC = new Date(yesterdayMidnightIST.getTime() - istOffset);
+    
     const todayMidnightIST = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
     const todayMidnightUTC = new Date(todayMidnightIST.getTime() - istOffset);
 
-    // Get current time in IST and convert to UTC
-    const currentTimeIST = new Date(now.getTime() + istOffset);
-    const currentTimeUTC = new Date(now.getTime()); // Already UTC
-
-    // Convert to milliseconds for Google Fit API
-    const startTime = todayMidnightUTC.getTime();
-    const endTime = currentTimeUTC.getTime();
+    const startTime = yesterdayMidnightUTC.getTime();
+    const endTime = todayMidnightUTC.getTime();
 
     const requestBody = {
         "aggregateBy": [{
             "dataSourceId": dataSourceId,
             "dataTypeName": "com.google.step_count.delta",
         }],
-        "bucketByTime": { "durationMillis": 86400000 }, // Aggregate over 1 day
-        "startTimeMillis": startTime, // From 12 AM IST (converted to UTC)
-        "endTimeMillis": endTime, // Up to current time in IST (converted to UTC)
+        "bucketByTime": { "durationMillis": 86400000 },
+        "startTimeMillis": startTime,
+        "endTimeMillis": endTime,
         "flush": true 
     };
 
     try {
-        console.log("Fetching steps from Google Fit using:", dataSourceId);
-        console.log("Start Time (IST):", todayMidnightIST.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }));
-        console.log("End Time (IST):", currentTimeIST.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }));
-        console.log("Start Time (UTC):", new Date(startTime).toISOString());
-        console.log("End Time (UTC):", new Date(endTime).toISOString());
-
         const response = await fetch(url, {
             method: "POST",
             headers: {
@@ -110,9 +100,7 @@ async function fetchGoogleFitSteps(accessToken, dataSourceId) {
         }
 
         const data = await response.json();
-        console.log("Google Fit Steps Response:", JSON.stringify(data, null, 2));
 
-        // Extract step count
         let totalSteps = 0;
         if (data?.bucket?.length > 0) {
             data.bucket.forEach(bucket => {
@@ -128,7 +116,6 @@ async function fetchGoogleFitSteps(accessToken, dataSourceId) {
             });
         }
 
-        console.log("Total Steps (12 AM IST to Current Time IST):", totalSteps);
         return { steps: totalSteps };
 
     } catch (error) {
@@ -137,31 +124,21 @@ async function fetchGoogleFitSteps(accessToken, dataSourceId) {
     }
 }
 
-
-
-
-
 async function fetchGoogleFitHeartRate(accessToken) {
     const url = "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate";
-
-    // Get current date in IST
     const now = new Date();
-    const nowIST = now.getTime(); // Current time in IST
-
-    // Get 12 AM IST of the current day
+    const yesterdayMidnightIST = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0).getTime();
     const todayMidnightIST = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
 
     const requestBody = {
         "aggregateBy": [{ "dataTypeName": "com.google.heart_rate.bpm" }],
-        "bucketByTime": { "durationMillis": 60000 }, // 1-minute intervals
-        "startTimeMillis": todayMidnightIST, // From 12 AM IST today
-        "endTimeMillis": nowIST, // Up to now (IST)
-        "flush": true // Force fresh data from Google Fit
+        "bucketByTime": { "durationMillis": 60000 },
+        "startTimeMillis": yesterdayMidnightIST,
+        "endTimeMillis": todayMidnightIST,
+        "flush": true 
     };
 
     try {
-        console.log("Fetching today's heart rate data from Google Fit...");
-
         const response = await fetch(url, {
             method: "POST",
             headers: {
@@ -177,9 +154,7 @@ async function fetchGoogleFitHeartRate(accessToken) {
         }
 
         const data = await response.json();
-        console.log("Google Fit Heart Rate Response:", JSON.stringify(data, null, 2));
 
-        // Extract the latest heart rate value of today
         let latestHeartRate = 0;
         let latestTimestamp = null;
 
@@ -198,35 +173,28 @@ async function fetchGoogleFitHeartRate(accessToken) {
             });
         }
 
-        console.log(`Latest Heart Rate Today (IST): ${latestHeartRate} BPM at ${latestTimestamp}`);
         return { heartRate: latestHeartRate, timestamp: latestTimestamp };
 
     } catch (error) {
-        console.error("Error fetching Google Fit heart rate data:", error);
         return { heartRate: 0, timestamp: null };
     }
 }
 
-
 async function fetchGoogleFitSleep(accessToken) {
     const url = "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate";
-
-    // Get start time as 12 AM IST today
     const now = new Date();
+    const yesterdayMidnightIST = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0).getTime();
     const todayMidnightIST = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
-    const nowIST = now.getTime(); // Current time in IST
 
     const requestBody = {
         "aggregateBy": [{ "dataTypeName": "com.google.sleep.segment" }],
-        "bucketByTime": { "durationMillis": 86400000 }, // Aggregate daily
-        "startTimeMillis": todayMidnightIST, // From 12 AM IST today
-        "endTimeMillis": nowIST, // Up to now
-        "flush": true // Force fresh data from Google Fit
+        "bucketByTime": { "durationMillis": 86400000 },
+        "startTimeMillis": yesterdayMidnightIST,
+        "endTimeMillis": todayMidnightIST,
+        "flush": true 
     };
 
     try {
-        console.log("Fetching sleep data from Google Fit...");
-
         const response = await fetch(url, {
             method: "POST",
             headers: {
@@ -237,14 +205,12 @@ async function fetchGoogleFitSleep(accessToken) {
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`API Error: ${response.status} - ${errorText}`);
+            return 0;
         }
 
         const data = await response.json();
-        console.log("Google Fit Sleep Response:", JSON.stringify(data, null, 2));
 
-        let totalSleepDuration = 0; // Total sleep duration in minutes
+        let totalSleepDuration = 0;
 
         if (data?.bucket?.length > 0) {
             data.bucket.forEach(bucket => {
@@ -254,8 +220,7 @@ async function fetchGoogleFitSleep(accessToken) {
                             if (point.value?.[0]?.intVal !== undefined) {
                                 const startTime = point.startTimeNanos / 1000000;
                                 const endTime = point.endTimeNanos / 1000000;
-                                const duration = (endTime - startTime) / (1000 * 60); // Convert to minutes
-                                totalSleepDuration += duration;
+                                totalSleepDuration += (endTime - startTime) / (1000 * 60);
                             }
                         });
                     });
@@ -263,12 +228,10 @@ async function fetchGoogleFitSleep(accessToken) {
             });
         }
 
-        console.log(`Total Sleep Duration (Minutes): ${totalSleepDuration}`);
-        return totalSleepDuration; // ✅ Return only a `Number`, not an object
+        return totalSleepDuration;
 
     } catch (error) {
-        console.error("Error fetching Google Fit sleep data:", error);
-        return 0; // ✅ Return `0` (not `{ sleep: 0 }`)
+        return 0;
     }
 }
 
@@ -324,50 +287,45 @@ async function fetchGoogleFitCalories(accessToken) {
         }
 
         console.log(`Total Calories Burned: ${totalCalories}`);
-        return { calories: totalCalories }; // Return just the calorie value
+        return {totalCalories }; // Return just the calorie value
     } catch (error) {
         console.error("Error fetching Google Fit calorie data:", error);
         return { calories: 0 };
     }
 }
 
-
 async function getAIInsights(healthData) {
-    try{
-    const prompt = `
-        Based on the following health data:
-        Steps: ${healthData.steps}
-        Heart Rate: ${healthData.heartRate}
-        Sleep Hours: ${healthData.sleep}
+    try {
+        const prompt = `
+            Based on the following health data:
+            - Steps: ${healthData.steps}
+            - Heart Rate: ${healthData.heartRate}
+            - Sleep Hours: ${healthData.sleep}
 
-        Generate a personalized health recommendation.
-    `;
-    
-    // Generate content using the model
-    const result = await model.generateContent(prompt);
+            Generate a personalized health recommendation.
+        `;
 
-    // Extract the text (which may be a function or a string)
-    let aiSuggestions = result.response.text;
-    if (typeof aiSuggestions === "function") {
-        aiSuggestions = aiSuggestions();
-      }
-  
-      // If it's a string, split it into individual topics and rejoin them as a single string
-      const suggestions = typeof aiSuggestions === "string" 
-        ? aiSuggestions.split("\n").filter(Boolean).join("\n") 
-        : "";
-  
-      //console.log(suggestions); // Debugging
-  
-      res.status(200).json({
-        message: "AI suggestions generated successfully",
-        suggestions, // Send as string now
-      });
+        // ✅ Correct API Call
+        const response = await axios.post(
+            `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
+            {
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+            }
+        );
+
+        console.log("Gemini API Response:", response.data);
+
+        // ✅ Extract the response text
+        const aiSuggestions =
+            response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response from AI";
+
+        return aiSuggestions; // Return the result
+
     } catch (error) {
-      console.error("Error generating AI suggestions:", error);
-      res.status(500).json({ message: "Error generating AI suggestions", error: error.message });
+        console.error("Error generating AI suggestions:", error.response?.data || error.message);
+        return "Error generating AI suggestions";
     }
-  };
+}
 
 async function getDeviceInstructions(deviceName) {
     try{
