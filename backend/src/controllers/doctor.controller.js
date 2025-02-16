@@ -13,6 +13,40 @@ import app from "../app.js"
 import {server,io} from "../index.js"
 import twilio from "twilio"
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+import mongoose from "mongoose";
+// import { Doctor } from "./doctorModel.js"; // Adjust the path as needed
+
+const doctorsData = [
+  { fullName: "Dr. John Smith", specialization: ["Cardiologist"], mobileNumber: 9876543210, yearexp: 15, hospitals: ["City Hospital"], password: "password123", isAvailable: true },
+  { fullName: "Dr. Jane Doe", specialization: ["Dermatologist"], mobileNumber: 9123456780, yearexp: 10, hospitals: ["Skin Care Clinic"], password: "password123", isAvailable: false },
+  { fullName: "Dr. Mark Wilson", specialization: ["Neurologist"], mobileNumber: 9234567890, yearexp: 12, hospitals: ["Brain Institute"], password: "password123", isAvailable: true },
+  { fullName: "Dr. Emily Carter", specialization: ["Pediatrician"], mobileNumber: 9345678901, yearexp: 8, hospitals: ["Children's Hospital"], password: "password123", isAvailable: false },
+  { fullName: "Dr. William Brown", specialization: ["Orthopedic Surgeon"], mobileNumber: 9456789012, yearexp: 20, hospitals: ["OrthoCare Center"], password: "password123", isAvailable: true },
+  { fullName: "Dr. Sophia Martinez", specialization: ["Oncologist"], mobileNumber: 9567890123, yearexp: 18, hospitals: ["Cancer Research Center"], password: "password123", isAvailable: false },
+  { fullName: "Dr. Michael Johnson", specialization: ["Endocrinologist"], mobileNumber: 9678901234, yearexp: 14, hospitals: ["Diabetes Clinic"], password: "password123", isAvailable: true },
+  { fullName: "Dr. Olivia Taylor", specialization: ["Gynecologist"], mobileNumber: 9789012345, yearexp: 16, hospitals: ["Women's Hospital"], password: "password123", isAvailable: false },
+  { fullName: "Dr. James Anderson", specialization: ["Psychiatrist"], mobileNumber: 9890123456, yearexp: 9, hospitals: ["Mental Health Center"], password: "password123", isAvailable: true },
+  { fullName: "Dr. Emma Wilson", specialization: ["Urologist"], mobileNumber: 9901234567, yearexp: 11, hospitals: ["Urology Institute"], password: "password123", isAvailable: false },
+  { fullName: "Dr. Daniel Thomas", specialization: ["Pulmonologist"], mobileNumber: 9012345678, yearexp: 13, hospitals: ["Lung Health Center"], password: "password123", isAvailable: true },
+  { fullName: "Dr. Ava Harris", specialization: ["Nephrologist"], mobileNumber: 9123456789, yearexp: 7, hospitals: ["Kidney Care Unit"], password: "password123", isAvailable: false },
+  { fullName: "Dr. Benjamin Scott", specialization: ["Hematologist"], mobileNumber: 9234567891, yearexp: 19, hospitals: ["Blood Disorder Clinic"], password: "password123", isAvailable: true },
+  { fullName: "Dr. Isabella Moore", specialization: ["Ophthalmologist"], mobileNumber: 9345678912, yearexp: 10, hospitals: ["Vision Center"], password: "password123", isAvailable: false },
+  { fullName: "Dr. Lucas White", specialization: ["Gastroenterologist"], mobileNumber: 9456789123, yearexp: 12, hospitals: ["Digestive Health Clinic"], password: "password123", isAvailable: true },
+];
+
+export const insertDoctors = async () => {
+  try {
+    //await mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true });
+    await Doctor.insertMany(doctorsData);
+    console.log("Doctors inserted successfully");
+    //mongoose.connection.close();
+  } catch (error) {
+    console.error("Error inserting doctors:", error);
+    //mongoose.connection.close();
+  }
+};
+
+//insertDoctors();
 
 const sendOTP = async (req, res) => {
     const mobileNumber= req.body.mobileNumber;
@@ -103,7 +137,6 @@ export const requestSession = asyncHandler(async (req, res) => {
     roomName: `room_${user._id}`, // ✅ Generate a room name
     type: "video", // ✅ Default type for video consultation
   });
-
   res.status(201).json({
     success: true,
     message: "Session requested successfully",
@@ -115,34 +148,6 @@ export const requestSession = asyncHandler(async (req, res) => {
   });
 });
 
-
-export const addNotesToSession = async (req, res) => {
-    const { sessionId, notes } = req.body;
-
-    if (!sessionId || !notes) {
-      return res.status(400).json({ message: "Session ID and notes are required." });
-    }
-  
-    try {
-      const session = await Session.findById(sessionId);
-  
-      if (!session) {
-        return res.status(404).json({ message: "Session not found." });
-      }
-  
-      if (session.status !== "Active") {
-        return res.status(400).json({ message: "Cannot add notes to a session that is not active." });
-      }
-
-      session.userNotes = notes;
-      await session.save();
-  
-      return res.status(200).json({ message: "Notes added successfully!" });
-    } catch (error) {
-      console.error("Error adding notes:", error);
-      return res.status(500).json({ message: "Failed to add notes. Please try again." });
-    }
-};
 export const getPendingConsultations = asyncHandler(async (req, res) => {
   const doctorId = req.doctor._id; // Assuming doctor is logged in
 
@@ -155,6 +160,7 @@ export const getPendingConsultations = asyncHandler(async (req, res) => {
     success: true,
     consultations: pendingConsultations.map((session) => ({
       id: session._id,
+      issueDetails: session.issueDetails,
       name: session.user.name,
       time: `${new Date(session.startTime).toLocaleTimeString()} - ${new Date(session.endTime).toLocaleTimeString()}`,
     })),
@@ -165,70 +171,6 @@ export const getPendingConsultations = asyncHandler(async (req, res) => {
 // import asyncHandler from "../utils/asynchandler.utils.js";
 // import Session from "../models/session.model.js";
 // import ApiError from "../utils/apiError.utils.js";
-
-export const acceptSession = asyncHandler(async (req, res) => {
-  try {
-    // Check if the request is from a doctor
-    if (!req.isDoctor) {
-      return res.status(403).json({ 
-        success: false, 
-        message: "Only doctors can accept sessions" 
-      });
-    }
-
-    const { sessionId } = req.body;
-    const doctorId = req.doctor._id;
-
-    console.log("Received sessionId:", sessionId); // Debugging log
-
-    const session = await Session.findById(sessionId);
-    if (!session) {
-      console.error("Session not found:", sessionId);
-      return res.status(404).json({ 
-        success: false, 
-        message: "Session not found" 
-      });
-    }
-
-    // Verify that the doctor accepting the session is the assigned doctor
-    if (session.doctor.toString() !== doctorId.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: "You are not authorized to accept this session"
-      });
-    }
-
-    if (session.status !== "Pending") {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Session is not in pending state" 
-      });
-    }
-
-    session.status = "Upcoming";
-    session.jitsiLink = `https://meet.jit.si/consultation_${sessionId}`;
-    await session.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Session accepted",
-      session: {
-        _id: session._id,
-        doctorId,
-        appointmentTime: session.appointmentTime,
-        status: "Upcoming",
-        jitsiLink: session.jitsiLink,
-      },
-    });
-  } catch (error) {
-    console.error("Error in acceptSession:", error);
-    res.status(500).json({ 
-      success: false, 
-      message: "Internal server error" 
-    });
-  }
-});
-
 export const joinSession = asyncHandler(async (req, res) => {
   const { sessionId } = req.params;
   const userId = req.isUser ? req.user._id : null;
@@ -301,79 +243,113 @@ export const joinSession = asyncHandler(async (req, res) => {
   });
 });
 // End Session
-export const endSession = asyncHandler(async (req, res) => {
-  const { sessionId } = req.body;
-  const userId = req.isDoctor ? req.doctor._id : req.user._id;
+export const addNotesToSession = async (req, res) => {
+  const { sessionId, notes } = req.body;
 
-  const session = await Session.findById(sessionId);
-  if (!session) {
-    throw new ApiError(404, "Session not found");
+  if (!sessionId || !notes) {
+    return res.status(400).json({ message: "Session ID and notes are required." });
   }
 
- session.status = "Completed";
+  try {
+    const session = await Session.findById(sessionId);
+
+    if (!session) {
+      return res.status(404).json({ message: "Session not found." });
+    }
+
+    if (session.status !== "Active") {
+      return res.status(400).json({ message: "Cannot add notes to a session that is not active." });
+    }
+
+    session.userNotes = notes;
+    await session.save();
+
+    return res.status(200).json({ message: "Notes added successfully!" });
+  } catch (error) {
+    console.error("Error adding notes:", error);
+    return res.status(500).json({ message: "Failed to add notes. Please try again." });
+  }
+};
+
+// Accept Session (Doctor Side)
+export const acceptSession = asyncHandler(async (req, res) => {
+  const { sessionId, issueDetails } = req.body;
+  const doctorId = req.doctor._id;
+  const doctor = await Doctor.findById(doctorId);
+  const session = await Session.findById(sessionId);
+  if (!session) {
+      throw new ApiError(404, "Session not found");
+  }
+
+  if (session.status !== "Pending") {
+      throw new ApiError(400, "Session is not in pending state");
+  }
+  session.doctor = doctorId;
+  
+  // Mark doctor as unavailable
+  doctor.isAvailable = false;
+  await doctor.save();
+  
+  session.status = "Active";
   await session.save();
 
-  io.emit(`sessionEnded-${sessionId}`, { sessionId });
+  res.status(200).json({
+      success: true,
+      message: "Session accepted",
+      session: {
+          _id: session._id,
+          issueDetails,
+          roomName: session.roomName,
+          status: "Active",
+      }
+  });
+});
 
+// End Session
+export const endSession = asyncHandler(async (req, res) => {
+  const { sessionId } = req.body;
+  let userId;
+  if (!req.isDoctor) {
+      userId = req.user._id;
+  } else {
+      userId = req.doctor._id;
+  }
+  const session = await Session.findById(sessionId);
+  if (!session) {
+      throw new ApiError(404, "Session not found");
+  }
+   
+  session.status = "Completed";
+  await session.save();
+  io.emit(`sessionEnded-${sessionId}`, { sessionId });
+  
   // Make doctor available again
   const doctor = await Doctor.findById(session.doctor);
   if (doctor) {
-    doctor.isAvailable = true;
-    await doctor.save();
+      doctor.isAvailable = true;
+      await doctor.save();
   }
 
   res.status(200).json({
-    success: true,
-    message: "Session ended successfully"
+      success: true,
+      message: "Session ended successfully"
   });
 });
 
 // Get Active Sessions (Doctor Side)
 export const getActiveSessions = asyncHandler(async (req, res) => {
-  let query = {
-      status: { $in: ["Active", "Upcoming"] }
-  };
+  //const doctorId = req.doctor._id;
 
-  // Add user or doctor filter based on who is requesting
-  if (req.isDoctor) {
-      query.doctor = req.doctor._id;
-      // For doctors, populate user details
-      const sessions = await Session.find(query)
-          .populate('user', 'username');
+  const sessions = await Session.find({
+      status: { $in: ["Pending", "Active"] }
+  }).populate('user', 'username');
 
-      return res.status(200).json({
-          success: true,
-          sessions: sessions.map(session => ({
-              _id: session._id,
-              user: session.user,
-              status: session.status,
-              appointmentTime: session.appointmentTime,
-              jitsiLink: session.jitsiLink
-          }))
-      });
-  } else if (req.isUser) {
-      query.user = req.user._id;
-      // For users, populate doctor details
-      const sessions = await Session.find(query)
-          .populate('doctor', 'name specialization');
-
-      return res.status(200).json({
-          success: true,
-          sessions: sessions.map(session => ({
-              _id: session._id,
-              doctor: session.doctor,
-              status: session.status,
-              appointmentTime: session.appointmentTime,
-              jitsiLink: session.jitsiLink
-          }))
-      });
-  } else {
-      return res.status(403).json({
-          success: false,
-          message: "Unauthorized access"
-      });
-  }
+  res.status(200).json({
+      success: true,
+      sessions
+  });
 });
+
 // import asyncHandler from "express-async-handler";
 // import { Doctor } from "../models/doctorModel.js";
 

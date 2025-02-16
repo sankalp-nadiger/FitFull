@@ -36,10 +36,10 @@ router.post("/logout", doctor_verifyJWT, logoutDoctor);
 
 // Session management
 router.post("/request", user_verifyJWT, requestSession);
-router.post("/:sessionId/join-session", verifyUserOrDoctor, joinSession);
+//router.post("/:sessionId/join-session", verifyUserOrDoctor, joinSession);
 router.post("/accept", doctor_verifyJWT, acceptSession);
-router.post("/:sessionId/end", verifyUserOrDoctor, endSession);
-router.get("/active", verifyUserOrDoctor, getActiveSessions);
+router.post("/end", verifyUserOrDoctor, endSession);
+router.get("/active", getActiveSessions);
 router.post("/notes", user_verifyJWT, addNotesToSession);
 router.get("/pending-consultations", doctor_verifyJWT, getPendingConsultations);
 

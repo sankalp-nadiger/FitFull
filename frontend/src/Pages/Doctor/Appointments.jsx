@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 
 const socket = io("http://localhost:8000", {
   transports: ["websocket"],
-  withCredentials: true
+  withCredentials: true,
 });
 
 const Appointment = () => {
@@ -19,12 +19,13 @@ const Appointment = () => {
   const [activeTab, setActiveTab] = useState('sessions');
   const navigate = useNavigate();
 
+  // Fetching active sessions and setting up socket listener
   useEffect(() => {
     const fetchActiveSessions = async () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `http://localhost:8000/api/doctor/active`,
+          'http://localhost:8000/api/doctor/active',
           {
             headers: {
               Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
@@ -44,13 +45,16 @@ const Appointment = () => {
 
     // Listen for new session requests
     socket.on('sessionRequested', (data) => {
-      setSessions(prevSessions => [...prevSessions, {
-        _id: data.sessionId,
-        issueDetails: data.issueDetails,
-        status: 'Pending',
-        user: { username: data.userId }, // You might want to fetch full user details
-        timestamp: data.timestamp
-      }]);
+      setSessions(prevSessions => [
+        ...prevSessions,
+        {
+          _id: data.sessionId,
+          issueDetails: data.issueDetails,
+          status: 'Pending',
+          user: { username: data.userId }, // You might want to fetch full user details
+          timestamp: data.timestamp,
+        },
+      ]);
     });
 
     return () => {
@@ -73,7 +77,7 @@ const Appointment = () => {
 
       setSessions((prevSessions) =>
         prevSessions.map((session) =>
-          session._id === sessionId ? { ...session, status: 'Active' } : session
+          session._id === sessionId ? { ...session, status: 'Active', roomName: response.data.session.roomName } : session
         )
       );
 
@@ -119,12 +123,12 @@ const Appointment = () => {
       setActiveRoom(null);
     };
 
-    sessions.forEach(session => {
+    sessions.forEach((session) => {
       socket.on(`sessionEnded-${session._id}`, handleSessionEnd);
     });
 
     return () => {
-      sessions.forEach(session => {
+      sessions.forEach((session) => {
         socket.off(`sessionEnded-${session._id}`, handleSessionEnd);
       });
     };
@@ -138,7 +142,7 @@ const Appointment = () => {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <img src="plant.png" alt="Logo" style={{ height: "30px", width: "30px" }} />
-              <span className="ml-2 text-xl font-semibold text-white">doctor Dashboard</span>
+              <span className="ml-2 text-xl font-semibold text-white">Doctor Dashboard</span>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
@@ -160,7 +164,7 @@ const Appointment = () => {
             <div className="bg-gray-100 rounded-lg shadow p-6">
               <div className="space-y-6">
                 <button
-                  onClick={() => navigate('/councellor')}
+                  onClick={() => navigate('/doctor')}
                   className="flex items-center space-x-3 w-full p-2 rounded text-gray-600"
                 >
                   <Users className="h-5 w-5" />
@@ -168,36 +172,28 @@ const Appointment = () => {
                 </button>
                 <button
                   onClick={() => navigate('/notifications')}
-                  className={`flex items-center space-x-3 w-full p-2 rounded ${
-                    activeTab === 'notifications' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'
-                  }`}
+                  className={`flex items-center space-x-3 w-full p-2 rounded ${activeTab === 'notifications' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'}`}
                 >
                   <Bell className="h-5 w-5" />
                   <span>Notifications</span>
                 </button>
                 <button
                   onClick={() => navigate('/sessions')}
-                  className={`flex items-center space-x-3 w-full p-2 rounded ${
-                    activeTab === 'sessions' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'
-                  }`}
+                  className={`flex items-center space-x-3 w-full p-2 rounded ${activeTab === 'sessions' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'}`}
                 >
                   <Video className="h-5 w-5" />
                   <span>Sessions</span>
                 </button>
                 <button
                   onClick={() => navigate('/schedule')}
-                  className={`flex items-center space-x-3 w-full p-2 rounded ${
-                    activeTab === 'schedule' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'
-                  }`}
+                  className={`flex items-center space-x-3 w-full p-2 rounded ${activeTab === 'schedule' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'}`}
                 >
                   <Calendar className="h-5 w-5" />
                   <span>Schedule</span>
                 </button>
                 <button
-                  onClick={() => navigate('/Councellorprofile')}
-                  className={`flex items-center space-x-3 w-full p-2 rounded ${
-                    activeTab === 'profile' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'
-                  }`}
+                  onClick={() => navigate('/doctorprofile')}
+                  className={`flex items-center space-x-3 w-full p-2 rounded ${activeTab === 'profile' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'}`}
                 >
                   <Settings className="h-5 w-5" />
                   <span>Profile</span>
