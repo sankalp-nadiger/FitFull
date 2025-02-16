@@ -57,22 +57,22 @@ async function fetchGoogleFitHealthData(accessToken, selectedDevice) {
 
 
 async function fetchGoogleFitSteps(accessToken, dataSourceId) {
-    if (!dataSourceId) return { steps: 0 };
+    if (!accessToken) return { steps: 0 };
 
     const url = "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate";
 
+    // Calculate today's midnight and end of day in IST
     const now = new Date();
-    const todayMidnightIST = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
-    const endOfDayIST = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).getTime();
+    const todayMidnightIST = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    const endOfDayIST = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
     const requestBody = {
         "aggregateBy": [{
-            "dataSourceId": dataSourceId,
-            "dataTypeName": "com.google.step_count.delta",
+            "dataTypeName": "com.google.step_count.delta"
         }],
-        "bucketByTime": { "durationMillis": 86400000 },
-        "startTimeMillis": todayMidnightIST,
-        "endTimeMillis": endOfDayIST,
+        "bucketByTime": { "durationMillis": 86400000 }, // 24 hours
+        "startTimeMillis": todayMidnightIST.getTime(),
+        "endTimeMillis": endOfDayIST.getTime(),
         "flush": true 
     };
 
@@ -88,34 +88,34 @@ async function fetchGoogleFitSteps(accessToken, dataSourceId) {
 
         if (!response.ok) {
             const errorText = await response.text();
+            console.error("Google Fit API Error:", errorText);
             throw new Error(`API Error: ${response.status} - ${errorText}`);
         }
 
         const data = await response.json();
+        console.log("Step data response:", JSON.stringify(data, null, 2));
 
         let totalSteps = 0;
-        if (data?.bucket?.length > 0) {
+        if (data.bucket && data.bucket.length > 0) {
             data.bucket.forEach(bucket => {
-                if (bucket.dataset?.length > 0) {
-                    bucket.dataset.forEach(dataset => {
-                        if (dataset.point?.length > 0) {
-                            dataset.point.forEach(point => {
-                                totalSteps += point.value[0]?.intVal || 0;
-                            });
+                bucket.dataset.forEach(dataset => {
+                    dataset.point.forEach(point => {
+                        if (point.value && point.value.length > 0) {
+                            totalSteps += Number(point.value[0].intVal || 0);
                         }
                     });
-                }
+                });
             });
         }
 
+        console.log("Total steps calculated:", totalSteps);
         return { steps: totalSteps };
 
     } catch (error) {
         console.error("Error fetching Google Fit step data:", error);
-        return { steps: 0 };
+        return { steps: 0, error: error.message };
     }
 }
-
 async function fetchGoogleFitHeartRate(accessToken) {
     const url = "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate";
     const now = new Date();
