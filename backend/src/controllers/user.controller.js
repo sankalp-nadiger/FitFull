@@ -320,7 +320,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 });
 
-const getRandomActivity = () => {
+export const getRandomActivity = () => {
     const randomIndex = Math.floor(Math.random() * additionalActivities.length);
     return additionalActivities[randomIndex];
 };

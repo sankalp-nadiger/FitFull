@@ -59,7 +59,7 @@ function SignUpLoadingPage() {
                 }
                 if (data.user) {
                     sessionStorage.setItem('user', JSON.stringify(data.user));
-                    sessionStorage.setItem("activity", JSON.stringify(suggestedActivity));
+                    sessionStorage.setItem("activity", JSON.stringify(data.suggestedActivity));
                 }
                 
                 navigate("/success");

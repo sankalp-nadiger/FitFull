@@ -8,6 +8,7 @@ import { User } from './models/user.model.js';
 import dotenv, { configDotenv } from 'dotenv';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
+import { getRandomActivity } from "./controllers/user.controller.js";
 dotenv.config();
 
 // Router imports
@@ -197,7 +198,7 @@ const loginOAuthClient = new google.auth.OAuth2(
             };
             await user.save();
         }
-
+        const activity= getRandomActivity();
         const jwtToken = jwt.sign(
             { userId: user._id }, 
             process.env.ACCESS_TOKEN_SECRET, 
@@ -211,7 +212,8 @@ const loginOAuthClient = new google.auth.OAuth2(
                 id: user._id,
                 email: user.email,
                 fullName: user.fullName,
-                avatar: user.avatar
+                avatar: user.avatar,
+                suggestedActivity: activity
             } 
         });
 
@@ -284,7 +286,7 @@ app.post("/auth/google/check-login", async (req, res) => {
         await user.save();
     }
     
-
+    const activity= getRandomActivity();
       // Generate JWT for the existing user
       const jwtToken = jwt.sign(
         { _id: user._id },  // Ensure _id is used to match the verifyJWT function
@@ -293,7 +295,7 @@ app.post("/auth/google/check-login", async (req, res) => {
     );
     
       console.log(jwtToken)
-      res.json({ success: true, jwt: jwtToken, user });
+      res.json({ success: true, jwt: jwtToken, user , suggestedActivity: activity });
 
   } catch (error) {
       console.error("Google OAuth Error:", error);
