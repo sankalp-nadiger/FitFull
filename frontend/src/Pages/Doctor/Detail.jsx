@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FileText, Edit, Trash2 } from "lucide-react";
+import { FileText, Edit, Clipboard } from "lucide-react";
 import { FaHome, FaUserMd, FaUser, FaSignOutAlt } from "react-icons/fa";
 import Modal from "../../utils/modal";
 import axios from "axios";
@@ -224,34 +224,25 @@ function Detail() {
                   </div>
                 </div>
 
-                <div className="flex gap-4 mt-6">
-                  <button 
-                    onClick={() => openModal("prescription", patient)} 
-                    className="flex-1 flex items-center justify-center gap-3 bg-blue-50 text-blue-600 px-5 py-3 rounded-lg hover:bg-blue-100 transition-all text-lg font-medium"
-                  >
-                    <FileText size={20} />
-                    Add Prescription
-                  </button>
-                  <button 
-                    onClick={() => openModal("testReport", patient)} 
-                    className="flex-1 flex items-center justify-center gap-3 bg-green-50 text-green-600 px-5 py-3 rounded-lg hover:bg-green-100 transition-all text-lg font-medium"
-                  >
-                    <Edit size={20} />
-                    Add Test Report
-                  </button>
-                  <button 
-                    onClick={() => openModal("diagnosis", patient)} 
-                    className="flex-1 flex items-center justify-center gap-3 bg-red-50 text-red-600 px-5 py-3 rounded-lg hover:bg-red-100 transition-all text-lg font-medium"
-                  >
-                    <Trash2 size={20} />
-                    Add Diagnosis
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+               <div className="flex flex-wrap gap-4 mt-6">
+                                 <button onClick={() => openModal("prescription", patient)} className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                                   <FileText size={20} />
+                                   Add Prescription
+                                 </button>
+                                 <button onClick={() => openModal("testReport", patient)} className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
+                                   <Edit size={20} />
+                                   Add Test Report
+                                 </button>
+                                 <button onClick={() => openModal("diagnosis", patient)} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+                                   <Clipboard size={20} />
+                                   Add Diagnosis
+                                 </button>
+                               </div>
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                     </div>
 
       {/* Prescription Modal */}
       <Modal isOpen={activeModalType === "prescription"} onClose={closeModal} title="Add Prescription">

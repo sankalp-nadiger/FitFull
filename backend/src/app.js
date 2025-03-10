@@ -28,7 +28,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: 'http://localhost:5174',
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
@@ -58,8 +58,8 @@ app.use("/api/doctor", doctorRouter);
 app.use("/api/health", healthRouter);
 app.use("/api/wearables",wearableRouter)
 
-const SIGNUP_REDIRECT_URI = "http://localhost:5173/up-loading";
-const LOGIN_REDIRECT_URI = "http://localhost:5173/in-loading";
+const SIGNUP_REDIRECT_URI = "http://localhost:5174/up-loading";
+const LOGIN_REDIRECT_URI = "http://localhost:5174/in-loading";
 
 const signupOAuthClient = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -363,7 +363,7 @@ app.post('/auth/spotify/exchange-token', async (req, res) => {
 
 
 // Start Server
-const PORT = 3000;
+const PORT = 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 export default app;

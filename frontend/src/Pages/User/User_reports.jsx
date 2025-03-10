@@ -273,9 +273,9 @@ const User_reports = () => {
             case "tests":
                 endpoint = "/addReport";
                 formData.append("testName", reportFormData.testName || "");
-formData.append("result", reportFormData.result || "");
-formData.append("doctorName", reportFormData.doctorName || "");
-formData.append("document", selectedFile);
+                formData.append("result", reportFormData.result || "");
+                formData.append("doctorName", reportFormData.doctorName || "");
+                formData.append("document", selectedFile);
                 break;
 
             case "prescriptions":
@@ -297,114 +297,104 @@ formData.append("document", selectedFile);
                 return;
         }
 
-        // Debugging: Log FormData entries
-        console.log("Submitting FormData:");
-        for (let pair of formData.entries()) {
-            console.log(pair[0] + ": " + pair[1]);
+        // Set the appropriate request body based on the active tab
+        let requestBody;
+        let contentType;
+        
+        if (userActiveTab === "tests" && selectedFile) {
+            requestBody = formData;
+            contentType = "multipart/form-data";
+        } else {
+            requestBody = {
+                doctorName: reportFormData.doctorName || "",
+                ...(userActiveTab === "tests" && {
+                    testName: reportFormData.testName || "",
+                    result: reportFormData.result || ""
+                }),
+                ...(userActiveTab === "prescriptions" && {
+                    medication: reportFormData.medication || "",
+                    dosage: reportFormData.dosage || ""
+                }),
+                ...(userActiveTab === "diagnoses" && {
+                    condition: reportFormData.condition || "",
+                    notes: reportFormData.notes || "",
+                    date: reportFormData.date || ""
+                })
+            };
+            contentType = "application/json";
         }
 
-        let requestBody;
-switch (userActiveTab) {
-    case "tests":
-        endpoint = "/addReport";
-        requestBody = formData;
-        break;
+        const response = await axios.post(
+            `http://localhost:8000/api/users/${endpoint}`,
+            requestBody,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    ...(contentType === "multipart/form-data" ? {} : { "Content-Type": "application/json" })
+                },
+            }
+        );
 
-    case "prescriptions":
-        endpoint = "/addPresc";
-        requestBody = {
-            doctorName: reportFormData.doctorName || "",
-            medication: reportFormData.medication || "",
-            dosage: reportFormData.dosage || ""
-        };
-        break;
-
-    case "diagnoses":
-        endpoint = "/addDiagnosis";
-        requestBody = {
-            doctorName: reportFormData.doctorName || "",
-            condition: reportFormData.condition || "",
-            notes: reportFormData.notes || "",
-            date: reportFormData.date || ""
-        };
-        break;
-}
-
-const response = await axios.post(
-    `${"http://localhost:8000/api/users/"}${endpoint}`,
-    requestBody,
-    {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": selectedFile ? "multipart/form-data" : "application/json",
-        },
-    }
-);
-        
-
-if (response.data.success) {
-  // Define fetch functions that return promises
-  const fetchTestReports = async () => {
-      const response = await axios.get('http://localhost:8000/api/users/test-reports', {
-          headers: {
-              Authorization: `Bearer ${token}`
-          }
-      });
-      return response.data;
-  };
-
-  const fetchPrescriptions = async () => {
-      const response = await axios.get('http://localhost:8000/api/users/prescriptions', {
-          headers: {
-              Authorization: `Bearer ${token}`
-          }
-      });
-      return response.data;
-  };
-
-  const fetchDiagnoses = async () => {
-      const response = await axios.get('http://localhost:8000/api/users/diagnoses', {
-          headers: {
-              Authorization: `Bearer ${token}`
-          }
-      });
-      return response.data;
-  };
-
-  // Map of fetch functions
-  const fetchFunction = {
-      tests: fetchTestReports,
-      prescriptions: fetchPrescriptions,
-      diagnoses: fetchDiagnoses
-  };
-
-  const fetchUserActiveTab = fetchFunction[userActiveTab];
-
-  if (fetchUserActiveTab) {
-      try {
-          const updatedReports = await fetchUserActiveTab(); // Execute the function
-          setUserReports((prev) => ({
-              ...prev,
-              [userActiveTab]: updatedReports
-          }));
-      } catch (error) {
-          console.error('Error fetching updated reports:', error);
-          // Handle error appropriately
-      }
-  }
-}
-      
+        if (response.data.success) {
+            // Set loading state for the current tab
+            setIsLoading(prev => ({ ...prev, [userActiveTab]: true }));
+            
+            // Clear any existing errors
+            setError(prev => ({ ...prev, [userActiveTab]: null }));
+            
+            try {
+                // Determine the correct endpoint based on the active tab
+                const fetchEndpoint = endpointMap[userActiveTab];
+                const doctorFilter = selectedDoctor ? `?doctor=${selectedDoctor}` : '';
+                
+                // Fetch the updated data
+                const updatedResponse = await axios.get(
+                    `${fetchEndpoint}${doctorFilter}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                
+                // Update the appropriate part of userReports state based on active tab
+                setUserReports(prev => {
+                    const newState = { ...prev };
+                    
+                    if (userActiveTab === "tests") {
+                        newState.testReports = updatedResponse.data;
+                    } else if (userActiveTab === "prescriptions") {
+                        newState.prescriptions = updatedResponse.data;
+                    } else if (userActiveTab === "diagnoses") {
+                        newState.diagnoses = updatedResponse.data;
+                    }
+                    
+                    return newState;
+                });
+                
+                // Success message or notification could be added here
+                
+            } catch (fetchError) {
+                console.error(`Error fetching updated ${userActiveTab}:`, fetchError);
+                setError(prev => ({
+                    ...prev, 
+                    [userActiveTab]: fetchError.response?.data?.message || `Failed to refresh ${userActiveTab} data`
+                }));
+            } finally {
+                // Always clear loading state
+                setIsLoading(prev => ({ ...prev, [userActiveTab]: false }));
+            }
+            
             // Reset form and close modal
             setReportFormData({});
             setSelectedFile(null);
             setIsReportModalOpen(false);
-        
+        }
     } catch (error) {
         console.error(`Error submitting ${userActiveTab} report:`, error);
+        // Set error state
+        setError(prev => ({ 
+            ...prev, 
+            [userActiveTab]: error.response?.data?.message || `Failed to submit ${userActiveTab}`
+        }));
     }
 };
-
-  
   
   const reportModal = (
     <Dialog open={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} className="relative z-50">

@@ -1,29 +1,7 @@
 import React, { useState } from "react";
-import { FileText, Edit, Trash2 } from "react-feather";
+import { FileText, Edit, Clipboard } from "react-feather"; // Changed Trash2 to Clipboard for diagnosis
 import { FaHome, FaUserMd, FaUser, FaSignOutAlt } from "react-icons/fa";
 import Modal from "../../utils/modal"; // Ensure you have a reusable Modal component
-
-// Mock Patient Data (Replace with API data if needed)
-const patients = [
-  {
-    id: 1,
-    name: "John Doe",
-    age: 45,
-    lastVisit: "2024-03-15",
-    condition: "Hypertension",
-    email: "johndoe@example.com",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=120&h=120",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    age: 32,
-    lastVisit: "2024-03-14",
-    condition: "Diabetes Type 2",
-    email: "janesmith@example.com",
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=120&h=120",
-  },
-];
 
 function Details() {
   const [modalType, setModalType] = useState(null);
@@ -113,8 +91,8 @@ function Details() {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-4 mt-6">
+                {/* Action Buttons - Modified to use flex-wrap and ensure buttons stay in container */}
+                <div className="flex flex-wrap gap-4 mt-6">
                   <button onClick={() => openModal("prescription", patient)} className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
                     <FileText size={20} />
                     Add Prescription
@@ -124,7 +102,7 @@ function Details() {
                     Add Test Report
                   </button>
                   <button onClick={() => openModal("diagnosis", patient)} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
-                    <Trash2 size={20} />
+                    <Clipboard size={20} />
                     Add Diagnosis
                   </button>
                 </div>

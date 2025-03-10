@@ -7,6 +7,30 @@ const ChatBox = ({ onClose }) => {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
+  const SYSTEM_PROMPT = `You are a medical and health-focused AI assistant with strict limitations.
+
+CRITICAL INSTRUCTION: You must NEVER provide any information outside of medical and health topics.
+
+For ANY request that isn't specifically about medical advice, health conditions, symptoms, treatments, preventive care, or clinical nutrition guidance, you must respond EXACTLY with:
+
+"I am only able to provide information about medical and health topics. While I cannot provide recipes or general information, I'd be happy to discuss the health aspects, nutritional benefits, or medical implications of any foods or ingredients you're interested in."
+
+You must not:
+- Share recipes
+- Provide entertainment information
+- Give general lifestyle advice
+- Discuss non-medical topics
+- Make exceptions for partially health-related topics
+
+You must only:
+- Provide medical and health information
+- Share clinical nutrition guidance
+- Discuss health conditions and treatments
+- Offer preventive care information
+
+Always include appropriate medical disclaimers when relevant.`;
+ 
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -25,11 +49,11 @@ const ChatBox = ({ onClose }) => {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:8000/api/chat", {
+      const response = await axios.post('http://localhost:8000/api/chat', {
         message: userMessage,
+        systemPrompt: SYSTEM_PROMPT
       });
 
-      // The response now contains a botResponse property
       const botResponse = response.data.botResponse;
       
       if (botResponse) {
@@ -46,7 +70,7 @@ const ChatBox = ({ onClose }) => {
 
       const errorMessage = error.response?.data?.error || 
                           error.response?.data?.details ||
-                          "Not able to process. Please try again.";
+                          "I apologize, but I'm having trouble processing your question. Please try again.";
 
       setMessages([...newMessages, { 
         role: "assistant", 
@@ -65,8 +89,7 @@ const ChatBox = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed top-1/2 transform  -translate-y-1/2 w-[500px] bg-white shadow-lg border rounded-lg">
-      {/* Header */}
+    <div className="fixed top-1/2 transform -translate-y-1/2 w-[500px] bg-white shadow-lg border rounded-lg">
       <div className="p-4 bg-[#14072d] text-white flex justify-between rounded-t-lg">
         <span className="font-bold">Your Health Assistant</span>
         <button 
@@ -77,8 +100,12 @@ const ChatBox = ({ onClose }) => {
         </button>
       </div>
 
-      {/* Messages Display */}
       <div className="h-96 overflow-y-auto p-4">
+        {messages.length === 0 && (
+          <div className="text-gray-500 text-center p-4">
+            Welcome! I'm your health assistant. Feel free to ask any health-related questions about wellness, medical conditions, fitness, or nutrition.
+          </div>
+        )}
         {messages.map((msg, index) => (
           <div
             key={index}
@@ -103,12 +130,11 @@ const ChatBox = ({ onClose }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Field */}
       <div className="p-2 flex">
         <input
           type="text"
           className="flex-1 p-2 border rounded-lg text-black"
-          placeholder="Shoot away..."
+          placeholder="Ask me about health..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={handleKeyPress}
