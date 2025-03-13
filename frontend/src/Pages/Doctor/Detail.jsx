@@ -219,7 +219,7 @@ function Detail() {
 
                 <div className="space-y-4 text-lg">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Patient ID:</span>
+                    {/* <span className="text-gray-600">Patient ID:</span> */}
                     <span className="text-gray-900 font-medium">{patient.id}</span>
                   </div>
                 </div>
