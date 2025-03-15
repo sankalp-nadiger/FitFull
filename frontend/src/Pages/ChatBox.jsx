@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import ReactMarkdown from "react-markdown";
 
 const ChatBox = ({ onClose }) => {
   const [messages, setMessages] = useState([]);
@@ -7,28 +8,24 @@ const ChatBox = ({ onClose }) => {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const SYSTEM_PROMPT = `You are a medical and health-focused AI assistant with strict limitations.
+  const SYSTEM_PROMPT = `You are a medical and health-focused AI assistant. You must strictly provide information only on medical, health, clinical nutrition, and wellness topics.
 
-CRITICAL INSTRUCTION: You must NEVER provide any information outside of medical and health topics.
+You must never engage in non-medical discussions. If a query is unrelated to health, respond with:
+"I can only provide information about medical and health topics. Please ask me about health conditions, symptoms, treatments, nutrition, or preventive care."
 
-For ANY request that isn't specifically about medical advice, health conditions, symptoms, treatments, preventive care, or clinical nutrition guidance, you must respond EXACTLY with:
+You must:
+✔ Provide medical and health information
+✔ Share clinical nutrition guidance
+✔ Discuss health conditions, symptoms, and treatments
+✔ Offer preventive care information
+✔ Provide up-to-date health news and research insights
 
-"I am only able to provide information about medical and health topics. While I cannot provide recipes or general information, I'd be happy to discuss the health aspects, nutritional benefits, or medical implications of any foods or ingredients you're interested in."
+You must NOT:
+❌ Share entertainment, lifestyle, or general knowledge
+❌ Provide recipes (but you may discuss their health implications)
+❌ Engage in non-medical discussions
 
-You must not:
-- Share recipes
-- Provide entertainment information
-- Give general lifestyle advice
-- Discuss non-medical topics
-- Make exceptions for partially health-related topics
-
-You must only:
-- Provide medical and health information
-- Share clinical nutrition guidance
-- Discuss health conditions and treatments
-- Offer preventive care information
-
-Always include appropriate medical disclaimers when relevant.`;
+If a query is partially health-related, focus ONLY on the medical aspects. For example, if asked about a food, discuss its health benefits but NOT recipes.`;
  
 
   const scrollToBottom = () => {
@@ -116,8 +113,9 @@ Always include appropriate medical disclaimers when relevant.`;
             }`}
           >
             <div className="whitespace-pre-wrap break-words">
-              {msg.content}
-            </div>
+  <ReactMarkdown>{msg.content}</ReactMarkdown>
+</div>
+
           </div>
         ))}
         {loading && (

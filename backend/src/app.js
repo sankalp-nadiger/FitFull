@@ -9,6 +9,7 @@ import dotenv, { configDotenv } from 'dotenv';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import { getRandomActivity } from "./controllers/user.controller.js";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 dotenv.config();
 
 // Router imports
@@ -91,38 +92,37 @@ const loginOAuthClient = new google.auth.OAuth2(
   });
   //CHATBOT
 
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   app.post("/api/chat", async (req, res) => {
     try {
-        const { message } = req.body;
+        const { message, systemPrompt } = req.body;
         console.log("User message:", message);
+        console.log("System prompt:", systemPrompt);
 
         if (!message) {
             return res.status(400).json({ error: "Message is required" });
         }
 
-        if (!GEMINI_API_KEY) {
-            return res.status(500).json({ error: "Gemini API key is not configured" });
-        }
+        // Construct prompt including system instructions
+        const prompt = systemPrompt ? `${systemPrompt}\n\nUser: ${message}` : message;
 
-        const response = await axios.post(
-            `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
-            {
-                contents: [{ role: "user", parts: [{ text: message }] }],
-            }
-        );
+        // Call the Gemini model
+        const result = await model.generateContent(prompt);
 
-        console.log("Full API Response:", JSON.stringify(response.data, null, 2));
+        console.log("Gemini Raw Response:", JSON.stringify(result, null, 2));
 
-        const botResponse = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        // Extracting the response properly
+        const botResponse = result?.response?.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!botResponse) {
-            return res.status(500).json({ error: "No response from Gemini API" });
+            return res.status(500).json({ error: "No valid response from Gemini" });
         }
 
-        console.log("Extracted bot response:", botResponse);
         res.json({ botResponse });
+
     } catch (error) {
         console.error("Detailed error:", {
             message: error.message,
@@ -132,7 +132,7 @@ const loginOAuthClient = new google.auth.OAuth2(
 
         res.status(500).json({ 
             error: "Internal Server Error", 
-            details: error.response?.data || error.message 
+            details: error.message 
         });
     }
 });
