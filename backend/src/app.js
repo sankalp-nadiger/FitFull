@@ -106,15 +106,12 @@ const loginOAuthClient = new google.auth.OAuth2(
             return res.status(400).json({ error: "Message is required" });
         }
 
-        // Construct prompt including system instructions
         const prompt = systemPrompt ? `${systemPrompt}\n\nUser: ${message}` : message;
 
-        // Call the Gemini model
         const result = await model.generateContent(prompt);
 
         console.log("Gemini Raw Response:", JSON.stringify(result, null, 2));
 
-        // Extracting the response properly
         const botResponse = result?.response?.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!botResponse) {
