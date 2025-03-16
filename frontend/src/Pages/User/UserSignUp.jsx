@@ -40,7 +40,7 @@ const UserSignUp = () => {
       sessionStorage.setItem("activity", JSON.stringify(suggestedActivity));
       toast.success("User registered successfully!");
       console.log("Registration Success:", response.data);
-      navigate("/dashboard");
+      navigate("/onboard");
     } catch (error) {
       console.error("Registration Error:", error.response?.data || error.message);
       toast.error(error.response?.data?.message || "Registration failed!");

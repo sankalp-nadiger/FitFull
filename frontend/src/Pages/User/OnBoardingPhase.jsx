@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const OnboardingPhase = () => {
   const navigate = useNavigate();
@@ -170,8 +171,8 @@ const OnboardingPhase = () => {
          Save
         </button>
       </form>
-{/* 
-      {recommendedDoctors.length > 0 && (
+      {
+      <>{recommendedDoctors.length > 0 && (
         <div className="mt-6 p-4 bg-gray-700 rounded-md w-full max-w-md">
           <h2 className="text-xl font-semibold">Recommended Doctors:</h2>
           <ul className="mt-2">
@@ -179,8 +180,16 @@ const OnboardingPhase = () => {
               <li key={index} className="mt-1 text-yellow-400">✔ {doctor}</li>
             ))}
           </ul>
+          <button>
+        <Link to="/main-page" className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md">
+          Continue
+        </Link>
+    </button>
         </div>
-      )} */}
+      )
+      }
+    </>
+      } 
     </div>
   );
 };
