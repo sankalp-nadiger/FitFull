@@ -9,12 +9,12 @@ dotenv.config({ path: '../.env' });
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:5173", // Adjust according to your frontend URL
+        origin: "http://localhost:5173",
         methods: ["GET", "POST"]
     }
 });
 
-let activeSessions = {}; // Store active video call sessions
+let activeSessions = {};
 
 // WebSocket connection
 io.on("connection", (socket) => {

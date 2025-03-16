@@ -140,7 +140,7 @@ const DeviceList = () => {
               <div className="mt-4">
                 <p><strong>Heart Rate:</strong> {healthData.heartRate} bpm</p>
                 <p><strong>Steps:</strong> {healthData.steps}</p>
-                <p><strong>Calories Burned:</strong> {healthData.totalCalories} kcal</p>
+                <p><strong>Calories Burned:</strong> {healthData.calories} kcal</p>
               </div>
             ) : (
               <button 
