@@ -29,7 +29,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:5173','https://fitfull.netlify.app/',
+    origin: ['http://localhost:5173','https://fitfull.netlify.app/'],
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
