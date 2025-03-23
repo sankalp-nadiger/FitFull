@@ -3,7 +3,7 @@ import axios from "axios";
 import { FaTrash, FaStar, FaBellSlash, FaPlus, FaCheck, FaTimes } from "react-icons/fa";
 import Navbar from "./Navbar";
 
-const API_BASE_URL = "http://localhost:8000/api/wearables";
+const API_BASE_URL = `${import.meta.env.VITE_BASE_API_URL}/api/wearables`;
 
 const DeviceList = () => {
   const [devices, setDevices] = useState([]);
@@ -71,7 +71,7 @@ const DeviceList = () => {
 
     try {
       setAiLoading(true);
-      const response = await axios.post("http://localhost:8000/api/chat", {
+      const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/api/chat`, {
         message: userMessage,
       });
 

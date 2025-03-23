@@ -30,7 +30,7 @@ const fetchFamilyMembers = async () => {
     
     try {
       const token = sessionStorage.getItem("accessToken");
-      const response = await fetch('http://localhost:8000/api/users/family', {
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/api/users/family`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -71,7 +71,7 @@ const fetchFamilyMembers = async () => {
         diagnoses: 'famDiagnosis'
       };
 
-      const response = await fetch(`http://localhost:8000/api/users/${endpoints[activeTab]}`, {
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/api/users/${endpoints[activeTab]}`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ familyMemberEmail: email })

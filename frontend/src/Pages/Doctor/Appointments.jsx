@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Bell, Calendar, Users, Settings, LogOut, Video } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const socket = io("http://localhost:8000", {
+const socket = io(`${import.meta.env.VITE_BASE_API_URL}`, {
   transports: ["websocket"],
   withCredentials: true,
 });
@@ -25,7 +25,7 @@ const Appointment = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          'http://localhost:8000/api/doctor/active',
+          `${import.meta.env.VITE_BASE_API_URL}/api/doctor/active`,
           {
             headers: {
               Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
@@ -66,7 +66,7 @@ const Appointment = () => {
     try {
       setLoading(true);
       const response = await axios.post(
-        'http://localhost:8000/api/doctor/accept',
+        `${import.meta.env.VITE_BASE_API_URL}/api/doctor/accept`,
         { sessionId },
         {
           headers: {
@@ -93,7 +93,7 @@ const Appointment = () => {
     try {
       setEnding(true);
       await axios.post(
-        'http://localhost:8000/api/doctor/end',
+        `${import.meta.env.VITE_BASE_API_URL}/api/doctor/end`,
         { sessionId },
         {
           headers: {

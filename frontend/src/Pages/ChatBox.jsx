@@ -46,7 +46,7 @@ If a query is partially health-related, focus ONLY on the medical aspects. For e
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8000/api/chat', {
+      const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/api/chat`, {
         message: userMessage,
         systemPrompt: SYSTEM_PROMPT
       });

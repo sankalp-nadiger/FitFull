@@ -56,7 +56,7 @@ const DoctorSignUp = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/doctor/register-doctor",
+       `${import.meta.env.VITE_BASE_API_URL}/api/doctor/register-doctor`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },

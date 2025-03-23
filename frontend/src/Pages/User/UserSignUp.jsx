@@ -29,7 +29,7 @@ const UserSignUp = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:8000/api/users/register", formData, {
+      const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/api/users/register`, formData, {
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
       });

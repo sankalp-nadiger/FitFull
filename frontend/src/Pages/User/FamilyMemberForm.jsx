@@ -30,7 +30,7 @@ const FamilyForm = ({ onFamilyAdded, setFamilyMember, closeModal }) => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/users/family/add",
+        `${import.meta.env.VITE_BASE_API_URL}/api/users/family/add`,
         { familyMembers: familyEmails },
         {
           headers: {

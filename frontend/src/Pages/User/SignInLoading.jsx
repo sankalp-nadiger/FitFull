@@ -23,7 +23,7 @@ function SignInLoadingPage() {
 
     async function signInWithGoogle() {
         try {
-            const response = await fetch("http://localhost:8000/auth/login-google");
+            const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/auth/login-google`);
             const data = await response.json();
 
             if (data.url) {
@@ -41,7 +41,7 @@ function SignInLoadingPage() {
 
     async function processAuthCode(code) {
         try {
-            const response = await fetch("http://localhost:8000/auth/google/check-login", {
+            const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/auth/google/check-login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

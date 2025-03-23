@@ -19,7 +19,7 @@ const DoctorSignIn = () => {
   // const handleSendOtp = async () => {
   //   if (phoneNumber.length === 10) {
   //     try {
-  //       const response = await axios.post("http://localhost:8000/api/doctor/send-otp", {
+  //       const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/api/doctor/send-otp`, {
   //         mobileNumber: phoneNumber,
   //       });
   //       if (response.data.success) {
@@ -55,7 +55,7 @@ const DoctorSignIn = () => {
   //   }
 
   //   try {
-  //     const response = await axios.post("http://localhost:8000/api/doctor/verify-otp", {
+  //     const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/api/doctor/verify-otp`, {
   //       mobileNumber: phoneNumber,
   //       otp,
   //     });
@@ -76,7 +76,7 @@ const DoctorSignIn = () => {
     e.preventDefault();
 
     try {
-      const response = await axios.post("http://localhost:8000/api/doctor/login", {
+      const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/api/doctor/login`, {
         email,
         mobileNumber: phoneNumber,
         password,

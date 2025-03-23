@@ -18,7 +18,7 @@ export default function UserProfile() {
           return;
         }
 
-        const response = await fetch("http://localhost:8000/api/users/current", {
+        const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/api/users/current`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${accessToken}`,

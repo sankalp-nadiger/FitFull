@@ -30,7 +30,7 @@ function Detail() {
           throw new Error("No access token found");
         }
 
-        const response = await axios.get("http://localhost:8000/api/doctor/patients", {
+        const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/api/doctor/patients`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -80,7 +80,7 @@ function Detail() {
   };
 
   const getApiEndpoint = (modalType) => {
-    const apiBaseUrl = "http://localhost:8000/api/doctor";
+    const apiBaseUrl = `${import.meta.env.VITE_BASE_API_URL}/api/doctor`;
     switch (modalType) {
       case "prescription":
         return `${apiBaseUrl}/prescription`;

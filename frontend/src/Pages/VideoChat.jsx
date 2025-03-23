@@ -12,7 +12,7 @@ const VideoChat = () => {
     try {
       setEnding(true);
       await axios.post(
-        'http://localhost:8000/api/counsellor/end',
+        `${import.meta.env.VITE_BASE_API_URL}/api/counsellor/end`,
         { sessionId },
         {
           headers: {

@@ -178,7 +178,7 @@ const User_reports = () => {
         const token = sessionStorage.getItem("accessToken");
         const headers = { Authorization: `Bearer ${token}` };
         
-        const response = await axios.get("http://localhost:8000/api/users/family", { headers });
+        const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/api/users/family`, { headers });
         
         if (response.data?.data?.familyMembers) {
           setFamilyMembers(response.data.data.familyMembers);
@@ -210,9 +210,9 @@ const User_reports = () => {
   // }, []);
   // API endpoints
   const endpointMap = {
-    tests: "http://localhost:8000/api/users/test-reports",
-    prescriptions: "http://localhost:8000/api/users/prescriptions",
-    diagnoses: "http://localhost:8000/api/users/diagnoses"
+    tests: `${import.meta.env.VITE_BASE_API_URL}/api/users/test-reports`,
+    prescriptions: `${import.meta.env.VITE_BASE_API_URL}/api/users/prescriptions`,
+    diagnoses: `${import.meta.env.VITE_BASE_API_URL}/api/users/diagnoses`
   };
 
   // Fetch reports

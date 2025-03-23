@@ -25,7 +25,7 @@ function SignUpLoadingPage() {
 
     async function startGoogleSignUp() {
         try {
-            const response = await fetch("http://localhost:8000/auth/google-url");
+            const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/auth/google-url`);
             const data = await response.json();
 
             if (data.url) {
@@ -43,7 +43,7 @@ function SignUpLoadingPage() {
 
     async function processAuthCode(code) {
         try {
-            const response = await fetch("http://localhost:8000/auth/google/callback", {
+            const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/auth/google/callback`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

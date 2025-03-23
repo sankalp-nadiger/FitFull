@@ -13,7 +13,7 @@ const DoctorPatientChat = ({ doctorId, patientId }) => {
     const fetchChat = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8000/api/chat/${doctorId}/${patientId}`,
+          `${import.meta.env.VITE_BASE_API_URL}/api/chat/${doctorId}/${patientId}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -44,7 +44,7 @@ const DoctorPatientChat = ({ doctorId, patientId }) => {
       interval = setInterval(async () => {
         try {
           const response = await axios.get(
-            `http://localhost:8000/api/chat/messages/${chatId}`,
+            `${import.meta.env.VITE_BASE_API_URL}/api/chat/messages/${chatId}`,
             {
               headers: {
                 Authorization: `Bearer ${accessToken}`,
@@ -71,7 +71,7 @@ const DoctorPatientChat = ({ doctorId, patientId }) => {
 
     try {
       await axios.post(
-        `http://localhost:8000/api/chat/send`,
+        `${import.meta.env.VITE_BASE_API_URL}/api/chat/send`,
         {
           chatId,
           message: message.trim(),
