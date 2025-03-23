@@ -32,7 +32,7 @@ const UserSignIn = () => {
     setLoading(true); // Show loading state during login
 
     try {
-      // API call to backend login endpoint
+      console.log(`fetching data from ${import.meta.env.VITE_BASE_API_URL}`)
       const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/api/users/login`, {
         username,
         password,
