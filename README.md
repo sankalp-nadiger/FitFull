@@ -1,12 +1,8 @@
 # 🌟 FitFull - Smart Health Data Manager
 
-![FitFull Banner](https://yourimageurl.com/banner.png)
 
 ## 🚀 Revolutionizing Healthcare Data with AI & IoT Integration
 
-![GitHub stars](https://img.shields.io/github/stars/yourrepo?style=social)
-![GitHub forks](https://img.shields.io/github/forks/yourrepo?style=social)
-![GitHub license](https://img.shields.io/github/license/yourrepo)
 
 ---
 
@@ -32,8 +28,7 @@ FitFull is a **smart healthcare management system** that ensures seamless access
 
 ---
 
-## 🎬 Live Demo
-📌 **[Watch the Demo](https://yourdemo.com)**
+
 
 ---
 
@@ -59,8 +54,7 @@ $ cd backend && npm run dev  # Starts the backend
 
 ---
 
-## 📷 Screenshots & GIFs
-![App Preview](https://yourimageurl.com/screenshot.png)
+
 
 ---
 
