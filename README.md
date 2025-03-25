@@ -54,7 +54,7 @@ $ cd backend && npm run dev  # Starts the backend
 
 ---
 
-
+## MVP Link: https://fitfull.netlify.app/
 
 ---
 
@@ -70,7 +70,5 @@ We welcome contributions! Feel free to fork the repo and submit a pull request.
 
 ---
 
-## 📜 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 🚀 **Developed by Team RejuveNation** | Powered by Passion & Innovation! 💙
