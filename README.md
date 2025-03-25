@@ -71,4 +71,4 @@ We welcome contributions! Feel free to fork the repo and submit a pull request.
 ---
 
 
-🚀 **Developed by Team RejuveNation** | Powered by Passion & Innovation! 💙
+🚀 Powered by Passion & Innovation! 💙
