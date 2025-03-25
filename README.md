@@ -58,7 +58,7 @@ $ cd backend && npm run dev  # Starts the backend
 
 ---
 
-## 🌍 Aligning with UN SDGs
+## 🌍 Aligning with SDGs
 ✅ **Good Health & Well-Being**  
 ✅ **Industry, Innovation, & Infrastructure**  
 ✅ **Reduced Inequalities**  
