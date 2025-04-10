@@ -15,6 +15,8 @@ import RoleSelection from "./Pages/RoleSelection";
 import DoctorDashBoard from "./Pages/Doctor/DoctorDashBoard";
 import Appointments from "./Pages/Doctor/Appointments";
 import FinalPatient from "./Pages/Doctor/FinalPatient";
+import BookApp from "./Pages/User/BookDoctor";
+import DoctorAppointments from "./Pages/Doctor/FinalAppointment";
 import Detail from "./Pages/Doctor/Detail";
 import MainPage from "./MainPage/MainPage"
 import UserTelemedicine from "./Pages/User/User_tele";
@@ -43,7 +45,7 @@ function App() {
         <Route path="/doctor-signin" element={<DoctorSignIn/>}/>
         <Route path="/doctor-signup" element={<DoctorSignUp/>}/>
         <Route path="/doctor-dashboard" element={<DoctorDashBoard/>}/>
-        <Route path="/appointments" element={<Appointments/>}/>
+        {/* <Route path="/appointments" element={<Appointments/>}/> */}
         <Route path="/patient-dashboard" element={<FinalPatient/>}/>
         <Route path="/details" element={<Detail/>}/>
         <Route path="/main-page" element={<MainPage/>}/>
@@ -54,6 +56,8 @@ function App() {
         {/* <Route path="/onboard" element={<OnboardingPhase/>}/> */}
         <Route path="/user-reports" element={<User_reports/>}/>
         <Route path="/activity" element={<PhysicalActivity/>}/>
+        <Route path="/appointments" element={<DoctorAppointments/>}/>
+        <Route path="/book-appointment" element={<BookApp/>}/>
       </Routes>
     </Router>
     //  </Layout>

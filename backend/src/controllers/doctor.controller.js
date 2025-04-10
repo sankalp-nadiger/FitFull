@@ -13,6 +13,7 @@ import app from "../app.js"
 import {server,io} from "../index.js"
 import twilio from "twilio"
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+import { google } from "googleapis";
 import mongoose from "mongoose";
 
 const doctorsData = [
@@ -105,44 +106,193 @@ const generateAccessAndRefreshTokens = async (userId) => {
 };
 
 export const requestSession = asyncHandler(async (req, res) => {
-  const { issueDetails} = req.body;
+  const { issueDetails, doctorId, date, time } = req.body;
   const userId = req.user._id;
-
-  if (!userId || !issueDetails ) {
-    throw new ApiError(400, "User ID, issue detail and doctor email are required");
+  
+  console.log('Request received:', { userId, doctorId, date, time, issueDetails });
+  
+  if (!userId || !issueDetails || !doctorId || !date || !time) {
+    throw new ApiError(400, "User ID, issue details, doctor ID, date, and time are required");
   }
 
-  const user = await User.findById(userId);
+  // Verify user and doctor existence
+  const user = await User.findById(userId).select("+tokens");
+  const doctor = await Doctor.findById(doctorId);
+  
   if (!user) {
     throw new ApiError(404, "User not found");
   }
+  
+  if (!doctor) {
+    throw new ApiError(404, "Doctor not found");
+  }
 
-  // const doctor = await Doctor.findOne({ email: doctorEmail });
-  // if (!doctor) {
-  //   throw new ApiError(404, "Doctor not found");
-  // }
+  console.log('User and doctor found:', { 
+    user: user._id.toString(), 
+    doctor: doctor._id.toString() 
+  });
 
-  // ✅ Fix: Ensure missing fields are either optional or get default values
+  // Parse date and time to create start and end times in IST
+  const dateTimeStr = `${date}T${time}:00+05:30`;
+  console.log('Creating date from string:', dateTimeStr);
+  
+  const startTime = new Date(dateTimeStr);
+  
+  if (isNaN(startTime.getTime())) {
+    throw new ApiError(400, "Invalid date or time format");
+  }
+  
+  const endTime = new Date(startTime);
+  endTime.setHours(endTime.getHours() + 1); // Assuming 1-hour appointments
+  
+  console.log('Appointment time window:', { 
+    startTime: startTime.toISOString(), 
+    endTime: endTime.toISOString() 
+  });
+
+  // Check scheduling conflicts
+  const conflictingSession = await Session.findOne({
+    doctor: doctor._id,
+    startTime: { $lt: endTime },
+    endTime: { $gt: startTime }
+  });
+  
+  if (conflictingSession) {
+    console.log('Conflicting session found:', conflictingSession._id.toString());
+    throw new ApiError(409, "The doctor already has an appointment during that time");
+  }
+
+  // Create the Session in your database
   const session = await Session.create({
     user: user._id,
+    doctor: doctor._id,
     status: "Pending",
     issueDetails,
-    userJoined: false, // ✅ Explicitly setting boolean values
+    userJoined: false,
     doctorJoined: false,
- // ✅ Can be set later when session ends
-    roomName: `room_${user._id}`, // ✅ Generate a room name
-    type: "video", // ✅ Default type for video consultation
+    roomName: `room_${user._id}_${doctor._id}_${Date.now()}`,
+    type: "video",
+    startTime,
+    endTime,
   });
-  res.status(201).json({
+
+  console.log('Session created successfully:', session._id.toString());
+
+  // Create Google Calendar events using tokens from user model
+  try {
+    // Check if we have valid tokens to create calendar events
+    console.log('Checking user tokens:');
+    console.log('User tokens structure:', JSON.stringify(user.tokens, null, 2));
+    console.log('- userTokens:', user.tokens);
+    if (user.tokens) {
+      console.log('- googleFitToken:', user.tokens.googleFitToken ? 'Present' : 'Missing');
+      console.log('- refreshToken:', user.tokens.refreshToken ? 'Present' : 'Missing');
+    } else {
+      console.log('No tokens object found in user document');
+    }
+    
+    // Only proceed with calendar creation if tokens exist
+    if (user.tokens?.googleFitToken) {
+      console.log('Creating OAuth client for user calendar event');
+      
+      // Create OAuth client with the tokens from user schema
+      const oauth2Client = new google.auth.OAuth2(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET,
+        process.env.GOOGLE_REDIRECT_URI
+      );
+      
+      // Set credentials based on available tokens
+      const credentials = {
+        access_token: user.tokens.googleFitToken,
+      };
+      
+      // Add refresh token if available
+      if (user.tokens.refreshToken) {
+        credentials.refresh_token = user.tokens.refreshToken;
+      }
+      
+      oauth2Client.setCredentials(credentials);
+      
+      // Create calendar event details
+      const eventDetails = {
+        summary: `Medical Appointment with Dr. ${doctor.fullName || doctor.name}`,
+        description: `Consultation regarding: ${issueDetails}`,
+        start: {
+          dateTime: startTime.toISOString(),
+          timeZone: 'Asia/Kolkata', // IST timezone
+        },
+        end: {
+          dateTime: endTime.toISOString(),
+          timeZone: 'Asia/Kolkata', // IST timezone
+        },
+        attendees: [
+          { email: user.email },
+          { email: doctor.email }
+        ],
+        reminders: {
+          useDefault: false,
+          overrides: [
+            { method: 'email', minutes: 24 * 60 },
+            { method: 'popup', minutes: 30 },
+          ],
+        },
+        colorId: "1" // Blue color for medical appointments
+      };
+      
+      console.log('Creating calendar event with details:', JSON.stringify(eventDetails, null, 2));
+      
+      try {
+        // Try to create the calendar event
+        const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+        const response = await calendar.events.insert({
+          calendarId: 'primary',
+          resource: eventDetails,
+          sendUpdates: 'all', // Send emails to attendees
+        });
+        
+        console.log('Calendar event created successfully!');
+        console.log('Event ID:', response.data.id);
+        console.log('Event link:', response.data.htmlLink);
+        
+        // Update session with calendar event ID for future reference
+        session.calendarEventId = response.data.id;
+        await session.save();
+        
+      } catch (calendarError) {
+        console.error('Failed to create calendar event:', calendarError.message);
+        
+        if (calendarError.response) {
+          console.error('Response status:', calendarError.response.status);
+          console.error('Error details:', JSON.stringify(calendarError.response.data, null, 2));
+        }
+        
+        // Don't throw the error - we still want to return the session
+        // Just log it for debugging
+      }
+    } else {
+      console.log('Skipping calendar event creation - no valid tokens available');
+    }
+    
+  } catch (error) {
+    console.error('Error in calendar event creation process:', error.message);
+    // Don't re-throw - we still want to return the created session
+  }
+
+  return res.status(201).json({
     success: true,
-    message: "Session requested successfully",
+    message: "Session requested and scheduled successfully",
     session: {
       _id: session._id,
-      status: "Pending",
-      issueDetails,
+      status: session.status,
+      issueDetails: session.issueDetails,
+      startTime: session.startTime,
+      endTime: session.endTime,
+      doctorName: doctor.fullName || doctor.name,
     },
   });
 });
+
 
 export const getPendingConsultations = asyncHandler(async (req, res) => {
   const doctorId = req.doctor._id; // Assuming doctor is logged in
@@ -163,10 +313,6 @@ export const getPendingConsultations = asyncHandler(async (req, res) => {
   });
 });
 
-// Accept Session (Doctor Side)
-// import asyncHandler from "../utils/asynchandler.utils.js";
-// import Session from "../models/session.model.js";
-// import ApiError from "../utils/apiError.utils.js";
 export const joinSession = asyncHandler(async (req, res) => {
   const { sessionId } = req.params;
   const userId = req.isUser ? req.user._id : null;
@@ -332,22 +478,20 @@ export const endSession = asyncHandler(async (req, res) => {
   });
 });
 
-// Get Active Sessions (Doctor Side)
-export const getActiveSessions = asyncHandler(async (req, res) => {
-  //const doctorId = req.doctor._id;
+export const getUserAppointments = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
 
-  const sessions = await Session.find({
-      status: { $in: ["Pending", "Active"] }
-  }).populate('user', 'username');
+  const sessions = await Session.find({ user: userId })
+    .populate('user', 'username email') // adjust fields as needed
+    .populate('doctor', 'name specification email'); // adjust to match your Doctor schema
 
   res.status(200).json({
-      success: true,
-      sessions
+    success: true,
+    sessions,
   });
 });
 
-// import asyncHandler from "express-async-handler";
-// import { Doctor } from "../models/doctorModel.js";
+
 
 // @desc   Get all registered doctors
 // @route  GET /api/doctors

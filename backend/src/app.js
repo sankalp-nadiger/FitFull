@@ -78,15 +78,17 @@ const loginOAuthClient = new google.auth.OAuth2(
   app.get("/auth/google-url", (req, res) => {
     const oauth2Client = signupOAuthClient;
     const url = oauth2Client.generateAuthUrl({
-      access_type: "offline",
-      scope: ["https://www.googleapis.com/auth/fitness.activity.read",
-        'https://www.googleapis.com/auth/userinfo.profile',
-    'https://www.googleapis.com/auth/userinfo.email',
-    "https://www.googleapis.com/auth/fitness.activity.read",
-    "https://www.googleapis.com/auth/fitness.heart_rate.read",
-    "https://www.googleapis.com/auth/fitness.sleep.read"
-      ],
-    });
+        access_type: "offline",
+        prompt: "consent",
+        scope: [
+          "https://www.googleapis.com/auth/calendar", // Added Calendar scope
+          "https://www.googleapis.com/auth/fitness.activity.read",
+          "https://www.googleapis.com/auth/userinfo.profile",
+          "https://www.googleapis.com/auth/userinfo.email",
+          "https://www.googleapis.com/auth/fitness.heart_rate.read",
+          "https://www.googleapis.com/auth/fitness.sleep.read"
+        ],
+      });
   
     res.json({url});
   });
@@ -236,6 +238,7 @@ app.get("/auth/login-google", async (req, res) => {
   const authUrl = oauth2Client.generateAuthUrl({
       access_type: "offline",
       scope: ["https://www.googleapis.com/auth/fitness.activity.read",
+        "https://www.googleapis.com/auth/calendar",
         'https://www.googleapis.com/auth/userinfo.email',
         "https://www.googleapis.com/auth/userinfo.profile",
         "https://www.googleapis.com/auth/fitness.activity.read",
@@ -249,56 +252,100 @@ app.get("/auth/login-google", async (req, res) => {
 });
 
 app.post("/auth/google/check-login", async (req, res) => {
-  const { code } = req.body;
-    console.log(code)
-  if (!code) {
+    const { code } = req.body;
+    console.log("Attempting token exchange with code:", code);
+    
+    if (!code) {
       return res.status(400).json({ success: false, message: "No authorization code provided" });
-  }
-  const oauth2Client = loginOAuthClient;
-  try {
+    }
+    
+    const oauth2Client = loginOAuthClient;
+    try {
       // Exchange code for tokens
+      console.log("Exchanging code for tokens...");
       const { tokens } = await oauth2Client.getToken(code);
-      oauth2Client.setCredentials(tokens);
+        console.log("Token exchange successful:", tokens);
+      console.log("Tokens received:", {
+        access_token_exists: !!tokens.access_token,
+        refresh_token_exists: !!tokens.refresh_token,
+        expiry_date_exists: !!tokens.expiry_date
+      });
 
+      oauth2Client.setCredentials(tokens);
+  
       // Get user info from Google
       const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
       const { data: googleUser } = await oauth2.userinfo.get();
-
+      console.log("Google user info retrieved:", googleUser.email);
+  
       // Check if user exists in the database
       let user = await User.findOne({ email: googleUser.email });
-
+  
       if (!user) {
-          return res.status(404).json({ success: false, message: "User does not exist. Please sign up first." });
+        return res.status(404).json({ success: false, message: "User does not exist. Please sign up first." });
       }
-      if (user) {
-        // Update access & refresh tokens
-        user.tokens.googleFitToken = tokens.access_token;
-        user.tokens.googleFitTokenExpiry = Date.now() + tokens.expiry_date;
-    
-        // Only update refresh token if a new one is provided
-        if (tokens.refresh_token) {
-            user.tokens.refreshToken = tokens.refresh_token;
-        }
-    
-        await user.save();
-    }
-    
-    const activity= getRandomActivity();
+      
+      console.log("User found in database with ID:", user._id);
+      
+      // Make sure the tokens object exists
+      if (!user.tokens) {
+        user.tokens = {};
+      }
+      
+      // Update access & refresh tokens with proper validation
+      user.tokens.googleFitToken = tokens.access_token;
+      
+      // Safely handle the expiry date
+      if (tokens.expires_in && !isNaN(tokens.expires_in)) {
+        user.tokens.googleFitTokenExpiry = new Date(Date.now() + (tokens.expires_in * 1000));
+      } else if (tokens.expiry_date) {
+        user.tokens.googleFitTokenExpiry = new Date(tokens.expiry_date);
+      } else {
+        user.tokens.googleFitTokenExpiry = new Date(Date.now() + (3600 * 1000));
+      }
+      
+      // Only update refresh token if a new one is provided
+      if (tokens.refresh_token) {
+        user.tokens.refreshToken = tokens.refresh_token;
+      }
+      
+      await user.save();
+      
+      const activity = getRandomActivity();
+      
       // Generate JWT for the existing user
       const jwtToken = jwt.sign(
-        { _id: user._id },  // Ensure _id is used to match the verifyJWT function
+        { _id: user._id },
         process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: "7d" }
-    );
-    
-      console.log(jwtToken)
-      res.json({ success: true, jwt: jwtToken, user , suggestedActivity: activity });
-
-  } catch (error) {
+      );
+      
+      // Set the JWT as accessToken cookie
+      res.cookie('accessToken', jwtToken, {
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+        httpOnly: true, // Prevents JavaScript from reading the cookie
+        secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
+        sameSite: 'strict' // Prevents CSRF attacks
+      });
+      
+      console.log("JWT cookie set successfully as 'accessToken'");
+      res.json({ success: true, user, suggestedActivity: activity });
+  
+    } catch (error) {
       console.error("Google OAuth Error:", error);
-      res.status(500).json({ success: false, message: "Google authentication failed" });
-  }
-});
+      console.error("Error details:", error.message);
+      if (error.response && error.response.data) {
+        console.error("Response data:", error.response.data);
+      }
+      
+      return res.status(401).json({ 
+        success: false, 
+        message: "Google authentication failed", 
+        error: error.message,
+        details: error.response?.data || "Unknown error"
+      });
+    }
+  });
 
 app.post('/auth/spotify', async (req, res) => {
     const state = Math.random().toString(36).substring(7);  // Random state string for security

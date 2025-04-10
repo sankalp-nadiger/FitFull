@@ -33,6 +33,8 @@ const verifyJWT = async (token, model, role) => {
 };
 
 export const user_verifyJWT = asyncHandler(async (req, _, next) => {
+  console.log("Cookies received:", req.cookies); 
+  console.log("user_verifyJWT middleware called"); // Debugging line
   const token =
     req.cookies?.accessToken ||
     req.header("Authorization")?.replace("Bearer ", "");

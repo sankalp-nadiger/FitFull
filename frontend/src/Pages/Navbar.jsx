@@ -42,7 +42,7 @@ function Navbar() {
     <>
       <div className="bg-zinc-900 opacity-100 z-50 fixed top-0 left-0 w-full shadow-md">
         <header className="text-gray-200 body-font">
-          <div className="container mx-auto flex flex-wrap p-5 flex-col md:flex-row items-center">
+          <div className="container mx-auto flex flex-wrap p-1 flex-col md:flex-row items-center">
             <a className="flex title-font font-medium items-center text-gray-900 mb-4 md:mb-0" href="/main-page">
               <img src="../FitFull logo wo text.png" alt="Logo" style={{ height: "60px", width: "60px" }} />
               <span className="ml-3 text-3xl text-violet-500">FitFull</span>

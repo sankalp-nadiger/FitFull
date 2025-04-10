@@ -4,7 +4,7 @@ import {
     requestSession,
     acceptSession,
     endSession,
-    getActiveSessions,
+    getUserAppointments,
     addNotesToSession,
     updateFeedback,
     getDoctorStats,
@@ -35,19 +35,13 @@ router.post("/login", loginDoctor);
 router.post("/logout", doctor_verifyJWT, logoutDoctor);
 
 // Session management
-router.post("/request", user_verifyJWT, requestSession);
-//router.post("/:sessionId/join-session", verifyUserOrDoctor, joinSession);
-router.post("/accept", doctor_verifyJWT, acceptSession);
+router.post("/book", user_verifyJWT, requestSession);
+router.post("/:sessionId/join-session", verifyUserOrDoctor, joinSession);
+//router.post("/accept", doctor_verifyJWT, acceptSession);
 router.post("/end", verifyUserOrDoctor, endSession);
-router.get("/active", getActiveSessions);
+router.get("/active", user_verifyJWT, getUserAppointments);
 router.post("/notes", user_verifyJWT, addNotesToSession);
 router.get("/pending-consultations", doctor_verifyJWT, getPendingConsultations);
-
-// import express from "express";
-// import { getAllDoctors } from "../controllers/doctorController.js";
-
-// const router = express.Router();
-
 router.get("/", getAllDoctors); // Get all registered doctors
 
 // Doctor profile and stats

@@ -29,15 +29,22 @@ const UserSignIn = () => {
       return;
     }
 
-    setLoading(true); // Show loading state during login
+    setLoading(true);
 
     try {
       console.log(`fetching data from ${import.meta.env.VITE_BASE_API_URL}`)
-      const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/api/users/login`, {
-        username,
-        password,
-        email,
-      });
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_API_URL}/api/users/login`,
+        {
+          username,
+          password,
+          email,
+        },
+        {
+          withCredentials: true, // ✅ Send & receive cookies!
+        }
+      );
+      
 
       if (response.status === 200) {
         const { user, accessToken, streak, maxStreak, suggestedActivity } =
