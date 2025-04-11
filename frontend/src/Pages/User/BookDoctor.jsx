@@ -17,7 +17,7 @@ function BookApp() {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/doctor/');
+        const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/api/doctor/`);
         setDoctors(response.data);
         console.log('Doctors fetched:', response.data);
       } catch (error) {
@@ -62,7 +62,7 @@ function BookApp() {
     });
     try {
       await axios.post(
-        'http://localhost:8000/api/doctor/book',
+        `${import.meta.env.VITE_BASE_API_URL}/api/doctor/book`,
         {
           doctorId: selectedDoctor._id,
           date: selectedDate,

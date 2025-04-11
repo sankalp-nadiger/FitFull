@@ -326,14 +326,14 @@ export const getRandomActivity = () => {
 };
   
 const loginUser = asyncHandler(async (req, res) => {
-    const { username, password, email } = req.body;
+    const { username, password } = req.body;
     console.log("Request body:", req.body);
 
-    if (!username && !email) {
+    if (!username) {
         throw new ApiError(400, "Username or email is required");
     }
 
-    const user = await User.findOne({ $or: [{ username }, { email }] });
+    const user = await User.findOne({ $or: [{ username }] });
 
     if (!user) {
         throw new ApiError(404, "User does not exist");

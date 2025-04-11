@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import UserSignUp from "./UserSignUp"; // Assuming you have a UserSignUp component
+import UserSignUp from "./UserSignUp";
 
 const UserSignIn = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false); // State for password visibility toggle
-  const [activeTab, setActiveTab] = useState("user-signin"); // State for managing active form (SignIn or SignUp)
+  const [isSignUp, setIsSignUp] = useState(false); // State for managing active form (SignIn or SignUp)
 
   // Sign in with Google
   async function signInWithGoogle() {
@@ -20,11 +20,10 @@ const UserSignIn = () => {
 
     // Collect form data
     const username = event.target.username.value;
-    const email = event.target.email.value;
     const password = event.target.password.value;
 
     // Validate fields
-    if (!email || !password || !username) {
+    if (!password || !username) {
       alert("Please fill in all fields.");
       return;
     }
@@ -38,7 +37,7 @@ const UserSignIn = () => {
         {
           username,
           password,
-          email,
+   
         },
         {
           withCredentials: true, // ✅ Send & receive cookies!
@@ -77,101 +76,96 @@ const UserSignIn = () => {
       setLoading(false); // Hide loading state
     }
   };
-
+  if (isSignUp) {
+    return <UserSignUp />;
+  }
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6">
-      <h1 className="text-4xl font-bold text-green-600 mb-6">Welcome to Fitfull</h1>
-
-      <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg">
-        <h2 className="text-2xl font-semibold text-center text-indigo-300 mb-4">
-          {activeTab === "user-signin" ? "User Sign In" : "User Sign Up"}
-        </h2>
-
-        {/* Conditionally render Sign In or Sign Up form */}
-        {activeTab === "user-signin" ? (
-          <form onSubmit={handleSignIn} className="space-y-4">
-            <div>
-              <label htmlFor="username" className="block text-gray-300">
-                Username
-              </label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Enter your username"
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-indigo-900 px-4 py-8">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-lg shadow-xl overflow-hidden">
+          <div className="p-6 bg-gradient-to-r from-indigo-500 to-purple-600">
+            <div className="flex justify-center mb-4">
+              <img
+                src="/api/placeholder/64/64"
+                alt="Welcome"
+                className="w-16 h-16 rounded-full bg-white p-2"
               />
             </div>
+            <h2 className="text-2xl font-bold text-center text-white">
+              {!isSignUp ? "User Sign In" : "User Sign Up"}
+            </h2>
+          </div>
 
-            <div>
-              <label htmlFor="password" className="block text-gray-300">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={passwordVisible ? "text" : "password"} // Toggle password visibility
-                  id="password"
-                  name="password"
-                  className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Enter your password"
-                />
+          <div className="p-6">
+            {!isSignUp ? (
+              <form onSubmit={handleSignIn} className="space-y-5">
+                <div className="space-y-2">
+                  <label htmlFor="username" className="block text-gray-700 font-medium">Username</label>
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Enter your username"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="password" className="block text-gray-700 font-medium">Password</label>
+                  <div className="relative">
+                    <input
+                      type={passwordVisible ? "text" : "password"}
+                      id="password"
+                      name="password"
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="Enter your password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPasswordVisible(!passwordVisible)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 px-2 py-1 text-sm text-indigo-600 hover:text-indigo-800"
+                    >
+                      {passwordVisible ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                </div>
+
                 <button
-                  type="button"
-                  onClick={() => setPasswordVisible(!passwordVisible)} // Toggle visibility
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  type="submit"
+                  className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-all duration-200 flex items-center justify-center"
+                  disabled={loading}
                 >
-                  {passwordVisible ? "Hide" : "Show"}
+                  {loading ? "Signing In..." : "Sign In"}
                 </button>
-              </div>
+              </form>
+            ) : (
+              <UserSignUp />
+            )}
+
+<div className="mt-6 text-center">
+              <p className="text-gray-600">
+                {isSignUp ? "Already have an account? " : "Don't have an account? "}
+                <span
+                  className="text-teal-600 hover:text-teal-800 font-medium cursor-pointer"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                >
+                  {isSignUp ? "Sign in here" : "Sign up here"}
+                </span>
+              </p>
             </div>
 
-            <div>
-              <label htmlFor="email" className="block text-gray-300">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Enter your email"
-              />
+            <div className="mt-6">
+              <button
+                onClick={signInWithGoogle}
+                className="w-full py-3 px-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg transition-all duration-200 flex items-center justify-center"
+              >
+                <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032 s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2 C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
+                </svg>
+                Sign in with Google
+              </button>
             </div>
-
-            <button
-              type="submit"
-              className="w-full py-2 text-lg font-bold text-white bg-indigo-500 rounded-md hover:bg-indigo-600 transition-all disabled:opacity-50"
-              disabled={loading}
-            >
-              {loading ? "Signing In..." : "Sign In"}
-            </button>
-          </form>
-        ) : (
-          <UserSignUp />
-        )}
-
-        <div className="mt-4 text-center">
-          <p className="text-gray-400">
-            {activeTab === "user-signin"
-              ? "Don't have an account?"
-              : "Already have an account?"}{" "}
-            <span
-              className="text-indigo-400 hover:underline cursor-pointer"
-              onClick={() => setActiveTab(activeTab === "user-signin" ? "user-signup" : "user-signin")}
-            >
-              {activeTab === "user-signin" ? "Click here to sign up" : "Click here to log in"}
-            </span>
-          </p>
-        </div>
-
-        {/* Sign in with Google Button */}
-        <div className="mt-4 text-center">
-          <button
-            onClick={signInWithGoogle}
-            className="w-full py-2 text-lg font-bold text-white bg-red-500 rounded-md hover:bg-red-600 transition-all mt-2"
-          >
-            Sign in with Google
-          </button>
+          </div>
         </div>
       </div>
     </div>

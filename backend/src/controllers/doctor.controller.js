@@ -117,7 +117,7 @@ export const requestSession = asyncHandler(async (req, res) => {
 
   // Verify user and doctor existence
   const user = await User.findById(userId).select("+tokens");
-  const doctor = await Doctor.findById(doctorId);
+  const doctor = await Doctor.findById(doctorId).select("+tokens"); // Add tokens field to selection
   
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -172,110 +172,128 @@ export const requestSession = asyncHandler(async (req, res) => {
     doctorJoined: false,
     roomName: `room_${user._id}_${doctor._id}_${Date.now()}`,
     type: "video",
+    date,
     startTime,
     endTime,
   });
 
   console.log('Session created successfully:', session._id.toString());
 
-  // Create Google Calendar events using tokens from user model
-  try {
-    // Check if we have valid tokens to create calendar events
-    console.log('Checking user tokens:');
-    console.log('User tokens structure:', JSON.stringify(user.tokens, null, 2));
-    console.log('- userTokens:', user.tokens);
-    if (user.tokens) {
-      console.log('- googleFitToken:', user.tokens.googleFitToken ? 'Present' : 'Missing');
-      console.log('- refreshToken:', user.tokens.refreshToken ? 'Present' : 'Missing');
-    } else {
-      console.log('No tokens object found in user document');
-    }
-    
-    // Only proceed with calendar creation if tokens exist
-    if (user.tokens?.googleFitToken) {
-      console.log('Creating OAuth client for user calendar event');
+  // Function to create a Google Calendar event for a participant (user or doctor)
+  const createCalendarEvent = async (participant, participantType) => {
+    try {
+      console.log(`Checking ${participantType} tokens:`);
+      console.log(`${participantType} tokens structure:`, JSON.stringify(participant.tokens, null, 2));
       
-      // Create OAuth client with the tokens from user schema
-      const oauth2Client = new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,
-        process.env.GOOGLE_CLIENT_SECRET,
-        process.env.GOOGLE_REDIRECT_URI
-      );
-      
-      // Set credentials based on available tokens
-      const credentials = {
-        access_token: user.tokens.googleFitToken,
-      };
-      
-      // Add refresh token if available
-      if (user.tokens.refreshToken) {
-        credentials.refresh_token = user.tokens.refreshToken;
-      }
-      
-      oauth2Client.setCredentials(credentials);
-      
-      // Create calendar event details
-      const eventDetails = {
-        summary: `Medical Appointment with Dr. ${doctor.fullName || doctor.name}`,
-        description: `Consultation regarding: ${issueDetails}`,
-        start: {
-          dateTime: startTime.toISOString(),
-          timeZone: 'Asia/Kolkata', // IST timezone
-        },
-        end: {
-          dateTime: endTime.toISOString(),
-          timeZone: 'Asia/Kolkata', // IST timezone
-        },
-        attendees: [
-          { email: user.email },
-          { email: doctor.email }
-        ],
-        reminders: {
-          useDefault: false,
-          overrides: [
-            { method: 'email', minutes: 24 * 60 },
-            { method: 'popup', minutes: 30 },
-          ],
-        },
-        colorId: "1" // Blue color for medical appointments
-      };
-      
-      console.log('Creating calendar event with details:', JSON.stringify(eventDetails, null, 2));
-      
-      try {
-        // Try to create the calendar event
-        const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
-        const response = await calendar.events.insert({
-          calendarId: 'primary',
-          resource: eventDetails,
-          sendUpdates: 'all', // Send emails to attendees
-        });
+      if (participant.tokens?.googleFitToken) {
+        console.log(`Creating OAuth client for ${participantType} calendar event`);
         
-        console.log('Calendar event created successfully!');
-        console.log('Event ID:', response.data.id);
-        console.log('Event link:', response.data.htmlLink);
+        // Create OAuth client with the tokens
+        const oauth2Client = new google.auth.OAuth2(
+          process.env.GOOGLE_CLIENT_ID,
+          process.env.GOOGLE_CLIENT_SECRET,
+          process.env.GOOGLE_REDIRECT_URI
+        );
         
-        // Update session with calendar event ID for future reference
-        session.calendarEventId = response.data.id;
-        await session.save();
+        // Set credentials based on available tokens
+        const credentials = {
+          access_token: participant.tokens.googleFitToken,
+        };
         
-      } catch (calendarError) {
-        console.error('Failed to create calendar event:', calendarError.message);
-        
-        if (calendarError.response) {
-          console.error('Response status:', calendarError.response.status);
-          console.error('Error details:', JSON.stringify(calendarError.response.data, null, 2));
+        // Add refresh token if available
+        if (participant.tokens.refreshToken) {
+          credentials.refresh_token = participant.tokens.refreshToken;
         }
         
-        // Don't throw the error - we still want to return the session
-        // Just log it for debugging
+        oauth2Client.setCredentials(credentials);
+        
+        // Create calendar event details
+        const eventDetails = {
+          summary: `Medical Appointment with ${participantType === 'user' 
+            ? `Dr. ${doctor.fullName || doctor.name}` 
+            : `Patient ${user.fullName || user.name}`}`,
+          description: `Consultation regarding: ${issueDetails}`,
+          start: {
+            dateTime: startTime.toISOString(),
+            timeZone: 'Asia/Kolkata', // IST timezone
+          },
+          end: {
+            dateTime: endTime.toISOString(),
+            timeZone: 'Asia/Kolkata', // IST timezone
+          },
+          attendees: [
+            { email: user.email },
+            { email: doctor.email }
+          ],
+          reminders: {
+            useDefault: false,
+            overrides: [
+              { method: 'email', minutes: 24 * 60 },
+              { method: 'popup', minutes: 30 },
+            ],
+          },
+          colorId: "1" // Blue color for medical appointments
+        };
+        
+        console.log(`Creating calendar event for ${participantType} with details:`, 
+          JSON.stringify(eventDetails, null, 2));
+        
+        try {
+          // Create the calendar event
+          const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+          const response = await calendar.events.insert({
+            calendarId: 'primary',
+            resource: eventDetails,
+            sendUpdates: 'all', // Send emails to attendees
+          });
+          
+          console.log(`Calendar event created successfully for ${participantType}!`);
+          console.log('Event ID:', response.data.id);
+          console.log('Event link:', response.data.htmlLink);
+          
+          // Return the event ID
+          return response.data.id;
+          
+        } catch (calendarError) {
+          console.error(`Failed to create calendar event for ${participantType}:`, calendarError.message);
+          
+          if (calendarError.response) {
+            console.error('Response status:', calendarError.response.status);
+            console.error('Error details:', JSON.stringify(calendarError.response.data, null, 2));
+          }
+          
+          return null;
+        }
+      } else {
+        console.log(`Skipping calendar event creation for ${participantType} - no valid tokens available`);
+        return null;
       }
-    } else {
-      console.log('Skipping calendar event creation - no valid tokens available');
+    } catch (error) {
+      console.error(`Error in ${participantType} calendar event creation process:`, error.message);
+      return null;
+    }
+  };
+
+  // Create calendar events for both user and doctor
+  try {
+    // Create event for user
+    const userEventId = await createCalendarEvent(user, 'user');
+    if (userEventId) {
+      session.userCalendarEventId = userEventId;
     }
     
+    // Create event for doctor
+    const doctorEventId = await createCalendarEvent(doctor, 'doctor');
+    if (doctorEventId) {
+      session.doctorCalendarEventId = doctorEventId;
+    }
+    
+    // Save the session with calendar event IDs
+    if (userEventId || doctorEventId) {
+      await session.save();
+    }
   } catch (error) {
-    console.error('Error in calendar event creation process:', error.message);
+    console.error('Error in calendar events creation:', error.message);
     // Don't re-throw - we still want to return the created session
   }
 
@@ -296,25 +314,26 @@ export const requestSession = asyncHandler(async (req, res) => {
 
 export const getPendingConsultations = asyncHandler(async (req, res) => {
   const doctorId = req.doctor._id; // Assuming doctor is logged in
-
   const pendingConsultations = await Session.find({
     doctor: doctorId,
     status: "Pending",
-  }).populate("user", "name");
+  }).populate("user", "fullName");
 
   res.status(200).json({
     success: true,
     consultations: pendingConsultations.map((session) => ({
       id: session._id,
       issueDetails: session.issueDetails,
-      name: session.user.name,
+      name: session.user.fullName,
       time: `${new Date(session.startTime).toLocaleTimeString()} - ${new Date(session.endTime).toLocaleTimeString()}`,
+      date: session.date
     })),
   });
 });
 
 export const joinSession = asyncHandler(async (req, res) => {
   const { sessionId } = req.params;
+  console.log("Route hit join")
   const userId = req.isUser ? req.user._id : null;
   const doctorId = req.isDoctor ? req.doctor._id : null;
 
@@ -337,12 +356,13 @@ export const joinSession = asyncHandler(async (req, res) => {
       doctor: session.doctor.toString(),
       userJoined: session.userJoined,
       doctorJoined: session.doctorJoined,
-      status: session.status
+      status: session.status,
+      roomName: session.roomName
     }
   });
 
-  if (session.status !== "Upcoming") {
-    throw new ApiError(400, "Session is not in upcoming state");
+  if (session.status !== "Pending") {
+    throw new ApiError(400, "Session is not in pending state");
   }
 
   // Update fields based on who is joining
@@ -379,6 +399,7 @@ export const joinSession = asyncHandler(async (req, res) => {
     session: {
       _id: session._id,
       status: session.status,
+      roomName: session.roomName,
       userJoined: session.userJoined,
       doctorJoined: session.doctorJoined
     },
@@ -449,6 +470,7 @@ export const acceptSession = asyncHandler(async (req, res) => {
 
 // End Session
 export const endSession = asyncHandler(async (req, res) => {
+  console.log("Route hit");
   const { sessionId } = req.body;
   let userId;
   if (!req.isDoctor) {
@@ -483,7 +505,7 @@ export const getUserAppointments = asyncHandler(async (req, res) => {
 
   const sessions = await Session.find({ user: userId })
     .populate('user', 'username email') // adjust fields as needed
-    .populate('doctor', 'name specification email'); // adjust to match your Doctor schema
+    .populate('doctor', 'fullName specification email'); // adjust to match your Doctor schema
 
   res.status(200).json({
     success: true,

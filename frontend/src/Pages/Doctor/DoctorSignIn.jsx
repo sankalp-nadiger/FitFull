@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import DoctorSignUp from "./DoctorSignUp";
 import { useNavigate } from "react-router-dom";
-import { use } from "react";
+import "./DoctorSignIn.css"; // Make sure to create this file with the CSS content
 
 const DoctorSignIn = () => {
   const [isSignUp, setIsSignUp] = useState(false); // Toggle between SignIn & SignUp
@@ -99,111 +99,117 @@ const DoctorSignIn = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6">
-      <h1 className="text-4xl font-bold text-green-600 mb-6">Doctor Sign</h1>
-
-      <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg flex flex-col items-center">
-        <form onSubmit={handleSubmit} className="w-full space-y-4">
-          <div className="flex flex-col">
-            <label htmlFor="email" className="text-sm font-medium text-gray-300">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label htmlFor="phoneNumber" className="text-sm font-medium text-gray-300">
-              Phone Number
-            </label>
-            <input
-              id="phoneNumber"
-              type="tel"
-              className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              placeholder="Enter your phone number"
-              maxLength={10}
-              required
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label htmlFor="password" className="text-sm font-medium text-gray-300">
-              Password
-            </label>
-            <div className="relative">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-teal-900 via-cyan-900 to-blue-900 px-4 py-8">
+      <div className="w-full max-w-md">
+        
+        <div className="bg-white rounded-lg shadow-xl overflow-hidden relative">
+          <div className="p-6 bg-gradient-to-r from-teal-500 to-cyan-600">
+            <div className="flex justify-center mb-4">
+              <img
+                src="/api/placeholder/80/80"
+                alt="Welcome"
+                className="w-20 h-20 rounded-full bg-white p-2 animate-pulse"
               />
+            </div>
+            <h2 className="text-2xl font-bold text-center text-white">
+              {isSignUp ? "Doctor Sign Up" : "Doctor Sign In"}
+            </h2>
+          </div>
+
+          <div className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <label htmlFor="email" className="block text-gray-700 font-medium">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="phoneNumber" className="block text-gray-700 font-medium">Phone Number</label>
+                <input
+                  type="tel"
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="Enter your phone number"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  maxLength={10}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="password" className="block text-gray-700 font-medium">Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    name="password"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 px-2 py-1 text-sm text-teal-600 hover:text-teal-800"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+
               <button
-                type="button"
-                className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-300"
-                onClick={() => setShowPassword(!showPassword)}
+                type="submit"
+                className="w-full py-3 px-4 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg transition-all duration-200 flex items-center justify-center"
               >
-                {showPassword ? "Hide" : "Show"}
+                Submit
+              </button>
+            </form>
+
+            <div className="mt-6">
+              <button
+                onClick={signInWithGoogle}
+                className="w-full py-3 px-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg transition-all duration-200 flex items-center justify-center"
+              >
+                <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032 s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2 C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
+                </svg>
+                Sign in with Google
               </button>
             </div>
-          </div>
-          
 
-          {/* OTP Field (Commented out for now) */}
-          {/* {otpSent && (
-            <div className="flex flex-col">
-              <label htmlFor="otp" className="text-sm font-medium text-gray-300">OTP</label>
-              <input
-                id="otp"
-                type="text"
-                className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                placeholder="Enter OTP"
-                maxLength={6}
-                required
-              />
-              {otpError && <span className="text-red-500 text-sm">Invalid OTP. Please try again.</span>}
+            <div className="mt-6 text-center">
+              <p className="text-gray-600">
+                {isSignUp ? "Already have an account? " : "Don't have an account? "}
+                <span
+                  className="text-teal-600 hover:text-teal-800 font-medium cursor-pointer"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                >
+                  {isSignUp ? "Sign in here" : "Sign up here"}
+                </span>
+              </p>
             </div>
-          )} */}
-          
-          <button
-            type="submit"
-            className="w-full px-4 py-2 font-semibold bg-green-500 text-white rounded-md hover:bg-green-600 transition-all"
-          >
-            Submit
-          </button>
-        </form> 
-        <div className="mt-4 text-center">
-          <button
-            onClick={signInWithGoogle}
-            className="w-full py-2 px-16 text-lg font-bold text-white bg-red-500 rounded-md hover:bg-red-600 transition-all mt-2"
-          >
-            Sign in with Google
-          </button>
+          </div>
         </div>
-        <div className="mt-4 text-center">
-          <p className="text-gray-400">
-            Don't have an account?{" "}
-            <span
-              className="text-indigo-400 hover:underline cursor-pointer"
-              onClick={() => setIsSignUp(true)} // Toggle to SignUp
-            >
-              Click here to sign up
-            </span>
-          </p>
-        </div>
+      </div>
+
+      {/* Animated Background Elements */}
+      <div className="fixed top-0 left-0 w-full h-full -z-10 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-teal-500 rounded-full opacity-10 animate-blob"></div>
+        <div className="absolute top-3/4 left-2/3 w-48 h-48 bg-cyan-500 rounded-full opacity-10 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-blue-500 rounded-full opacity-10 animate-blob animation-delay-4000"></div>
       </div>
     </div>
   );

@@ -38,7 +38,7 @@ const UserTelemedicine = () => {
   const fetchActiveSessions = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:8000/api/doctor/active', {
+      const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/api/doctor/active`, {
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
         },
@@ -88,7 +88,7 @@ const UserTelemedicine = () => {
   const joinSession = async (sessionId) => {
     try {
       const response = await axios.post(
-        `http://localhost:8000/api/doctor/${sessionId}/join-session`,
+        `${import.meta.env.VITE_BASE_API_URL}/api/doctor/${sessionId}/join-session`,
         {},
         {
           headers: {
@@ -118,7 +118,7 @@ const UserTelemedicine = () => {
 
     try {
       await axios.post(
-        'http://localhost:8000/api/users/addNotes',
+        `${import.meta.env.VITE_BASE_API_URL}/api/users/addNotes`,
         { sessionId: activeSession._id, notes },
         {
           headers: {
@@ -142,7 +142,7 @@ const UserTelemedicine = () => {
   
     try {
       await axios.post(
-        'http://localhost:8000/api/users/end',
+        `${import.meta.env.VITE_BASE_API_URL}/api/users/end`,
         { sessionId: activeSession._id },
         {
           headers: {
@@ -172,7 +172,7 @@ const UserTelemedicine = () => {
     try {
       setTestReportStatus('Uploading...');
       await axios.post(
-        'http://localhost:8000/api/users/upload-report',
+        `${import.meta.env.VITE_BASE_API_URL}/api/users/upload-report`,
         formData,
         {
           headers: {
@@ -202,7 +202,7 @@ const UserTelemedicine = () => {
   
     try {
       await axios.post(
-        'http://localhost:8000/api/users/feedback',
+        `${import.meta.env.VITE_BASE_API_URL}/api/users/feedback`,
         {
           feedback,
           rating,
@@ -220,7 +220,7 @@ const UserTelemedicine = () => {
       // After feedback, get doctor recommendations
       try {
         const response = await axios.get(
-          `http://localhost:8000/api/doctor/recommendations/${endedSession.doctor._id}`,
+          `${import.meta.env.VITE_BASE_API_URL}/api/doctor/recommendations/${endedSession.doctor._id}`,
           {
             headers: {
               Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
@@ -410,7 +410,7 @@ const UserTelemedicine = () => {
                   >
                     <div className="flex justify-between items-start mb-3">
                       <h3 className="text-xl font-semibold text-gray-800">
-                        Dr. {session.doctor?.fullName || 'Not Assigned'}
+                        Dr. {session.doctor.fullName }
                       </h3>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         session.status === 'Active' ? 'bg-green-100 text-green-800' :
@@ -436,7 +436,7 @@ const UserTelemedicine = () => {
                       </p>
                     </div>
                     
-                    {session.status === 'Active' && !activeSession && (
+                    {session.status === 'Pending' && !activeSession && (
                       <button
                         onClick={() => joinSession(session._id)}
                         className="w-full mt-2 p-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center justify-center"
