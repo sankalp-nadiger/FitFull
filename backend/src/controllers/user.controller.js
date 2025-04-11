@@ -658,9 +658,9 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
       //   return res.status(404).json({ success: false, message: "Family member request not found" });
       // }
   
-      if (pendingRequest.status === 'approved') {
-        return res.status(400).json({ success: false, message: "Request already approved" });
-      }
+      // if (pendingRequest.status === 'approved') {
+      //   return res.status(400).json({ success: false, message: "Request already approved" });
+      // }
   
       // Update the request status and add the voice recording
       pendingRequest.status = 'approved';
