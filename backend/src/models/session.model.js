@@ -10,7 +10,7 @@ const sessionSchema = new mongoose.Schema({
         doctorJoined: { type: Boolean, default: false },
         startTime: { type: Date, required: false },
         endTime: { type: Date, required: false },
-        date: { type: Date, required: true },
+        date: { type: Date },
         roomName: { type: String, required: true },
         type: { type: String, default: "video" }
       });

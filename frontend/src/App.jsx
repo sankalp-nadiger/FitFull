@@ -13,8 +13,6 @@ import HomePage from "./Pages/HomePage";
 import Auth from "./Pages/Auth";
 import RoleSelection from "./Pages/RoleSelection";
 import DoctorDashBoard from "./Pages/Doctor/DoctorDashBoard";
-import Appointments from "./Pages/Doctor/Appointments";
-import FinalPatient from "./Pages/Doctor/FinalPatient";
 import BookApp from "./Pages/User/BookDoctor";
 import DoctorAppointments from "./Pages/Doctor/FinalAppointment";
 import Detail from "./Pages/Doctor/Detail";
@@ -25,7 +23,7 @@ import CommunityChat from "./Community/community";
 import UserProfile from "./Pages/User/User_profile";
 import User_reports from "./Pages/User/User_reports";
 import PhysicalActivity from "./Pages/Activity/Activity";
-// import OnboardingPhase from "./Pages/User/OnBoardingPhase";
+
 function App() {
   return (
   //  <Layout>
@@ -35,8 +33,6 @@ function App() {
         <Route path="/auth" element={<Auth/>} />
         <Route path="/user-signin" element={<UserSignIn />}/>
         <Route path="/user-signup" element={<UserSignUp />} />
-        {/* <Route path="/signin-password" element={<PasswordSignIn />} /> */}
-        {/* <Route path="/signin-google" element={<GoogleSignIn />} /> */}
         <Route path="/Onboard" element={<OnboardingPhase/>}/>
         <Route path="/success" element={<SuccessPage/>}/>
         <Route path="/roleselect" element={<RoleSelection/>}/>
@@ -45,15 +41,12 @@ function App() {
         <Route path="/doctor-signin" element={<DoctorSignIn/>}/>
         <Route path="/doctor-signup" element={<DoctorSignUp/>}/>
         <Route path="/doctor-dashboard" element={<DoctorDashBoard/>}/>
-        {/* <Route path="/appointments" element={<Appointments/>}/> */}
-        <Route path="/patient-dashboard" element={<FinalPatient/>}/>
         <Route path="/details" element={<Detail/>}/>
         <Route path="/main-page" element={<MainPage/>}/>
         <Route path="/user-tele" element={<UserTelemedicine/>}/>
         <Route path="/wearables" element={<DeviceList/>}/>
         <Route path="/community" element={<CommunityChat/>}/>
         <Route path="/user-profile" element={<UserProfile/>}/>
-        {/* <Route path="/onboard" element={<OnboardingPhase/>}/> */}
         <Route path="/user-reports" element={<User_reports/>}/>
         <Route path="/activity" element={<PhysicalActivity/>}/>
         <Route path="/appointments" element={<DoctorAppointments/>}/>

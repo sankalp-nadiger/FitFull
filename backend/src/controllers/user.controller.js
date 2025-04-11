@@ -151,7 +151,19 @@ const generateAccessAndRefreshTokens = async (userId) => {
       );
     }
 };
+export const getAllUsersWithDetails = async (req, res) => {
+  try {
+    const users = await User.find()
+      .populate('prescriptions')
+      .populate('testReports')
+      .populate('family');
 
+    res.status(200).json(users);
+  } catch (err) {
+    console.error("Error fetching users with full details:", err);
+    res.status(500).json({ message: 'Failed to fetch users with details', error: err.message });
+  }
+};
 
 import jwt from "jsonwebtoken";
 
@@ -658,9 +670,7 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
       if (!user.family) {
         user.family = [];
       }
-  
-      // Push the approved family member into the family array
-      // Instead of pushing an object with multiple fields
+
 user.family.push(recipientUser._id);
   
       await user.save();
@@ -1270,15 +1280,6 @@ const getFamilyTest = async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to retrieve test report" });
     }
 };
-export const getUsers = asyncHandler(async (req, res) => {
-    try {
-      const users = await User.find({}, 'name email'); // Fetch only necessary fields
-      res.status(200).json({ users });
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      throw new ApiError(500, 'Failed to fetch users');
-    }
-  });
 
   export const getDoctors = asyncHandler(async (req, res) => {
     try {

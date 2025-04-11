@@ -11,9 +11,9 @@ import {
   getFamDiag, getFamPresc, getDiagnosisReport, getFamilyTest, addDiagnosisReport,
   savePrescription,
   saveTestReport,
-  approveFamilyMember, approvalDeniedPage, approvalSuccessPage, getVerificationPage
+  approveFamilyMember, approvalDeniedPage, approvalSuccessPage, getVerificationPage,
   //getCurrentUser,
-  // getUsers
+  getAllUsersWithDetails
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { endSession, joinSession } from "../controllers/doctor.controller.js";
@@ -22,6 +22,7 @@ const router = express.Router();
 // Public routes
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.get('/full', getAllUsersWithDetails);
 // Protected routes - Require JWT authentication
 router.post("/family/add", user_verifyJWT, addFamilyMembers);
 router.delete("/family/remove", user_verifyJWT, removeFamilyMember);

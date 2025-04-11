@@ -29,6 +29,12 @@ const userSchema = new Schema(
       required: true,
       unique: true,
     },
+    mobileNumber: {
+      type: String,
+      unique: true,
+      sparse: true, // allows multiple null values
+      match: [/^\d{10}$/, 'Please enter a valid 10-digit mobile number']
+    },    
     password: {
       type: String,
       required: function () {
