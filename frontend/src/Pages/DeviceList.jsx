@@ -30,6 +30,7 @@ const DeviceList = () => {
       setError(null);
       const response = await axios.get(`${API_BASE_URL}/load`, {
         headers: { Authorization: `Bearer ${accessToken}` },
+        withCredentials: true,
       });
       setDevices(response.data.devices);
     } catch (error) {
