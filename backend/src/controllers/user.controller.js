@@ -384,108 +384,119 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
           </div>
           
           <script>
-            // Voice recording functionality
-            let mediaRecorder;
-            let audioChunks = [];
-            let audioBlob;
-            const recordButton = document.getElementById('recordButton');
-            const recordingStatus = document.getElementById('recordingStatus');
-            const audioPlayback = document.getElementById('audioPlayback');
-            const identityConfirmed = document.getElementById('identityConfirmed');
-            const approveButton = document.getElementById('approveButton');
-            const denyButton = document.getElementById('denyButton');
-            
-            // Handle recording
-            recordButton.addEventListener('click', () => {
-              if (mediaRecorder && mediaRecorder.state === 'recording') {
-                stopRecording();
-              } else {
-                startRecording();
-              }
-            });
-            
-            async function startRecording() {
-              audioChunks = [];
-              try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                
-                mediaRecorder.addEventListener('dataavailable', event => {
-                  audioChunks.push(event.data);
-                });
-                
-                mediaRecorder.addEventListener('stop', () => {
-                  audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                  const audioUrl = URL.createObjectURL(audioBlob);
-                  audioPlayback.src = audioUrl;
-                  audioPlayback.classList.remove('hidden');
-                  recordingStatus.textContent = 'Recording complete - play back to verify';
-                  recordButton.classList.remove('recording');
-                  checkEnableApproveButton();
-                });
-                
-                mediaRecorder.start();
-                recordingStatus.textContent = 'Recording in progress...';
-                recordButton.classList.add('recording');
-              } catch (err) {
-                console.error('Error accessing microphone:', err);
-                recordingStatus.textContent = 'Error: Unable to access microphone';
-              }
-            }
-            
-            function stopRecording() {
-              if (mediaRecorder) {
-                mediaRecorder.stop();
-                mediaRecorder.stream.getTracks().forEach(track => track.stop());
-              }
-            }
-            
-            // Check if approval button should be enabled
-            function checkEnableApproveButton() {
-              approveButton.disabled = !(identityConfirmed.checked && audioBlob);
-            }
-            
-            identityConfirmed.addEventListener('change', checkEnableApproveButton);
-            
-            // Handle approval submission
-            approveButton.addEventListener('click', async () => {
-              const formData = new FormData();
-              formData.append('voiceRecording', audioBlob);
-              formData.append('token', '${token}');
-              
-              try {
-                approveButton.disabled = true;
-                approveButton.textContent = 'Processing...';
-                
-                const response = await fetch('https://fitfull.onrender.com/api/users/family/approve', {
-                  method: 'POST',
-                  body: formData
-                });
-                
-                if (response.ok) {
-                  window.location.href = 'https://fitfull.onrender.com/users/approval-success/${token}';
-                } else {
-                  const errorData = await response.json();
-                  alert('Error: ' + (errorData.message || 'Failed to process approval'));
-                  approveButton.disabled = false;
-                  approveButton.textContent = 'Approve Request';
-                }
-              } catch (error) {
-                console.error('Error submitting approval:', error);
-                alert('Error submitting approval. Please try again.');
-                approveButton.disabled = false;
-                approveButton.textContent = 'Approve Request';
-              }
-            });
-            
-            // Handle denial
-            denyButton.addEventListener('click', () => {
-              if (confirm('Are you sure you want to deny this request?')) {
-                window.location.href = 'https://fitfull.onrender.com/approval-denied/${token}';
-              }
-            });
-          </script>
-        </body>
+  let mediaRecorder;
+  let audioChunks = [];
+  let audioBlob;
+  const recordButton = document.getElementById('recordButton');
+  const recordingStatus = document.getElementById('recordingStatus');
+  const audioPlayback = document.getElementById('audioPlayback');
+  const identityConfirmed = document.getElementById('identityConfirmed');
+  const approveButton = document.getElementById('approveButton');
+  const denyButton = document.getElementById('denyButton');
+
+  recordButton.addEventListener('click', () => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  });
+
+  async function startRecording() {
+    audioChunks = [];
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+
+      mediaRecorder.addEventListener('dataavailable', event => {
+        audioChunks.push(event.data);
+      });
+
+      mediaRecorder.addEventListener('stop', () => {
+        audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        audioPlayback.src = audioUrl;
+        audioPlayback.classList.remove('hidden');
+        recordingStatus.textContent = 'Recording complete - play back to verify';
+        recordButton.classList.remove('recording');
+        checkEnableApproveButton();
+      });
+
+      mediaRecorder.start();
+      recordingStatus.textContent = 'Recording in progress...';
+      recordButton.classList.add('recording');
+    } catch (err) {
+      console.error('Error accessing microphone:', err);
+      recordingStatus.textContent = 'Error: Unable to access microphone';
+    }
+  }
+
+  function stopRecording() {
+    if (mediaRecorder) {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    }
+  }
+
+  function checkEnableApproveButton() {
+    approveButton.disabled = !(identityConfirmed.checked && audioBlob);
+  }
+
+  identityConfirmed.addEventListener('change', checkEnableApproveButton);
+
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result.split(',')[1]; // remove data URL part
+        resolve(base64String);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  approveButton.addEventListener('click', async () => {
+    try {
+      approveButton.disabled = true;
+      approveButton.textContent = 'Processing...';
+
+      const base64Audio = await blobToBase64(audioBlob);
+
+      const response = await fetch('https://fitfull.onrender.com/api/users/family/approve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          token: '${token}', // server-injected token
+          voiceRecording: base64Audio
+        })
+      });
+
+      if (response.ok) {
+        window.location.href = 'https://fitfull.onrender.com/users/approval-success/${token}';
+      } else {
+        const errorData = await response.json();
+        alert('Error: ' + (errorData.message || 'Failed to process approval'));
+        approveButton.disabled = false;
+        approveButton.textContent = 'Approve Request';
+      }
+    } catch (error) {
+      console.error('Error submitting approval:', error);
+      alert('Error submitting approval. Please try again.');
+      approveButton.disabled = false;
+      approveButton.textContent = 'Approve Request';
+    }
+  });
+
+  denyButton.addEventListener('click', () => {
+    if (confirm('Are you sure you want to deny this request?')) {
+      window.location.href = 'https://fitfull.onrender.com/approval-denied/${token}';
+    }
+  });
+</script>
+ </body>
         </html>
       `;
       
@@ -598,90 +609,40 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
 // New endpoint to handle approval
 export const approveFamilyMember = asyncHandler(async (req, res) => {
     try {
-      // Get token and base64 voice recording from JSON body
       const { token, voiceRecording } = req.body;
-      
-      if (!token) {
-        return res.status(400).json({
-          success: false,
-          message: "Token is required"
-        });
+  
+      if (!token || !voiceRecording) {
+        return res.status(400).json({ success: false, message: "Missing token or voice recording" });
       }
-      
-      if (!voiceRecording) {
-        return res.status(400).json({
-          success: false,
-          message: "Voice verification recording is required"
-        });
-      }
-      
-      // Verify the token
+  
       const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-      const { requesterId, recipientId } = decoded;
-      
-      // Find both users
-      const requester = await User.findById(requesterId);
-      const recipient = await User.findById(recipientId);
-      
-      if (!requester || !recipient) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found"
-        });
+      const email = decoded.email;
+  
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(404).json({ success: false, message: "User not found" });
       }
-      
-      // Initialize family arrays if they don't exist
-      if (!requester.family) requester.family = [];
-      
-      // Check if already added
-      const alreadyAdded = requester.family.some(id => id.toString() === recipientId.toString());
-      
-      if (!alreadyAdded) {
-        // Add recipient to requester's family
-        requester.family.push(recipientId);
-        
-        // Save the voice recording as base64 or to file system if needed
-        // For this example, we'll just store it in the database
-        const voiceVerificationData = voiceRecording;
-        
-        // Update pending requests status
-        if (requester.pendingFamilyRequests) {
-          requester.pendingFamilyRequests = requester.pendingFamilyRequests.map(req => {
-            if (req.email === recipient.email) {
-              return { 
-                ...req, 
-                status: "approved",
-                voiceVerification: voiceVerificationData, // Storing base64 data
-                approvedAt: new Date()
-              };
-            }
-            return req;
-          });
-        }
-        
-        await requester.save();
+  
+      const familyMember = user.family.find((member) => member.approvalToken === token);
+      if (!familyMember) {
+        return res.status(404).json({ success: false, message: "Family member not found or already approved" });
       }
-      
-      return res.status(200).json({
-        success: true,
-        message: "Family member approved successfully"
-      });
+  
+      familyMember.approved = true;
+      familyMember.voiceRecording = voiceRecording; // base64 string
+      familyMember.approvalToken = undefined;
+  
+      await user.save();
+  
+      return res.status(200).json({ success: true, message: "Family member approved successfully" });
     } catch (error) {
-      console.error("Error approving family member:", error);
-      
-      if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid or expired token"
-        });
-      }
-      
-      return res.status(500).json({
-        success: false,
-        message: error.message || "Error approving family member"
-      });
+      console.error("Approval error:", error);
+      return res.status(500).json({ success: false, message: "Server error during approval" });
     }
-});
+  });
+  
+  
+  
 
   export const approvalSuccessPage = asyncHandler(async (req, res) => {
     try {
