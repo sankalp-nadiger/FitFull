@@ -1,5 +1,5 @@
-import { Button } from "../components/ui/Button";
-import { Card, CardContent } from "../components/ui/Card";
+import { Button } from "../../components/ui/Button";
+import { Card, CardContent } from "../../components/ui/Card";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
