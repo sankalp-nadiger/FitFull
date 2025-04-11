@@ -607,10 +607,6 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
     }
   });
 
-// New endpoint to handle approval
-import jwt from "jsonwebtoken";
-import asyncHandler from "express-async-handler";
-import User from "../models/User.js";
 
 export const approveFamilyMember = asyncHandler(async (req, res) => {
   try {
