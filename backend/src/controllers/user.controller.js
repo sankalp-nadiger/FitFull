@@ -8,6 +8,7 @@ import { DiagnosisReport } from "../models/Diagnoses.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { encryptData, decryptData } from "../utils/security.js";
 import { Doctor } from "../models/doctor.model.js";
+import nodemailer from "nodemailer";
 
 const additionalActivities = [
     // Cardio & Endurance
@@ -144,60 +145,235 @@ const generateAccessAndRefreshTokens = async (userId) => {
     }
 };
 
-export const addFamilyMembers = asyncHandler(async (req, res) => {
-    try {
-        const { familyMembers } = req.body; // Array of emails
-        const userId = req.user._id; // Current user's ID from auth middleware
 
-        if (!familyMembers || !Array.isArray(familyMembers)) {
-            throw new ApiError(400, "Family members must be provided as an array of emails");
-        }
+import jwt from "jsonwebtoken";
 
-        // Find the user
-        const user = await User.findById(userId);
-        if (!user) {
-            throw new ApiError(404, "User not found");
-        }
 
-        // Initialize family array if it doesn't exist
-        if (!user.family) {
-            user.family = [];
-        }
-
-        // Find users by email
-        const members = await User.find({ email: { $in: familyMembers } }, "_id");
-
-        if (members.length === 0) {
-            throw new ApiError(404, "No valid family members found");
-        }
-
-        // Extract IDs and filter out duplicates
-        const memberIds = members.map(member => member._id.toString());
-        const newMembers = memberIds.filter(id => !user.family.includes(id));
-
-        if (newMembers.length === 0) {
-            return res.status(200).json(
-                new ApiResponse(200, { user }, "No new family members added (already exist)")
-            );
-        }
-
-        // Add new members and save
-        user.family.push(...newMembers);
-        await user.save();
-
-        // Fetch the updated user with populated family members
-        const updatedUser = await User.findById(userId)
-            .populate("family", "fullName email username")
-            .select("-password -refreshToken");
-
-        return res.status(200).json(
-            new ApiResponse(200, { user: updatedUser }, "Family members added successfully")
-        );
-    } catch (error) {
-        console.error("Error adding family members:", error);
-        throw new ApiError(500, error.message || "Error adding family members");
-    }
+const transporter = nodemailer.createTransport({
+  service: "gmail", 
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
 });
+
+// Create HTML email template
+const createApprovalEmailTemplate = (requestingUser, token) => {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #4CAF50; color: white; padding: 10px; text-align: center; }
+        .content { padding: 20px; background-color: #f9f9f9; }
+        .button { 
+          display: inline-block; 
+          background-color: #4CAF50; 
+          color: white; 
+          padding: 10px 20px; 
+          text-decoration: none; 
+          border-radius: 5px; 
+        }
+        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h2>Family Access Request</h2>
+        </div>
+        <div class="content">
+          <p>Hello,</p>
+          <p><strong>${requestingUser.fullName}</strong> has requested to add you as a family member, which would grant them access to view your medical records.</p>
+          <p>Please confirm if you'd like to approve this request:</p>
+          <p style="text-align: center;">
+            <a href="https://fitfull.onrender.com/api/users/family/approve/${token}" class="button">Approve Request</a>
+          </p>
+          <p>If you didn't expect this request, you can safely ignore this email.</p>
+          <p>Thank you,<br>Health App Team</p>
+        </div>
+        <div class="footer">
+          <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+// Modified addFamilyMembers function
+const addFamilyMembers = asyncHandler(async (req, res) => {
+  try {
+    const { familyMembers } = req.body; // Array of emails
+    const userId = req.user._id; // Current user's ID from auth middleware
+
+    if (!familyMembers || !Array.isArray(familyMembers)) {
+      throw new ApiError(400, "Family members must be provided as an array of emails");
+    }
+
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    // Find users by email
+    const members = await User.find({ email: { $in: familyMembers } }, "_id email fullName");
+
+    if (members.length === 0) {
+      throw new ApiError(404, "No valid family members found");
+    }
+
+    // Create pending family requests
+    const pendingRequests = [];
+    
+    // Send approval emails to each family member
+    for (const member of members) {
+      // Generate a JWT token for verification
+      const token = jwt.sign(
+        { 
+          requesterId: userId,
+          recipientId: member._id
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "7d" }
+      );
+      
+      // Create email options
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: member.email,
+        subject: `${user.fullName} wants to add you as a family member`,
+        html: createApprovalEmailTemplate(user, token)
+      };
+      
+      // Send email
+      await transporter.sendMail(mailOptions);
+      
+      // Track pending request
+      pendingRequests.push({
+        email: member.email,
+        fullName: member.fullName,
+        status: "pending"
+      });
+    }
+
+    // Save pending requests to user document
+    if (!user.pendingFamilyRequests) {
+      user.pendingFamilyRequests = [];
+    }
+    
+    user.pendingFamilyRequests.push(...pendingRequests);
+    await user.save();
+
+    return res.status(200).json(
+      new ApiResponse(200, { pendingRequests }, "Family member approval emails sent successfully")
+    );
+  } catch (error) {
+    console.error("Error adding family members:", error);
+    throw new ApiError(500, error.message || "Error adding family members");
+  }
+});
+
+// New endpoint to handle approval
+export const approveFamilyMember = asyncHandler(async (req, res) => {
+  try {
+    const { token } = req.params;
+    
+    // Verify the token
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const { requesterId, recipientId } = decoded;
+    
+    // Find both users
+    const requester = await User.findById(requesterId);
+    const recipient = await User.findById(recipientId);
+    
+    if (!requester || !recipient) {
+      throw new ApiError(404, "User not found");
+    }
+    
+    // Initialize family arrays if they don't exist
+    if (!requester.family) requester.family = [];
+    if (!recipient.family) recipient.family = [];
+    
+    // Check if already added
+    const alreadyAdded = requester.family.some(id => id.toString() === recipientId.toString());
+    
+    if (!alreadyAdded) {
+      // Add recipient to requester's family
+      requester.family.push(recipientId);
+      
+      // Update pending requests status
+      if (requester.pendingFamilyRequests) {
+        requester.pendingFamilyRequests = requester.pendingFamilyRequests.map(req => {
+          if (req.email === recipient.email) {
+            return { ...req, status: "approved" };
+          }
+          return req;
+        });
+      }
+      
+      await requester.save();
+    }
+    
+    // Render HTML response page
+    const htmlResponse = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Request Approved</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; text-align: center; margin-top: 50px; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .success { color: #4CAF50; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1 class="success">Request Approved!</h1>
+          <p>You have successfully approved ${requester.fullName}'s request to add you as a family member.</p>
+          <p>You can now close this window.</p>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    // Respond with HTML
+    return res.status(200).send(htmlResponse);
+  } catch (error) {
+    console.error("Error approving family member:", error);
+    
+    // If token is invalid or expired
+    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+      const htmlError = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Invalid or Expired Link</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; text-align: center; margin-top: 50px; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .error { color: #f44336; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1 class="error">Invalid or Expired Link</h1>
+            <p>This approval link is no longer valid. Please request a new invitation.</p>
+          </div>
+        </body>
+        </html>
+      `;
+      return res.status(400).send(htmlError);
+    }
+    
+    throw new ApiError(500, error.message || "Error approving family member");
+  }
+});
+
+
 
 export const removeFamilyMember = asyncHandler(async (req, res) => {
     try {
@@ -688,4 +864,4 @@ const getFamDiag = async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to retrieve diagnosis report" });
     }
 };
-export {registerUser, loginUser, getFamilyTest, getFamPresc, getFamDiag}
+export {registerUser, loginUser, getFamilyTest, getFamPresc, getFamDiag, addFamilyMembers}
