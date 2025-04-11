@@ -598,9 +598,15 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
 // New endpoint to handle approval
 export const approveFamilyMember = asyncHandler(async (req, res) => {
     try {
-      // Instead of params, get token from form data
-      const { token } = req.body;
-      const voiceRecording = req.file; // Multer middleware should handle the file upload
+      // Get token and base64 voice recording from JSON body
+      const { token, voiceRecording } = req.body;
+      
+      if (!token) {
+        return res.status(400).json({
+          success: false,
+          message: "Token is required"
+        });
+      }
       
       if (!voiceRecording) {
         return res.status(400).json({
@@ -634,9 +640,9 @@ export const approveFamilyMember = asyncHandler(async (req, res) => {
         // Add recipient to requester's family
         requester.family.push(recipientId);
         
-        // Save the voice recording (optional - store path in database)
-        // For this example, we'll assume the voice recording is stored by Multer
-        const voiceVerificationPath = voiceRecording.path;
+        // Save the voice recording as base64 or to file system if needed
+        // For this example, we'll just store it in the database
+        const voiceVerificationData = voiceRecording;
         
         // Update pending requests status
         if (requester.pendingFamilyRequests) {
@@ -645,7 +651,7 @@ export const approveFamilyMember = asyncHandler(async (req, res) => {
               return { 
                 ...req, 
                 status: "approved",
-                voiceVerification: voiceVerificationPath,
+                voiceVerification: voiceVerificationData, // Storing base64 data
                 approvedAt: new Date()
               };
             }
@@ -675,7 +681,7 @@ export const approveFamilyMember = asyncHandler(async (req, res) => {
         message: error.message || "Error approving family member"
       });
     }
-  });
+});
 
   export const approvalSuccessPage = asyncHandler(async (req, res) => {
     try {
