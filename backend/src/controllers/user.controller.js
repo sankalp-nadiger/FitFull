@@ -476,7 +476,7 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
       });
 
       if (response.ok) {
-        window.location.href = '/api/users/approval-success/${token}';
+        window.location.href = 'https://fitfull.onrender.com/api/users/approval-success/${token}';
       } else {
         const errorData = await response.json();
         alert('Error: ' + (errorData.message || 'Failed to process approval'));
@@ -491,11 +491,12 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
     }
   });
 
-  denyButton.addEventListener('click', () => {
-    if (confirm('Are you sure you want to deny this request?')) {
-      window.location.href = '/api/users/approval-denied/${token}';
-    }
-  });
+ denyButton.addEventListener('click', () => {
+  if (confirm('Are you sure you want to deny this request?')) {
+    // Add the missing "/api/users" in the URL path
+    window.location.href = 'https://fitfull.onrender.com/api/users/approval-denied/${token}';
+  }
+});
 </script>
  </body>
         </html>
@@ -608,54 +609,71 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
   });
 
 
-export const approveFamilyMember = asyncHandler(async (req, res) => {
-  try {
-    console.log('Route hit')
-    const { token, voiceRecording } = req.body;
-
-    if (!token || !voiceRecording) {
-      return res.status(400).json({ success: false, message: "Missing token or voice recording" });
-    }
-
-    // Verify the token and extract the payload
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    const { requesterId, recipientId } = decoded;
-
-    // Find the user who added the family member
-    const user = await User.findById(requesterId);
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    // Find the specific family member in the user's family array
-    const familyMember = user.family.find(member => member._id.toString() === recipientId);
-    if (!familyMember) {
-      return res.status(404).json({ success: false, message: "Family member not found or already approved" });
-    }
-
-    // Approve the family member and attach the voice recording (base64)
-    familyMember.approved = true;
-    familyMember.voiceRecording = voiceRecording;
-    familyMember.approvalToken = undefined;
-
-    await user.save();
-
-    return res.status(200).json({ success: true, message: "Family member approved successfully" });
-  } catch (error) {
-    console.error("Approval error:", error);
-
-    // Token issues
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
-      return res.status(401).json({ success: false, message: "Invalid or expired token" });
-    }
-
-    return res.status(500).json({ success: false, message: "Server error during approval" });
-  }
-});
-
+  export const approveFamilyMember = asyncHandler(async (req, res) => {
+    try {
+      console.log('Route hit')
+      const { token, voiceRecording } = req.body;
   
+      if (!token || !voiceRecording) {
+        return res.status(400).json({ success: false, message: "Missing token or voice recording" });
+      }
   
+      // Verify the token and extract the payload
+      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+      const { requesterId, recipientId } = decoded;
   
+      // Find the user who added the family member
+      const user = await User.findById(requesterId);
+      if (!user) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+  
+      // Find the specific family member request by recipient ID
+      const pendingRequest = user.pendingFamilyRequests.find(request => 
+        request.email === recipientId || // If recipientId is the email
+        (request.userId && request.userId.toString() === recipientId) // If recipientId is the MongoDB _id
+      );
+  
+      if (!pendingRequest) {
+        return res.status(404).json({ success: false, message: "Family member request not found" });
+      }
+  
+      if (pendingRequest.status === 'approved') {
+        return res.status(400).json({ success: false, message: "Request already approved" });
+      }
+  
+      // Update the request status and add the voice recording
+      pendingRequest.status = 'approved';
+      pendingRequest.voiceRecording = voiceRecording;
+      pendingRequest.approvalToken = undefined;
+      pendingRequest.approvedAt = new Date();
+  
+      // Move approved request to user's family array if you have one
+      // This depends on your specific data model
+      if (user.family && Array.isArray(user.family)) {
+        user.family.push({
+          email: pendingRequest.email,
+          fullName: pendingRequest.fullName,
+          approved: true,
+          voiceRecording: voiceRecording
+        });
+      }
+  
+      await user.save();
+  
+      return res.status(200).json({ success: true, message: "Family member approved successfully" });
+    } catch (error) {
+      console.error("Approval error:", error);
+  
+      // Token issues
+      if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+        return res.status(401).json({ success: false, message: "Invalid or expired token" });
+      }
+  
+      return res.status(500).json({ success: false, message: "Server error during approval" });
+    }
+  });
+
   
 
   export const approvalSuccessPage = asyncHandler(async (req, res) => {
