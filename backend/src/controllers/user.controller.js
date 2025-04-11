@@ -660,9 +660,8 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
       }
   
       // Push the approved family member into the family array
-      user.family.push({
- recipientUser._id
-      });
+      // Instead of pushing an object with multiple fields
+user.family.push(recipientUser._id);
   
       await user.save();
   
