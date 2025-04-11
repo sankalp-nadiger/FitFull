@@ -37,7 +37,7 @@ router.post("/famPresc", user_verifyJWT, getFamPresc);
 router.post("/famDiagnosis", user_verifyJWT, getFamDiag);
 router.post("/join-session", user_verifyJWT, joinSession);
 router.post("/end", user_verifyJWT, endSession);
-router.get("/verify-family-request/:token", getVerificationPage);
+router.post("/verify-family-request/:token", getVerificationPage);
 router.post("/family/approve", upload.single('voiceRecording'), approveFamilyMember);
 router.get("/approval-success/:token", approvalSuccessPage);
 router.get("/approval-denied/:token", approvalDeniedPage);
