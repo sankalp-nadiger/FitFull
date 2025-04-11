@@ -463,7 +463,7 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
 
       const base64Audio = await blobToBase64(audioBlob);
 
-      const response = await fetch('https://fitfull.onrender.com/api/users/family/approve', {
+      const response = await fetch('/api/users/family/approve', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -476,7 +476,7 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
       });
 
       if (response.ok) {
-        window.location.href = 'https://fitfull.onrender.com/users/approval-success/${token}';
+        window.location.href = '/api/users/approval-success/${token}';
       } else {
         const errorData = await response.json();
         alert('Error: ' + (errorData.message || 'Failed to process approval'));
@@ -493,7 +493,7 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
 
   denyButton.addEventListener('click', () => {
     if (confirm('Are you sure you want to deny this request?')) {
-      window.location.href = 'https://fitfull.onrender.com/approval-denied/${token}';
+      window.location.href = 'api/users/approval-denied/${token}';
     }
   });
 </script>
@@ -610,6 +610,7 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
 
 export const approveFamilyMember = asyncHandler(async (req, res) => {
   try {
+    console.log('Route hit')
     const { token, voiceRecording } = req.body;
 
     if (!token || !voiceRecording) {
