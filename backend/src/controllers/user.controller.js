@@ -661,12 +661,7 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
   
       // Push the approved family member into the family array
       user.family.push({
-        email: recipientUser.email,
-        fullName: recipientUser.fullName,
-        userId: recipientUser._id,
-        approved: true,
-        voiceRecording: voiceRecording,
-        approvedAt: new Date()
+ recipientUser._id
       });
   
       await user.save();
