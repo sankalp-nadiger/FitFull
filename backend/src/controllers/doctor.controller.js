@@ -15,7 +15,13 @@ import twilio from "twilio"
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 import { google } from "googleapis";
 import mongoose from "mongoose";
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
+// Get the equivalent of __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const doctorsData = [
   { fullName: "Dr. Rajesh Sharma", specialization: ["Cardiologist"], mobileNumber: 9876543210, yearexp: 15, hospitals: ["Apollo Hospital"], email: "rajesh.sharma@apollo.com", password: "password" },
   { fullName: "Dr. Priya Iyer", specialization: ["Dermatologist"], mobileNumber: 9123456780, yearexp: 10, hospitals: ["Skin Glow Clinic"], email: "priya.iyer@skinglow.com", password: "password123" },
@@ -861,9 +867,11 @@ export const getDoctorPrescriptions = asyncHandler(async (req, res) => {
  */
 export const addTestReport = asyncHandler(async (req, res) => {
   try {
-    const { userEmail, testName, result} = req.body;
-    if (!userEmail || !testName || !result ) {
-      throw new ApiError(400, "User email, test name, result, and document URL are required");
+    console.log("Route hit");
+    const { userEmail, testName, result, documentBase64, fileName } = req.body;
+    
+    if (!userEmail || !testName || !result) {
+      throw new ApiError(400, "User email, test name, and result are required");
     }
 
     // Find user by email
@@ -871,17 +879,50 @@ export const addTestReport = asyncHandler(async (req, res) => {
     if (!user) {
       throw new ApiError(404, "User not found");
     }
+    
     let documentUrl = null;
-    const documentLocalPath =
-      (req?.files?.document && req.files.document[0]?.path) || null;
-  
-    if (documentLocalPath) {
-      const documentUploaded = await uploadOnCloudinary(documentLocalPath, {folder: "FitFull"});
-  
-      documentUrl = documentUploaded.url;
+    
+    // Handle base64 file if provided
+    if (documentBase64) {
+      // Create temp directory path
+      const tempDir = path.join(__dirname, '../../public/temp');
+      
+      // Create temp directory if it doesn't exist
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      
+      // Create a temporary file path
+      const tempFilePath = path.join(tempDir, fileName || 'upload.pdf');
+      
+      // Extract the base64 data part (remove metadata if present)
+      const base64Data = documentBase64.split(';base64,').pop();
+      
+      // Write the file to disk
+      fs.writeFileSync(tempFilePath, Buffer.from(base64Data, 'base64'));
+      
+      try {
+        // Upload to Cloudinary
+        const documentUploaded = await uploadOnCloudinary(tempFilePath, {folder: "FitFull"});
+        documentUrl = documentUploaded.url;
+      } catch (error) {
+        console.error("Error uploading to Cloudinary:", error);
+        throw new ApiError(500, "Error uploading document");
+      } finally {
+        // Clean up the temporary file (in a try-catch to handle if file doesn't exist)
+        try {
+          if (fs.existsSync(tempFilePath)) {
+            fs.unlinkSync(tempFilePath);
+          }
+        } catch (unlinkError) {
+          console.error("Error removing temp file:", unlinkError);
+          // Continue execution even if temp file removal fails
+        }
+      }
     }
-    console.log(req.body);
-        const encryptedDocumentUrl = documentUrl ? encryptData(documentUrl) : null;
+    
+    const encryptedDocumentUrl = documentUrl ? encryptData(documentUrl) : null;
+    
     // Create new test report
     const newTestReport = new TestReport({
       user: user._id,
@@ -891,7 +932,7 @@ export const addTestReport = asyncHandler(async (req, res) => {
       documentUrl: encryptedDocumentUrl,
     });
 
-    await newTestReport.save();
+    await newTestReport.save()
 
     res.status(201).json({
       success: true,

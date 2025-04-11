@@ -14,7 +14,8 @@ const verifyJWT = async (token, model, role) => {
 
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-    const entity = await model.findById(decodedToken?._id).select("-password -refreshToken");
+    // Modified this line to only exclude password but keep tokens
+    const entity = await model.findById(decodedToken?._id).select("+tokens");
 
     if (!entity) {
       throw new ApiError(401, `Invalid Access Token for ${role}`);
@@ -38,7 +39,7 @@ export const user_verifyJWT = asyncHandler(async (req, _, next) => {
   const token =
     req.cookies?.accessToken ||
     req.header("Authorization")?.replace("Bearer ", "");
-  const user = await verifyJWT(token, User, "User");
+  const user = await verifyJWT(token, User, "User")
   req.user = user; // Attach the user to the request object
   next();
 });

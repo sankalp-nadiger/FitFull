@@ -56,6 +56,7 @@ function SignInLoadingPage() {
                 // Store authentication data
                 if (data.jwt) {
                     sessionStorage.setItem('accessToken', data.jwt);
+                    console.log("JWT Token:", data.jwt);
                 }
                 if (data.user) {
                     sessionStorage.setItem('user', JSON.stringify(data.user));

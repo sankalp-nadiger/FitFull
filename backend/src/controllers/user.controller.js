@@ -9,6 +9,13 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { encryptData, decryptData } from "../utils/security.js";
 import { Doctor } from "../models/doctor.model.js";
 import nodemailer from "nodemailer";
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+// Get the equivalent of __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const additionalActivities = [
     // Cardio & Endurance
@@ -1030,37 +1037,90 @@ export const getFamilyMembers = asyncHandler(async (req, res) => {
     }
 });
 
-export const saveTestReport = async (req, res) => {
+export const saveTestReport = asyncHandler(async (req, res) => {
     try {
-        const { testName, result } = req.body;
-
-        const encryptedResult = encryptData(result);
-        let documentUrl = null;
-    const documentLocalPath =
-      (req?.files?.document && req.files.document[0]?.path) || null;
+      console.log("Route hit");
+      const { userEmail, testName, result, documentBase64, fileName } = req.body;
+      
+      if (!testName || !result) {
+        throw new ApiError(400, "Test name and result are required");
+      }
   
-    if (documentLocalPath) {
-      const documentUploaded = await uploadOnCloudinary(documentLocalPath);
+      // Use authenticated user directly from middleware
+      const user = req.user;
+      
+      let documentUrl = null;
+      
+      // Handle base64 file if provided
+      if (documentBase64) {
+        // Create temp directory path
+        const tempDir = path.join(__dirname, '../../public/temp');
+        
+        // Create temp directory if it doesn't exist
+        if (!fs.existsSync(tempDir)) {
+          fs.mkdirSync(tempDir, { recursive: true });
+        }
+        
+        // Create a temporary file path
+        const tempFilePath = path.join(tempDir, fileName || 'upload.pdf');
+        
+        // Extract the base64 data part (remove metadata if present)
+        const base64Data = documentBase64.split(';base64,').pop();
+        
+        // Write the file to disk
+        fs.writeFileSync(tempFilePath, Buffer.from(base64Data, 'base64'));
+        
+        try {
+          // Upload to Cloudinary
+          const documentUploaded = await uploadOnCloudinary(tempFilePath, {folder: "FitFull"});
+          documentUrl = documentUploaded.url;
+        } catch (error) {
+          console.error("Error uploading to Cloudinary:", error);
+          throw new ApiError(500, "Error uploading document");
+        } finally {
+          // Clean up the temporary file (in a try-catch to handle if file doesn't exist)
+          try {
+            if (fs.existsSync(tempFilePath)) {
+              fs.unlinkSync(tempFilePath);
+            }
+          } catch (unlinkError) {
+            console.error("Error removing temp file:", unlinkError);
+            // Continue execution even if temp file removal fails
+          }
+        }
+      } else {
+        // Handle file upload through multer if no base64
+        const documentLocalPath = 
+          (req?.files?.document && req.files.document[0]?.path) || null;
+      
+        if (documentLocalPath) {
+          const documentUploaded = await uploadOnCloudinary(documentLocalPath);
+          documentUrl = documentUploaded.url;
+        }
+      }
+      
+      const encryptedDocumentUrl = documentUrl ? encryptData(documentUrl) : null;
+      
+      // Create new test report
+      const newTestReport = new TestReport({
+        user: user._id,
+        testName,
+        result: encryptData(result),
+        documentUrl: encryptedDocumentUrl,
+      });
   
-      documentUrl = documentUploaded.url;
-    }
-    console.log(req.body);
-        const encryptedDocumentUrl = documentUrl ? encryptData(documentUrl) : null;
-
-        const newTestReport = new TestReport({
-            user: req.user._id, // User ID from auth middleware
-            testName,
-            result: encryptedResult,
-            documentUrl: encryptedDocumentUrl
-        });
-
-        await newTestReport.save();
-        res.json({ success: true, message: "Test report saved securely!" });
+      await newTestReport.save();
+  
+      res.status(201).json({
+        success: true,
+        message: "Test report saved securely!",
+        testReport: newTestReport,
+      });
     } catch (error) {
-        console.error("Error saving test report:", error);
-        res.status(500).json({ success: false, message: "Failed to save test report" });
+      console.error("Error saving test report:", error);
+      throw new ApiError(500, error.message || "Failed to save test report");
     }
-};
+  });
 
 export const savePrescription = async (req, res) => {
     try {

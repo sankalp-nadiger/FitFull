@@ -52,8 +52,7 @@ router.post("/profile", doctor_verifyJWT, updateProfile);
 // Medical records routes
 router.post("/prescription", doctor_verifyJWT, addPrescription);
 router.get("/prescriptions", doctor_verifyJWT, getDoctorPrescriptions);
-
-router.post("/test-report", upload.fields([{ name: "document", maxCount: 1 }]), doctor_verifyJWT, addTestReport);
+router.post("/test-report", express.json({ limit: '1000mb' }), doctor_verifyJWT, addTestReport);
 router.get("/test-reports", doctor_verifyJWT, getDoctorTestReports);
 
 router.post("/diagnosis", doctor_verifyJWT, addDiagnosis);

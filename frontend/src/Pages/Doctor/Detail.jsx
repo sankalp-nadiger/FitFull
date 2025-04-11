@@ -94,64 +94,143 @@ function Detail() {
   };
 
   const handleFormSubmit = async () => {
-    try {
-      setIsLoading(true);
-      setErrorMessage(null);
+  try {
+    setIsLoading(true);
+    setErrorMessage(null);
 
-      const apiEndpoint = getApiEndpoint(activeModalType);
-      if (!apiEndpoint) {
-        throw new Error("Invalid modal type");
-      }
+    const apiEndpoint = getApiEndpoint(activeModalType);
+    if (!apiEndpoint) {
+      throw new Error("Invalid modal type");
+    }
 
-      const accessToken = sessionStorage.getItem("accessToken");
-      if (!accessToken) {
-        throw new Error("No access token found");
-      }
+    const accessToken = sessionStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found");
+    }
 
-      let requestData;
-      if (activeModalType === "prescription") {
-        requestData = {
-          userEmail: formData.userEmail,
-          medication: formData.medication,
-          dosage: formData.dosage,
-        };
-      } else if (activeModalType === "testReport") {
-        const formDataObject = new FormData();
-        formDataObject.append("userEmail", formData.userEmail);
-        formDataObject.append("testName", formData.testName);
-        formDataObject.append("result", formData.result);
-        if (formData.document) {
-          formDataObject.append("document", formData.document);
-        }
-        requestData = formDataObject;
-      } else if (activeModalType === "diagnosis") {
-        requestData = {
-          userEmail: formData.userEmail,
-          condition: formData.condition,
-          notes: formData.notes,
-        };
-      }
+    let response;
 
-      const response = await axios({
+    if (activeModalType === "prescription") {
+      const requestData = {
+        userEmail: formData.userEmail,
+        medication: formData.medication,
+        dosage: formData.dosage,
+      };
+      
+      response = await axios({
         method: "POST",
         url: apiEndpoint,
         data: requestData,
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          ...(activeModalType !== "testReport" && { "Content-Type": "application/json" }),
+          "Content-Type": "application/json"
         },
       });
-
-      if (response.status === 200 || response.status === 201) {
-        alert(`${activeModalType} added successfully!`);
-        closeModal();
+    } 
+    else if (activeModalType === "testReport") {
+      if (formData.document) {
+        // Convert file to base64
+        const reader = new FileReader();
+        reader.readAsDataURL(formData.document);
+        reader.onload = async () => {
+          try {
+            const documentBase64 = reader.result;
+            
+            const requestData = {
+              userEmail: formData.userEmail,
+              testName: formData.testName,
+              result: formData.result,
+              documentBase64,
+              fileName: formData.document.name
+            };
+            
+            const response = await axios({
+              method: "POST",
+              url: apiEndpoint,
+              data: requestData,
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json"
+              },
+            });
+            
+            if (response.status === 200 || response.status === 201) {
+              alert(`${activeModalType} added successfully!`);
+              closeModal();
+            }
+          } catch (error) {
+            console.error("Error submitting form:", error);
+            setErrorMessage(error.response?.data?.message || "An error occurred. Please try again.");
+          } finally {
+            setIsLoading(false);
+          }
+        };
+        
+        reader.onerror = () => {
+          setErrorMessage("Failed to read file");
+          setIsLoading(false);
+        };
+      } else  {
+        // No file case
+        const requestData = {
+          userEmail: formData.userEmail,
+          testName: formData.testName,
+          result: formData.result
+        };
+        
+        try {
+          const response = await axios({
+            method: "POST",
+            url: apiEndpoint,
+            data: requestData,
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json"
+            },
+          });
+          
+          if (response.status === 200 || response.status === 201) {
+            alert(`${activeModalType} added successfully!`);
+            closeModal();
+          }
+        } catch (error) {
+          console.error("Error submitting form:", error);
+          setErrorMessage(error.response?.data?.message || "An error occurred. Please try again.");
+        } finally {
+          setIsLoading(false);
+        }
       }
-    } catch (error) {
-      setErrorMessage(error.response?.data?.message || "An error occurred. Please try again.");
-    } finally {
-      setIsLoading(false);
     }
-  };
+      
+    else if (activeModalType === "diagnosis") {
+      const requestData = {
+        userEmail: formData.userEmail,
+        condition: formData.condition,
+        notes: formData.notes,
+      };
+      
+      response = await axios({
+        method: "POST",
+        url: apiEndpoint,
+        data: requestData,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json"
+        },
+      });
+    }
+
+    if (response && (response.status === 200 || response.status === 201)) {
+      alert(`${activeModalType} added successfully!`);
+      closeModal();
+    }
+  } catch (error) {
+    console.error("Error submitting form:", error);
+    setErrorMessage(error.response?.data?.message || "An error occurred. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleNavigate = (route) => {
     navigate(`/${route}`)

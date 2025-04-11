@@ -47,6 +47,7 @@ const DeviceList = () => {
 
       const response = await axios.get(`${API_BASE_URL}/health-data`, {
         headers: { Authorization: `Bearer ${accessToken}` },
+        withCredentials: true,
       });
 
       if (response.data.success) {

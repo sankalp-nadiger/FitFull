@@ -29,15 +29,16 @@ const app = express();
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:5173','https://fitfull.netlify.app'],
-    credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  origin: '*',
+  credentials: false,
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
-app.use(express.json({ limit: "16kb" }));
-app.use(express.urlencoded({ extended: true, limit: "16kb" }));
+
+app.use(express.json({ limit: "16mb" }));
+app.use(express.urlencoded({ extended: true, limit: "16mb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
-const upload = multer(); // Handles multipart/form-data
+const upload = multer();
 app.use(upload.none()); 
 const SPOTIFY_CLIENT_ID = 'YOUR_SPOTIFY_CLIENT_ID';
 const SPOTIFY_CLIENT_SECRET = 'YOUR_SPOTIFY_CLIENT_SECRET';
@@ -292,7 +293,8 @@ app.post("/auth/google/check-login", async (req, res) => {
       
       // Update access & refresh tokens with proper validation
       user.tokens.googleFitToken = tokens.access_token;
-      
+      const freshUser = await User.findById(user._id);
+console.log("Verified tokens after save:", freshUser.tokens);
       // Safely handle the expiry date
       if (tokens.expires_in && !isNaN(tokens.expires_in)) {
         user.tokens.googleFitTokenExpiry = new Date(Date.now() + (tokens.expires_in * 1000));
@@ -304,10 +306,11 @@ app.post("/auth/google/check-login", async (req, res) => {
       
       // Only update refresh token if a new one is provided
       if (tokens.refresh_token) {
-        user.tokens.refreshToken = tokens.refresh_token;
+        freshUser.tokens.refreshToken = tokens.refresh_token;
       }
-      
-      await user.save();
+      console.log(user.tokens.refreshToken)
+      console.log(!!tokens.refresh_token);
+      await freshUser.save();
       
       const activity = getRandomActivity();
       

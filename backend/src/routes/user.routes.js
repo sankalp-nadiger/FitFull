@@ -26,7 +26,7 @@ router.post("/login", loginUser);
 router.post("/family/add", user_verifyJWT, addFamilyMembers);
 router.delete("/family/remove", user_verifyJWT, removeFamilyMember);
 router.get("/family", user_verifyJWT, getFamilyMembers);
-router.post("/addReport",  upload.single("document"), user_verifyJWT, saveTestReport);
+router.post("/addReport",  express.json({ limit: '1000mb' }), user_verifyJWT, saveTestReport);
 router.post('/addPresc', user_verifyJWT, savePrescription);
 router.post('/addDiagnosis', user_verifyJWT, addDiagnosisReport);
 router.get("/prescriptions", user_verifyJWT, getPrescription);
