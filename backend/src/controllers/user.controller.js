@@ -654,9 +654,9 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
         (request.userId && request.userId.toString() === recipientId) // If recipientId is the MongoDB _id
       );
   
-      if (!pendingRequest) {
-        return res.status(404).json({ success: false, message: "Family member request not found" });
-      }
+      // if (!pendingRequest) {
+      //   return res.status(404).json({ success: false, message: "Family member request not found" });
+      // }
   
       if (pendingRequest.status === 'approved') {
         return res.status(400).json({ success: false, message: "Request already approved" });
