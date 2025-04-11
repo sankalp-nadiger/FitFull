@@ -945,7 +945,6 @@ export const addTestReport = asyncHandler(async (req, res) => {
   }
 });
 
-
 /**
  * Get all test reports added by a specific doctor (Optional: If you want to filter by doctor)
  */
