@@ -62,6 +62,18 @@ const userSchema = new Schema(
       unique: true,
       sparse: true,
     },
+    pendingFamilyRequests: [{
+      email: String,
+      fullName: String,
+      status: {
+        type: String,
+        enum: ['pending', 'approved', 'denied'],
+        default: 'pending'
+      },
+      voiceVerification: String, // Path to stored voice file
+      requestedAt: Date,
+      approvedAt: Date
+    }], 
     tokens: {
       googleFitToken: String,
       googleFitTokenExpiry: Date,
