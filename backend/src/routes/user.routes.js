@@ -42,7 +42,7 @@ router.post("/verify-family-request/:token", getVerificationPage);
 router.post("/family/approve", express.json({limit: '1000mb'}), approveFamilyMember);
 router.get("/approval-success/:token", approvalSuccessPage);
 router.get("/approval-denied/:token", approvalDeniedPage);
-//router.get("/current", user_verifyJWT, getCurrentUser); 
+ 
 
 
 export default router;
