@@ -181,6 +181,7 @@ const OnboardingPhase = () => {
             ))}
           </ul>
           <button>
+            <br></br>
         <Link to="/main-page" className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md">
           Continue
         </Link>
