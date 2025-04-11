@@ -196,7 +196,7 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
             <p><strong>${requestingUser.fullName}</strong> has requested to add you as a family member, which would grant them access to view your medical records.</p>
             <p>For enhanced security, we've implemented a two-factor verification process. Please click the button below to proceed to our secure verification page:</p>
             <p style="text-align: center;">
-             <form action="https://fitfull.onrender.com/verify-family-request/${token}" method="POST" style="display:inline;">
+             <form action="https://fitfull.onrender.com/api/users/verify-family-request/${token}" method="POST" style="display:inline;">
   <button type="submit" class="button" style="border:none; background:none; padding:0; font: inherit; cursor: pointer; color: inherit;">
     Verify Request
   </button>
