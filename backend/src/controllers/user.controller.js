@@ -468,7 +468,7 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: include,
+        credentials: 'include',
         body: JSON.stringify({
           token: '${token}', // server-injected token
           voiceRecording: base64Audio
