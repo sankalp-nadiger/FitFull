@@ -470,7 +470,7 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
         },
         credentials: 'include',
         body: JSON.stringify({
-          token: '${token}', // server-injected token
+          token: '${token.replace(/'/g, "\\'")}', // server-injected token
           voiceRecording: base64Audio
         })
       });
@@ -493,7 +493,7 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
 
   denyButton.addEventListener('click', () => {
     if (confirm('Are you sure you want to deny this request?')) {
-      window.location.href = 'api/users/approval-denied/${token}';
+      window.location.href = '/api/users/approval-denied/${token}';
     }
   });
 </script>

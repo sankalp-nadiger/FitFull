@@ -34,8 +34,8 @@ app.use(cors({
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
 
-app.use(express.json({ limit: "16mb" }));
-app.use(express.urlencoded({ extended: true, limit: "16mb" }));
+app.use(express.json({ limit: "1000mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1000mb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
 const upload = multer();
