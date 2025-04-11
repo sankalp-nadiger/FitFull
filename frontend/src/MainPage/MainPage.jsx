@@ -28,7 +28,7 @@ export default function MainPage() {
       </BackgroundLines>
 
       {/* Secure Health Data Store Section */}
-      <div className="shadow-[4px_4px_0_rgba(0,0,0,0.3)] hover:shadow-[6px_6px_0_rgba(0,0,0,0.4)] transition duration-300 p-6 bg-black w-full">
+      {/* <div className="shadow-[4px_4px_0_rgba(0,0,0,0.3)] hover:shadow-[6px_6px_0_rgba(0,0,0,0.4)] transition duration-300 p-6 bg-black w-full">
         <div className="max-w-[85rem] text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-lg bg-[#14072d] bg-opacity-70 p-8 rounded-lg shadow-lg shadow-red-500/50 hover:shadow-blue-500/50 transition-shadow flex flex-col items-center text-center">
           <h2 className="text-2xl md:text-3xl font-bold">
             Secure Health Data Store
@@ -44,7 +44,7 @@ export default function MainPage() {
             View Records
           </Link>
         </div>
-      </div>
+      </div> */}
 
       <div className="shadow-[4px_4px_0_rgba(0,0,0,0.3)] hover:shadow-[6px_6px_0_rgba(0,0,0,0.4)] transition duration-300 p-6 bg-black w-full">
         <div className="max-w-[85rem] text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-lg bg-[#14072d] bg-opacity-70 p-8 rounded-lg shadow-lg shadow-red-500/50 hover:shadow-blue-500/50 transition-shadow flex flex-col items-center text-center">
@@ -56,7 +56,7 @@ export default function MainPage() {
             Stay on top of your healthcare schedule with ease.
           </p>
           <Link
-            to="/appointments"
+            to="/user-tele"
             className="mt-4 bg-violet-600 hover:bg-blue-600 text-white py-2 px-6 rounded-lg font-medium transition"
           >
             Manage Appointments

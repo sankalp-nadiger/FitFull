@@ -59,19 +59,18 @@ app.use("/api/doctor", doctorRouter);
 app.use("/api/health", healthRouter);
 app.use("/api/wearables",wearableRouter)
 
-const SIGNUP_REDIRECT_URI = "http://localhost:5173/up-loading";
-const LOGIN_REDIRECT_URI = "http://localhost:5173/in-loading";
+
 
 const signupOAuthClient = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    SIGNUP_REDIRECT_URI
+    process.env.SIGNUP_REDIRECT_URI
 );
 
 const loginOAuthClient = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    LOGIN_REDIRECT_URI
+    process.env.LOGIN_REDIRECT_URI
 );
   
   // Route to Start Google OAuth
