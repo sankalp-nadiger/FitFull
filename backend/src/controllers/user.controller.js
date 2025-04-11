@@ -549,9 +549,12 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
         throw new ApiError(404, "User not found");
       }
   
-      // Find users by email
-      const members = await User.find({ email: { $in: familyMembers } }, "_id email fullName");
-  
+      // Find users by email (corrected query)
+      const members = await User.find({ 
+        email: { $in: familyMembers }, 
+        _id: { $ne: userId } // Exclude the requesting user
+      }, "_id email fullName");
+      
       if (members.length === 0) {
         throw new ApiError(404, "No valid family members found");
       }
@@ -561,9 +564,23 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
       
       // Send approval emails to each family member
       for (const member of members) {
+        // Skip if this member is already in pending requests
+        const alreadyPending = user.pendingFamilyRequests?.some(
+          req => req.email === member.email && req.status === 'pending'
+        );
+        
+        // Skip if this member is already a family member
+        const alreadyFamily = user.family?.some(
+          fam => fam.email === member.email
+        );
+        
+        if (alreadyPending || alreadyFamily) {
+          continue; // Skip this member
+        }
+        
         // Generate a JWT token for verification
         const token = jwt.sign(
-          { 
+          {
             requesterId: userId,
             recipientId: member._id
           },
@@ -586,19 +603,22 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
         pendingRequests.push({
           email: member.email,
           fullName: member.fullName,
+          userId: member._id, // Store the user ID for easy lookup later
           status: "pending",
-          requestedAt: new Date()
+          requestedAt: new Date(),
+          approvalToken: token // Store the token for reference
         });
       }
-  
-      // Save pending requests to user document
+      
+      // Initialize pendingFamilyRequests array if it doesn't exist
       if (!user.pendingFamilyRequests) {
         user.pendingFamilyRequests = [];
       }
       
+      // Add new pending requests to user document
       user.pendingFamilyRequests.push(...pendingRequests);
       await user.save();
-  
+      
       return res.status(200).json(
         new ApiResponse(200, { pendingRequests }, "Family member approval emails sent successfully")
       );
