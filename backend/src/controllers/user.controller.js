@@ -158,6 +158,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Create HTML email template
+// Modified email template with a link to approval page instead of direct approval
 const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
     return `
       <!DOCTYPE html>
@@ -208,6 +209,608 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
       </html>
     `;
   };
+  
+  // Backend route handler for verification page
+  export const getVerificationPage = asyncHandler(async (req, res) => {
+    try {
+      const { token } = req.params;
+      
+      // Verify the token but don't process approval yet
+      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+      const { requesterId, recipientId } = decoded;
+      
+      // Find both users
+      const requester = await User.findById(requesterId);
+      const recipient = await User.findById(recipientId);
+      
+      if (!requester || !recipient) {
+        throw new ApiError(404, "User not found");
+      }
+      
+      // Render the verification page
+      const verificationPage = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Family Request Verification</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; background-color: #f5f5f5; }
+            .container { max-width: 800px; margin: 30px auto; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            .header { background-color: #4CAF50; color: white; padding: 15px; text-align: center; border-radius: 8px 8px 0 0; margin: -20px -20px 20px; }
+            .content { padding: 20px 0; }
+            .verifier { margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+            .requester-info { background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+            .button { 
+              display: inline-block; 
+              background-color: #4CAF50; 
+              color: white; 
+              padding: 12px 24px; 
+              text-decoration: none; 
+              border-radius: 5px; 
+              border: none;
+              cursor: pointer;
+              font-size: 16px;
+              margin-top: 10px;
+            }
+            .button:disabled {
+              background-color: #cccccc;
+              cursor: not-allowed;
+            }
+            .button-secondary {
+              background-color: #f44336;
+            }
+            .voice-controls {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              margin: 20px 0;
+            }
+            .record-button {
+              display: inline-block;
+              background-color: #f44336;
+              color: white;
+              width: 60px;
+              height: 60px;
+              border-radius: 50%;
+              text-align: center;
+              line-height: 60px;
+              font-size: 24px;
+              cursor: pointer;
+              margin-bottom: 10px;
+            }
+            .recording {
+              animation: pulse 1.5s infinite;
+            }
+            .hidden { display: none; }
+            .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+            .verification-steps {
+              counter-reset: step;
+              margin: 30px 0;
+            }
+            .step {
+              position: relative;
+              padding-left: 50px;
+              margin-bottom: 20px;
+            }
+            .step:before {
+              counter-increment: step;
+              content: counter(step);
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 30px;
+              height: 30px;
+              background-color: #4CAF50;
+              color: white;
+              border-radius: 50%;
+              text-align: center;
+              line-height: 30px;
+              font-weight: bold;
+            }
+            @keyframes pulse {
+              0% { transform: scale(1); }
+              50% { transform: scale(1.1); }
+              100% { transform: scale(1); }
+            }
+            #confirmText {
+              font-size: 18px;
+              font-weight: bold;
+              margin: 20px 0;
+              padding: 10px;
+              background-color: #f0f8ff;
+              border-radius: 5px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Family Request Verification</h1>
+            </div>
+            <div class="content">
+              <h2>Hello ${recipient.fullName},</h2>
+              
+              <div class="requester-info">
+                <h3>Request Details:</h3>
+                <p><strong>${requester.fullName}</strong> (${requester.email}) has requested to add you as a family member.</p>
+                <p>This will grant them access to view your medical records and health information.</p>
+              </div>
+              
+              <div class="verification-steps">
+                <div class="step">
+                  <h3>Verify Identity</h3>
+                  <p>Please confirm that you know <strong>${requester.fullName}</strong> and are comfortable sharing your health information with them.</p>
+                  <label>
+                    <input type="checkbox" id="identityConfirmed"> Yes, I confirm this request is legitimate
+                  </label>
+                </div>
+                
+                <div class="step">
+                  <h3>Voice Verification</h3>
+                  <p>For added security, please record yourself saying the following phrase:</p>
+                  <div id="confirmText">"I, ${recipient.fullName}, approve ${requester.fullName} to access my medical records."</div>
+                  
+                  <div class="voice-controls">
+                    <div class="record-button" id="recordButton">
+                      <i>🎤</i>
+                    </div>
+                    <p id="recordingStatus">Click to start recording</p>
+                    <audio id="audioPlayback" controls class="hidden"></audio>
+                  </div>
+                </div>
+                
+                <div class="step">
+                  <h3>Final Approval</h3>
+                  <p>Once you've completed the steps above, click the button below to approve this request:</p>
+                  <button id="approveButton" class="button" disabled>Approve Request</button>
+                  <button id="denyButton" class="button button-secondary">Deny Request</button>
+                </div>
+              </div>
+            </div>
+            <div class="footer">
+              <p>This is a secure verification page. If you have any concerns, please contact support.</p>
+            </div>
+          </div>
+          
+          <script>
+            // Voice recording functionality
+            let mediaRecorder;
+            let audioChunks = [];
+            let audioBlob;
+            const recordButton = document.getElementById('recordButton');
+            const recordingStatus = document.getElementById('recordingStatus');
+            const audioPlayback = document.getElementById('audioPlayback');
+            const identityConfirmed = document.getElementById('identityConfirmed');
+            const approveButton = document.getElementById('approveButton');
+            const denyButton = document.getElementById('denyButton');
+            
+            // Handle recording
+            recordButton.addEventListener('click', () => {
+              if (mediaRecorder && mediaRecorder.state === 'recording') {
+                stopRecording();
+              } else {
+                startRecording();
+              }
+            });
+            
+            async function startRecording() {
+              audioChunks = [];
+              try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.addEventListener('dataavailable', event => {
+                  audioChunks.push(event.data);
+                });
+                
+                mediaRecorder.addEventListener('stop', () => {
+                  audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                  const audioUrl = URL.createObjectURL(audioBlob);
+                  audioPlayback.src = audioUrl;
+                  audioPlayback.classList.remove('hidden');
+                  recordingStatus.textContent = 'Recording complete - play back to verify';
+                  recordButton.classList.remove('recording');
+                  checkEnableApproveButton();
+                });
+                
+                mediaRecorder.start();
+                recordingStatus.textContent = 'Recording in progress...';
+                recordButton.classList.add('recording');
+              } catch (err) {
+                console.error('Error accessing microphone:', err);
+                recordingStatus.textContent = 'Error: Unable to access microphone';
+              }
+            }
+            
+            function stopRecording() {
+              if (mediaRecorder) {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+              }
+            }
+            
+            // Check if approval button should be enabled
+            function checkEnableApproveButton() {
+              approveButton.disabled = !(identityConfirmed.checked && audioBlob);
+            }
+            
+            identityConfirmed.addEventListener('change', checkEnableApproveButton);
+            
+            // Handle approval submission
+            approveButton.addEventListener('click', async () => {
+              const formData = new FormData();
+              formData.append('voiceRecording', audioBlob);
+              formData.append('token', '${token}');
+              
+              try {
+                approveButton.disabled = true;
+                approveButton.textContent = 'Processing...';
+                
+                const response = await fetch('https://fitfull.onrender.com/api/users/family/approve', {
+                  method: 'POST',
+                  body: formData
+                });
+                
+                if (response.ok) {
+                  window.location.href = 'https://fitfull.onrender.com/approval-success/${token}';
+                } else {
+                  const errorData = await response.json();
+                  alert('Error: ' + (errorData.message || 'Failed to process approval'));
+                  approveButton.disabled = false;
+                  approveButton.textContent = 'Approve Request';
+                }
+              } catch (error) {
+                console.error('Error submitting approval:', error);
+                alert('Error submitting approval. Please try again.');
+                approveButton.disabled = false;
+                approveButton.textContent = 'Approve Request';
+              }
+            });
+            
+            // Handle denial
+            denyButton.addEventListener('click', () => {
+              if (confirm('Are you sure you want to deny this request?')) {
+                window.location.href = 'https://fitfull.onrender.com/approval-denied/${token}';
+              }
+            });
+          </script>
+        </body>
+        </html>
+      `;
+      
+      return res.status(200).send(verificationPage);
+    } catch (error) {
+      console.error("Error displaying verification page:", error);
+      
+      // If token is invalid or expired
+      if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+        const htmlError = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Invalid or Expired Link</title>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; text-align: center; margin-top: 50px; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .error { color: #f44336; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1 class="error">Invalid or Expired Link</h1>
+              <p>This verification link is no longer valid. Please request a new invitation.</p>
+            </div>
+          </body>
+          </html>
+        `;
+        return res.status(400).send(htmlError);
+      }
+      
+      throw new ApiError(500, error.message || "Error displaying verification page");
+    }
+  });
+  
+  // Modified approval endpoint to handle voice recording
+  export const approveFamilyMember = asyncHandler(async (req, res) => {
+    try {
+      // Instead of params, get token from form data
+      const { token } = req.body;
+      const voiceRecording = req.file; // Multer middleware should handle the file upload
+      
+      if (!voiceRecording) {
+        return res.status(400).json({
+          success: false,
+          message: "Voice verification recording is required"
+        });
+      }
+      
+      // Verify the token
+      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+      const { requesterId, recipientId } = decoded;
+      
+      // Find both users
+      const requester = await User.findById(requesterId);
+      const recipient = await User.findById(recipientId);
+      
+      if (!requester || !recipient) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found"
+        });
+      }
+      
+      // Initialize family arrays if they don't exist
+      if (!requester.family) requester.family = [];
+      
+      // Check if already added
+      const alreadyAdded = requester.family.some(id => id.toString() === recipientId.toString());
+      
+      if (!alreadyAdded) {
+        // Add recipient to requester's family
+        requester.family.push(recipientId);
+        
+        // Save the voice recording (optional - store path in database)
+        // For this example, we'll assume the voice recording is stored by Multer
+        const voiceVerificationPath = voiceRecording.path;
+        
+        // Update pending requests status
+        if (requester.pendingFamilyRequests) {
+          requester.pendingFamilyRequests = requester.pendingFamilyRequests.map(req => {
+            if (req.email === recipient.email) {
+              return { 
+                ...req, 
+                status: "approved",
+                voiceVerification: voiceVerificationPath,
+                approvedAt: new Date()
+              };
+            }
+            return req;
+          });
+        }
+        
+        await requester.save();
+      }
+      
+      return res.status(200).json({
+        success: true,
+        message: "Family member approved successfully"
+      });
+    } catch (error) {
+      console.error("Error approving family member:", error);
+      
+      if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid or expired token"
+        });
+      }
+      
+      return res.status(500).json({
+        success: false,
+        message: error.message || "Error approving family member"
+      });
+    }
+  });
+  
+  // Success page route
+  export const approvalSuccessPage = asyncHandler(async (req, res) => {
+    try {
+      const { token } = req.params;
+      
+      // Verify the token to get user info for personalization
+      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+      const { requesterId } = decoded;
+      
+      const requester = await User.findById(requesterId);
+      
+      const successPage = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Approval Successful</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; text-align: center; margin-top: 50px; background-color: #f5f5f5; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            .success { color: #4CAF50; }
+            .checkmark {
+              width: 80px;
+              height: 80px;
+              border-radius: 50%;
+              display: block;
+              stroke-width: 2;
+              stroke: #4CAF50;
+              stroke-miterlimit: 10;
+              margin: 10% auto;
+              box-shadow: inset 0px 0px 0px #4CAF50;
+              animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+            }
+            .checkmark__circle {
+              stroke-dasharray: 166;
+              stroke-dashoffset: 166;
+              stroke-width: 2;
+              stroke-miterlimit: 10;
+              stroke: #4CAF50;
+              fill: none;
+              animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+            }
+            .checkmark__check {
+              transform-origin: 50% 50%;
+              stroke-dasharray: 48;
+              stroke-dashoffset: 48;
+              animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+            }
+            @keyframes stroke {
+              100% { stroke-dashoffset: 0; }
+            }
+            @keyframes scale {
+              0%, 100% { transform: none; }
+              50% { transform: scale3d(1.1, 1.1, 1); }
+            }
+            @keyframes fill {
+              100% { box-shadow: inset 0px 0px 0px 30px #4CAF50; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+              <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+              <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+            <h1 class="success">Approval Successful!</h1>
+            <p>You have successfully approved ${requester ? requester.fullName : 'the'}'s request to add you as a family member.</p>
+            <p>Your voice verification has been recorded and the relationship has been established.</p>
+            <p>You can now close this window.</p>
+          </div>
+        </body>
+        </html>
+      `;
+      
+      return res.status(200).send(successPage);
+    } catch (error) {
+      console.error("Error displaying success page:", error);
+      
+      // If token is invalid, still show a generic success page
+      const genericSuccessPage = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Approval Successful</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; text-align: center; margin-top: 50px; background-color: #f5f5f5; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            .success { color: #4CAF50; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1 class="success">Approval Successful!</h1>
+            <p>You have successfully approved the request to add you as a family member.</p>
+            <p>Your voice verification has been recorded and the relationship has been established.</p>
+            <p>You can now close this window.</p>
+          </div>
+        </body>
+        </html>
+      `;
+      
+      return res.status(200).send(genericSuccessPage);
+    }
+  });
+  
+  // Denial page route
+  export const approvalDeniedPage = asyncHandler(async (req, res) => {
+    const deniedPage = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Request Denied</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; text-align: center; margin-top: 50px; background-color: #f5f5f5; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .denied { color: #f44336; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1 class="denied">Request Denied</h1>
+          <p>You have chosen to deny this family member request.</p>
+          <p>No access has been granted and the request has been canceled.</p>
+          <p>You can now close this window.</p>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    return res.status(200).send(deniedPage);
+  });
+  
+  // Updated routes.js entries
+  /*
+  // Add these to your routes file
+  router.get("/verify-family-request/:token", getVerificationPage);
+  router.post("/users/family/approve", multerUpload.single('voiceRecording'), approveFamilyMember);
+  router.get("/approval-success/:token", approvalSuccessPage);
+  router.get("/approval-denied/:token", approvalDeniedPage);
+  */
+  
+  // Updated addFamilyMembers function
+  export const addFamilyMembers = asyncHandler(async (req, res) => {
+    try {
+      const { familyMembers } = req.body; // Array of emails
+      const userId = req.user._id; // Current user's ID from auth middleware
+  
+      if (!familyMembers || !Array.isArray(familyMembers)) {
+        throw new ApiError(400, "Family members must be provided as an array of emails");
+      }
+  
+      // Find the user
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new ApiError(404, "User not found");
+      }
+  
+      // Find users by email
+      const members = await User.find({ email: { $in: familyMembers } }, "_id email fullName");
+  
+      if (members.length === 0) {
+        throw new ApiError(404, "No valid family members found");
+      }
+  
+      // Create pending family requests
+      const pendingRequests = [];
+      
+      // Send approval emails to each family member
+      for (const member of members) {
+        // Generate a JWT token for verification
+        const token = jwt.sign(
+          { 
+            requesterId: userId,
+            recipientId: member._id
+          },
+          process.env.ACCESS_TOKEN_SECRET,
+          { expiresIn: "7d" }
+        );
+        
+        // Create email options
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: member.email,
+          subject: `${user.fullName} wants to add you as a family member`,
+          html: createApprovalEmailTemplate(user, token, member.fullName)
+        };
+        
+        // Send email
+        await transporter.sendMail(mailOptions);
+        
+        // Track pending request
+        pendingRequests.push({
+          email: member.email,
+          fullName: member.fullName,
+          status: "pending",
+          requestedAt: new Date()
+        });
+      }
+  
+      // Save pending requests to user document
+      if (!user.pendingFamilyRequests) {
+        user.pendingFamilyRequests = [];
+      }
+      
+      user.pendingFamilyRequests.push(...pendingRequests);
+      await user.save();
+  
+      return res.status(200).json(
+        new ApiResponse(200, { pendingRequests }, "Family member approval emails sent successfully")
+      );
+    } catch (error) {
+      console.error("Error adding family members:", error);
+      throw new ApiError(500, error.message || "Error adding family members");
+    }
+  });
 
   export const getVerificationPage = asyncHandler(async (req, res) => {
     try {
