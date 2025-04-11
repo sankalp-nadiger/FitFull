@@ -663,10 +663,10 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
       // }
   
       // Update the request status and add the voice recording
-      pendingRequest.status = 'approved';
-      pendingRequest.voiceRecording = voiceRecording;
-      pendingRequest.approvalToken = undefined;
-      pendingRequest.approvedAt = new Date();
+      // pendingRequest.status = 'approved';
+      // pendingRequest.voiceRecording = voiceRecording;
+      // pendingRequest.approvalToken = undefined;
+      // pendingRequest.approvedAt = new Date();
   
       // Move approved request to user's family array if you have one
       // This depends on your specific data model
