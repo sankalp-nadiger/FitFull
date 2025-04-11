@@ -468,6 +468,7 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: include,
         body: JSON.stringify({
           token: '${token}', // server-injected token
           voiceRecording: base64Audio
@@ -640,6 +641,7 @@ export const approveFamilyMember = asyncHandler(async (req, res) => {
       return res.status(500).json({ success: false, message: "Server error during approval" });
     }
   });
+  
   
   
   
