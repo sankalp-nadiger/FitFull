@@ -45,6 +45,7 @@ const SPOTIFY_CLIENT_SECRET = 'YOUR_SPOTIFY_CLIENT_SECRET';
 const SPOTIFY_REDIRECT_URI = 'http://localhost:5173/loading';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
+const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta1/models/gemini-1.5-pro:generateContent?key=${GEMINI_API_KEY}`;
 // Routes
 app.use("/api/users", userRouter);
 // app.use("/api/resources", resourceRouter);
@@ -72,8 +73,7 @@ const loginOAuthClient = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_SECRET,
     process.env.LOGIN_REDIRECT_URI
 );
-  
-  // Route to Start Google OAuth
+// Route to Start Google OAuth
   app.get("/auth/google-url", (req, res) => {
     const oauth2Client = signupOAuthClient;
     const url = oauth2Client.generateAuthUrl({
@@ -91,6 +91,36 @@ const loginOAuthClient = new google.auth.OAuth2(
   
     res.json({url});
   });
+
+
+  app.post('/analyze', async (req, res) => {
+    try {
+      const { text } = req.body;
+      const prompt = `Analyze this medical test report and give:
+  1. Bullet point insights.
+  2. A spoken summary.
+  
+  Report:
+  ${text}`;
+  
+      const response = await axios.post(
+        GEMINI_ENDPOINT,
+        {
+          contents: [{ parts: [{ text: prompt }] }],
+        },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+  
+      const resultText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
+      res.json({ result: resultText });
+    } catch (error) {
+      console.error('Gemini API error:', error.message);
+      res.status(500).json({ error: 'Failed to fetch Gemini insights' });
+    }
+  });
+
+
+  
   //CHATBOT
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
