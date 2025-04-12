@@ -717,10 +717,27 @@ approveButton.addEventListener('click', async () => {
   export const approveFamilyMember = asyncHandler(async (req, res) => {
     try {
       console.log('Route hit');
-      const { token, voiceRecording } = req.body;
+      const { token, voiceRecording, transcription } = req.body;
   
       if (!token || !voiceRecording) {
         return res.status(400).json({ success: false, message: "Missing token or voice recording" });
+      }
+  
+      // Check transcription for negative words if it exists
+      if (transcription) {
+        console.log('Checking transcription:', transcription);
+        const negativeWords = ['no', 'reject', 'decline', 'disapprove', 'cancel', 'hate', 'dislike', 'negative', 'stop', 'don\'t'];
+        
+        const hasNegativeWords = negativeWords.some(word => 
+          transcription.toLowerCase().includes(word.toLowerCase())
+        );
+        
+        if (hasNegativeWords) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "Approval rejected due to negative sentiment in voice recording" 
+          });
+        }
       }
   
       // Verify the token and extract the payload
@@ -743,9 +760,17 @@ approveButton.addEventListener('click', async () => {
       if (!user.family) {
         user.family = [];
       }
-
-user.family.push(recipientUser._id);
   
+      // Check if recipient is already in the user's family
+      const alreadyInFamily = user.family.some(memberId => 
+        memberId.toString() === recipientUser._id.toString()
+      );
+      
+      if (alreadyInFamily) {
+        return res.status(400).json({ success: false, message: "User is already a family member" });
+      }
+  
+      user.family.push(recipientUser._id);
       await user.save();
   
       return res.status(200).json({ success: true, message: "Family member approved successfully" });
