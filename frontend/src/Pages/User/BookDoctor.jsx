@@ -70,9 +70,12 @@ function BookApp() {
           issueDetails: issueDetails || 'No details provided'
         },
         {
-          withCredentials: true
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`
+          }
         }
-      );      
+      );       
       alert('Appointment booked successfully!');
       setShowBooking(false);
       // Reset form values after successful booking
