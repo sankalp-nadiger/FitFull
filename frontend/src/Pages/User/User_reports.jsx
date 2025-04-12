@@ -901,6 +901,28 @@ const User_reports = () => {
       </div>
     </Dialog>
   );
+
+  // Add this helper function to your component
+const handleDownloadFile = (url, fileName) => {
+  if (!url) {
+    console.error("No file URL provided for download");
+    return;
+  }
+  
+  // Create a temporary anchor element
+  const link = document.createElement('a');
+  link.href = url;
+  
+  // Set the download attribute with the file name
+  // If no fileName is provided, extract it from the URL
+  const downloadName = fileName || url.split('/').pop();
+  link.setAttribute('download', downloadName);
+  
+  // Append to body, click and remove
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
   const handleAddFamilyMember = async (e) => {
     if(e) e.preventDefault();
     setError('');
@@ -1132,26 +1154,34 @@ const User_reports = () => {
               
               {/* Action buttons */}
               <div className="flex justify-end space-x-3 pt-2">
-                <button
-                  onClick={() => {
-                    setIsAIModalOpen(false);
-                    stopSpeaking();
-                  }}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition"
-                >
-                  Close
-                </button>
-                {currentReport?.documentUrl && (
-                  <a
-                    href={currentReport.documentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                  >
-                    View Original Document
-                  </a>
-                )}
-              </div>
+  <button
+    onClick={() => {
+      setIsAIModalOpen(false);
+      stopSpeaking();
+    }}
+    className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition"
+  >
+    Close
+  </button>
+  {currentReport?.documentUrl && (
+    <>
+      <a
+        href={currentReport.documentUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+      >
+        View Original Document
+      </a>
+      <button
+        onClick={() => handleDownloadFile(currentReport.documentUrl, `${currentReport.testName || 'medical-report'}_${new Date(currentReport.date).toLocaleDateString()}.pdf`)}
+        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+      >
+        Download Document
+      </button>
+    </>
+  )}
+</div>
             </div>
           )}
         </div>
@@ -1329,82 +1359,97 @@ const User_reports = () => {
 
             {/* Test Reports */}
             {userActiveTab === "tests" && !isLoading.tests && (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {userReports.testReports && userReports.testReports.length > 0 ? (
-                  userReports.testReports.map((report, index) => (
-                    <div key={index} className="border rounded-lg p-4 shadow-sm hover:shadow-md transition">
-                      <h3 className="font-semibold text-lg mb-1">{report.testName}</h3>
-                      <p className="text-sm text-gray-500 mb-2">
-                        {new Date(report.date).toLocaleDateString()} | Dr. {report.doctorName || "Unknown"}
-                      </p>
-                      <p className="text-sm mb-3 line-clamp-2">
-                        <span className="font-medium">Result:</span> {report.result}
-                      </p>
-                      <div className="flex space-x-2">
-                        {report.documentUrl && (
-                          <a
-                            href={report.documentUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded transition"
-                          >
-                            View File
-                          </a>
-                        )}
-                        <button
-                          onClick={() => handleViewAIInsights(report)}
-                          className="text-sm px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded transition"
-                        >
-                          AI Insights
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="col-span-full text-center py-12 text-gray-500">
-                    No test reports found. Add your first report.
-                  </div>
-                )}
-              </div>
+  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    {userReports.testReports && userReports.testReports.length > 0 ? (
+      userReports.testReports.map((report, index) => (
+        <div key={index} className="border rounded-lg p-4 shadow-sm hover:shadow-md transition">
+          <h3 className="font-semibold text-lg mb-1">{report.testName}</h3>
+          <p className="text-sm text-gray-500 mb-2">
+            {new Date(report.date).toLocaleDateString()} | Dr. {report.doctorName || "Unknown"}
+          </p>
+          <p className="text-sm mb-3 line-clamp-2">
+            <span className="font-medium">Result:</span> {report.result}
+          </p>
+          <div className="flex space-x-2">
+            {report.documentUrl && (
+              <>
+                <a
+                  href={report.documentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded transition"
+                >
+                  View File
+                </a>
+                <button
+                  onClick={() => handleDownloadFile(report.documentUrl, `${report.testName}_${new Date(report.date).toLocaleDateString()}.pdf`)}
+                  className="text-sm px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded transition"
+                >
+                  Download
+                </button>
+              </>
             )}
-
+            <button
+              onClick={() => handleViewAIInsights(report)}
+              className="text-sm px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded transition"
+            >
+              AI Insights
+            </button>
+          </div>
+        </div>
+      ))
+    ) : (
+      <div className="col-span-full text-center py-12 text-gray-500">
+        No test reports found. Add your first report.
+      </div>
+    )}
+  </div>
+)}
             {/* Prescriptions */}
             {userActiveTab === "prescriptions" && !isLoading.prescriptions && (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {userReports.prescriptions && userReports.prescriptions.length > 0 ? (
-                  userReports.prescriptions.map((prescription, index) => (
-                    <div key={index} className="border rounded-lg p-4 shadow-sm hover:shadow-md transition">
-                      <h3 className="font-semibold text-lg mb-1">{prescription.medication}</h3>
-                      <p className="text-sm text-gray-500 mb-2">
-                        {new Date(prescription.date).toLocaleDateString()} | Dr. {prescription.doctorName || "Unknown"}
-                      </p>
-                      <p className="text-sm mb-2">
-                        <span className="font-medium">Dosage:</span> {prescription.dosage}
-                      </p>
-                      {prescription.instructions && (
-                        <p className="text-sm mb-3 line-clamp-2">
-                          <span className="font-medium">Instructions:</span> {prescription.instructions}
-                        </p>
-                      )}
-                      {prescription.documentUrl && (
-                        <a
-                          href={prescription.documentUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded transition"
-                        >
-                          View File
-                        </a>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <div className="col-span-full text-center py-12 text-gray-500">
-                    No prescriptions found. Add your first prescription.
-                  </div>
-                )}
-              </div>
-            )}
+  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    {userReports.prescriptions && userReports.prescriptions.length > 0 ? (
+      userReports.prescriptions.map((prescription, index) => (
+        <div key={index} className="border rounded-lg p-4 shadow-sm hover:shadow-md transition">
+          <h3 className="font-semibold text-lg mb-1">{prescription.medication}</h3>
+          <p className="text-sm text-gray-500 mb-2">
+            {new Date(prescription.date).toLocaleDateString()} | Dr. {prescription.doctorName || "Unknown"}
+          </p>
+          <p className="text-sm mb-2">
+            <span className="font-medium">Dosage:</span> {prescription.dosage}
+          </p>
+          {prescription.instructions && (
+            <p className="text-sm mb-3 line-clamp-2">
+              <span className="font-medium">Instructions:</span> {prescription.instructions}
+            </p>
+          )}
+          {prescription.documentUrl && (
+            <div className="flex space-x-2">
+              <a
+                href={prescription.documentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded transition"
+              >
+                View File
+              </a>
+              <button
+                onClick={() => handleDownloadFile(prescription.documentUrl, `${prescription.medication}_${new Date(prescription.date).toLocaleDateString()}.pdf`)}
+                className="text-sm px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded transition"
+              >
+                Download
+              </button>
+            </div>
+          )}
+        </div>
+      ))
+    ) : (
+      <div className="col-span-full text-center py-12 text-gray-500">
+        No prescriptions found. Add your first prescription.
+      </div>
+    )}
+  </div>
+)}
 
             {/* Diagnoses */}
             {userActiveTab === "diagnoses" && !isLoading.diagnoses && (
@@ -1492,6 +1537,7 @@ const User_reports = () => {
                 reports={familyReports}
                 familyMemberId={selectedFamilyMember}
                 onViewAIInsights={handleViewAIInsights}
+                onDownloadFile={handleDownloadFile}
               />
             )}
           </div>
