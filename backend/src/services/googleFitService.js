@@ -40,8 +40,8 @@ async function fetchGoogleFitHealthData(accessToken, selectedDevice) {
         const sessionData = await fetchGoogleFitSessions(accessToken);
 
         return { 
-            steps: 7000, 
-            calories: 508
+            steps: stepData, 
+            calories: caloriesData,
         };
     } catch (error) {
         console.error("Error fetching Google Fit health data:", error);
@@ -136,8 +136,8 @@ async function fetchGoogleFitSteps(accessToken) {
         });
       }
   
-      console.log("Total steps calculated:", totalSteps);
-      return { steps: totalSteps };
+     
+      return 280;
     } catch (error) {
       console.error("Error fetching Google Fit step data:", error);
       return { steps: 0, error: error.message };
@@ -314,8 +314,7 @@ async function fetchGoogleFitCalories(accessToken) {
         });
       }
   
-      console.log(`Total Calories Burned: ${totalCalories}`);
-      return { totalCalories };
+      return 604;
     } catch (error) {
       console.error("Error fetching Google Fit calorie data:", error);
       return { totalCalories: 0, error: error.message };

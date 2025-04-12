@@ -235,6 +235,7 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
 
   export const getVerificationPage = asyncHandler(async (req, res) => {
     try {
+      console.log('Route hit');
       const { token } = req.params;
       
       // Verify the token but don't process approval yet
@@ -396,30 +397,33 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
           </div>
           
           <script>
-  let mediaRecorder;
-  let audioChunks = [];
-  let audioBlob;
-  const recordButton = document.getElementById('recordButton');
-  const recordingStatus = document.getElementById('recordingStatus');
-  const audioPlayback = document.getElementById('audioPlayback');
-  const identityConfirmed = document.getElementById('identityConfirmed');
-  const approveButton = document.getElementById('approveButton');
-  const denyButton = document.getElementById('denyButton');
+  // Remove the duplicate declaration at the top level
+// let audioChunks = []; - REMOVE THIS LINE
 
-  recordButton.addEventListener('click', () => {
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-      stopRecording();
-    } else {
-      startRecording();
-    }
-  });
-
-  let audioChunks = [];
 let mediaRecorder;
+let audioChunks = [];
 let audioBlob;
+const recordButton = document.getElementById('recordButton');
+const recordingStatus = document.getElementById('recordingStatus');
+const audioPlayback = document.getElementById('audioPlayback');
+const identityConfirmed = document.getElementById('identityConfirmed');
+const approveButton = document.getElementById('approveButton');
+const denyButton = document.getElementById('denyButton');
 let transcription = "";
 
-// Option 1: Record and transcribe simultaneously
+// Define checkEnableApproveButton function early to avoid scope issues
+function checkEnableApproveButton() {
+  approveButton.disabled = !(identityConfirmed.checked && audioBlob);
+}
+
+recordButton.addEventListener('click', () => {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    stopRecording();
+  } else {
+    startRecording();
+  }
+});
+
 async function startRecording() {
   audioChunks = [];
   transcription = "";
@@ -443,12 +447,12 @@ async function startRecording() {
         
         // Append to the full transcription
         transcription += transcript + " ";
-        recordingStatus.textContent = "Recording... Transcription: "${transcription.trim()}";
+        // Removed the recordingStatus.textContent line
       };
       
       recognition.onerror = function(event) {
         console.error('Speech recognition error:', event.error);
-        recordingStatus.textContent = 'Recording, but transcription error occurred';
+        // Removed the recordingStatus.textContent line
       };
       
       // Start recognition at the same time as recording
@@ -475,55 +479,36 @@ async function startRecording() {
       audioPlayback.src = audioUrl;
       audioPlayback.classList.remove('hidden');
       
-      // Check for negative words in transcription
-if (transcription) {
-  const negativeWords = ['no', 'reject', 'decline', 'disapprove', 'cancel', 'hate', 'dislike', 'negative', 'stop', 'don\'t'];
-  const hasNegativeWords = negativeWords.some(word => 
-    transcription.toLowerCase().includes(word.toLowerCase())
-  );
-  
-  if (hasNegativeWords) {
-  recordingStatus.textContent = "Recording complete. Transcription: \"" + transcription + "\" - Contains negative words, approval not allowed";
-  // Make sure approveButton exists before accessing its properties
-  if (approveButton) {
-    approveButton.disabled = true;
-  }
-} else {
-  recordingStatus.textContent = "Recording complete. Transcription: \"" + transcription + "\"";
-  // Only call checkEnableApproveButton if it exists
-  if (typeof checkEnableApproveButton === 'function') {
-    checkEnableApproveButton();
-  }
-}
-} else {
-  recordingStatus.textContent = 'Recording complete - no transcription available';
-  // Only call checkEnableApproveButton if it exists
-  if (typeof checkEnableApproveButton === 'function') {
-    checkEnableApproveButton();
-  }
-}
+      // Check for negative words in transcription without updating status
+      if (transcription) {
+        const negativeWords = ['no', 'reject', 'decline', 'disapprove', 'cancel', 'hate', 'dislike', 'negative', 'stop', 'don\'t'];
+        const hasNegativeWords = negativeWords.some(word => 
+          transcription.toLowerCase().includes(word.toLowerCase())
+        );
+        
+        if (hasNegativeWords) {
+          approveButton.disabled = true;
+        } else {
+          checkEnableApproveButton();
+        }
+      } else {
+        checkEnableApproveButton();
+      }
       
       recordButton.classList.remove('recording');
     });
 
     mediaRecorder.start();
-    recordingStatus.textContent = 'Recording in progress...';
     recordButton.classList.add('recording');
   } catch (err) {
     console.error('Error accessing microphone:', err);
-    recordingStatus.textContent = 'Error: Unable to access microphone';
   }
 }
-
 function stopRecording() {
   if (mediaRecorder) {
     mediaRecorder.stop();
     mediaRecorder.stream.getTracks().forEach(track => track.stop());
   }
-}
-
-function checkEnableApproveButton() {
-  approveButton.disabled = !(identityConfirmed.checked && audioBlob);
 }
 
 identityConfirmed.addEventListener('change', checkEnableApproveButton);
@@ -560,25 +545,24 @@ approveButton.addEventListener('click', async () => {
       })
     });
 
-      if (response.ok) {
-        window.location.href = 'https://fitfull.onrender.com/api/users/approval-success/${token}';
-      } else {
-        const errorData = await response.json();
-        alert('Error: ' + (errorData.message || 'Failed to process approval'));
-        approveButton.disabled = false;
-        approveButton.textContent = 'Approve Request';
-      }
-    } catch (error) {
-      console.error('Error submitting approval:', error);
-      alert('Error submitting approval. Please try again.');
+    if (response.ok) {
+      window.location.href = 'https://fitfull.onrender.com/api/users/approval-success/${token}';
+    } else {
+      const errorData = await response.json();
+      alert('Error: ' + (errorData.message || 'Failed to process approval'));
       approveButton.disabled = false;
       approveButton.textContent = 'Approve Request';
     }
-  });
+  } catch (error) {
+    console.error('Error submitting approval:', error);
+    alert('Error submitting approval. Please try again.');
+    approveButton.disabled = false;
+    approveButton.textContent = 'Approve Request';
+  }
+});
 
- denyButton.addEventListener('click', () => {
+denyButton.addEventListener('click', () => {
   if (confirm('Are you sure you want to deny this request?')) {
-    // Add the missing "/api/users" in the URL path
     window.location.href = 'https://fitfull.onrender.com/api/users/approval-denied/${token}';
   }
 });
