@@ -60,7 +60,6 @@ export const verifyUserOrDoctor = asyncHandler(async (req, _, next) => {
     req.header("Authorization")?.replace("Bearer ", "");
 
   try {
-    // Try doctor authentication first
     const doctor = await verifyJWT(token, Doctor, "Doctor");
     req.doctor = doctor;
     req.isDoctor = true;
@@ -68,7 +67,6 @@ export const verifyUserOrDoctor = asyncHandler(async (req, _, next) => {
     next();
   } catch (error) {
     try {
-      // If doctor auth fails, try user authentication
       const user = await verifyJWT(token, User, "User");
       req.user = user;
       req.isUser = true;
