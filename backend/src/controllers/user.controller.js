@@ -551,7 +551,7 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
       const { familyMembers } = req.body; // Array of emails
       const userId = req.user._id; // Current user's ID from auth middleware
   
-      if (!familyMembers || !Array.isArray(familyMembers)) {
+      if (!familyMembers ) {
         throw new ApiError(400, "Family members must be provided as an array of emails");
       }
   

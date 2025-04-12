@@ -25,6 +25,7 @@ import doctorRouter from "./routes/doctor.routes.js";
 // import recomendations from "./routes/recommendations.route.js";
 import wearableRouter from "./routes/wearable.routes.js" 
 import healthRouter from "./routes/healthData.routes.js";
+import ocrRouter from "./routes/ocr.routes.js";
 const app = express();
 
 // Middleware
@@ -60,7 +61,7 @@ app.use("/api/doctor", doctorRouter);
 // app.use("/api/recommendations", recomendations);
 app.use("/api/health", healthRouter);
 app.use("/api/wearables",wearableRouter)
-
+app.use("/api/ocr",ocrRouter);
 
 
 const signupOAuthClient = new google.auth.OAuth2(

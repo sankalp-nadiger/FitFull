@@ -1,10 +1,18 @@
-const express = require('express');
+// Top of your file
+import express from 'express';
+import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import { createWorker } from 'tesseract.js';
+import { createRequire } from 'module';
+
+// Use createRequire to import CommonJS modules
+const require = createRequire(import.meta.url);
+const pdfParse = require('pdf-parse');
+
 const router = express.Router();
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
-const { createWorker } = require('tesseract.js');
-const PDFParser = require('pdf-parse');
+
+// Rest of your code remains the same
 
 // OCR route
 router.post('/extract', async (req, res) => {
@@ -25,7 +33,7 @@ router.post('/extract', async (req, res) => {
     
     if (fileExtension === '.pdf') {
       // Extract text from PDF
-      const pdfData = await PDFParser(fileBuffer);
+      const pdfData = await pdfParse(fileBuffer);
       text = pdfData.text;
       
       // If PDF text extraction didn't work well, try OCR
@@ -58,8 +66,4 @@ async function extractTextWithOCR(fileBuffer) {
   }
 }
 
-module.exports = router;
-
-
-
-
+export default router;
