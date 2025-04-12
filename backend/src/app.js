@@ -1,16 +1,16 @@
-import express from "express";
-import cors from "cors";
-import cookieParser from "cookie-parser";
-import axios from 'axios';
-//import queryString from 'querystring';  
-import { google } from 'googleapis'; 
-import { User } from './models/user.model.js';
-import dotenv, { configDotenv } from 'dotenv';
-import jwt from 'jsonwebtoken';
-import multer from 'multer';
-import { getRandomActivity } from "./controllers/user.controller.js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-dotenv.config();
+  import express from "express";
+  import cors from "cors";
+  import cookieParser from "cookie-parser";
+  import axios from 'axios';
+  //import queryString from 'querystring';  
+  import { google } from 'googleapis'; 
+  import { User } from './models/user.model.js';
+  import dotenv, { configDotenv } from 'dotenv';
+  import jwt from 'jsonwebtoken';
+  import multer from 'multer';
+  import { getRandomActivity } from "./controllers/user.controller.js";
+  import { GoogleGenerativeAI } from "@google/generative-ai";
+  dotenv.config();
 
 // Router imports
 import userRouter from './routes/user.routes.js';
@@ -124,182 +124,182 @@ const loginOAuthClient = new google.auth.OAuth2(
   
   //CHATBOT
 
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-  app.post("/api/chat", async (req, res) => {
-    try {
-        const { message, systemPrompt } = req.body;
-        console.log("User message:", message);
-        console.log("System prompt:", systemPrompt);
+    app.post("/api/chat", async (req, res) => {
+      try {
+          const { message, systemPrompt } = req.body;
+          console.log("User message:", message);
+          console.log("System prompt:", systemPrompt);
 
-        if (!message) {
-            return res.status(400).json({ error: "Message is required" });
-        }
+          if (!message) {
+              return res.status(400).json({ error: "Message is required" });
+          }
 
-        const prompt = systemPrompt ? `${systemPrompt}\n\nUser: ${message}` : message;
+          const prompt = systemPrompt ? `${systemPrompt}\n\nUser: ${message}` : message;
 
-        const result = await model.generateContent(prompt);
+          const result = await model.generateContent(prompt);
 
-        console.log("Gemini Raw Response:", JSON.stringify(result, null, 2));
+          console.log("Gemini Raw Response:", JSON.stringify(result, null, 2));
 
-        const botResponse = result?.response?.candidates?.[0]?.content?.parts?.[0]?.text;
+          const botResponse = result?.response?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-        if (!botResponse) {
-            return res.status(500).json({ error: "No valid response from Gemini" });
-        }
+          if (!botResponse) {
+              return res.status(500).json({ error: "No valid response from Gemini" });
+          }
 
-        res.json({ botResponse });
+          res.json({ botResponse });
 
-    } catch (error) {
-        console.error("Detailed error:", {
-            message: error.message,
-            response: error.response?.data,
-            status: error.response?.status
-        });
+      } catch (error) {
+          console.error("Detailed error:", {
+              message: error.message,
+              response: error.response?.data,
+              status: error.response?.status
+          });
 
-        res.status(500).json({ 
-            error: "Internal Server Error", 
-            details: error.message 
-        });
-    }
-});
-
-  // Route to Handle Google OAuth Callback
-  app.post("/auth/google/callback", async (req, res) => {
-    const { code } = req.body;
-    console.log('Received code:', code);
-
-    if (!code) {
-        return res.status(400).json({ 
-            success: false, 
-            message: "No authorization code provided" 
-        });
-    }
-    const oauth2Client = signupOAuthClient;
-    try {
-        // Exchange code for tokens with correct parameters
-        const { tokens } = await oauth2Client.getToken({
-            code: code,
-            redirect_uri: oauth2Client.redirectUri  // This is crucial
-        });
-        
-        console.log('Token exchange successful');
-        oauth2Client.setCredentials(tokens);
-
-        // Get user info from Google
-        const oauth2 = google.oauth2({ 
-            version: "v2", 
-            auth: oauth2Client 
-        });
-        const { data: googleUser } = await oauth2.userinfo.get();
-
-        // Store user info in database
-        let user = await User.findOne({ email: googleUser.email });
-        if (user) {
-            return res.status(409).json({  // 409 Conflict for already existing user
-                success: false,
-                message: "User already exists. Please sign in instead."
-            });
-        }
-
-        if (!user) {
-            user = new User({
-                fullName: `${googleUser.given_name} ${googleUser.family_name}`,
-                email: googleUser.email,
-                avatar: googleUser.picture,
-                googleId: googleUser.id,
-                authProvider: "google",
-                username: googleUser.email.split('@')[0] + "_" + Math.floor(Math.random() * 10000),
-                tokens: { 
-                    googleFitToken: tokens.access_token,
-                    googleFitTokenExpiry: new Date(tokens.expiry_date),
-                    refreshToken: tokens.refresh_token  // Store refresh token if available
-                },
-            });
-            await user.save();
-        } else {
-            // Update existing user's tokens
-            user.tokens = { 
-                googleFitToken: tokens.access_token,
-                refreshToken: tokens.refresh_token
-            };
-            await user.save();
-        }
-        const activity= getRandomActivity();
-        const jwtToken = jwt.sign(
-            { userId: user._id }, 
-            process.env.ACCESS_TOKEN_SECRET, 
-            { expiresIn: "7d" }
-        );
-        console.log(jwtToken);
-        res.json({ 
-            success: true, 
-            jwt: jwtToken, 
-            user: {
-                id: user._id,
-                email: user.email,
-                fullName: user.fullName,
-                avatar: user.avatar,
-                suggestedActivity: activity
-            } 
-        });
-
-    } catch (error) {
-        console.error("Google OAuth Error:", error);
-        console.error("Error details:", {
-            message: error.message,
-            response: error.response?.data
-        });
-        
-        res.status(500).json({ 
-            success: false, 
-            message: "Google authentication failed",
-            error: error.message 
-        });
-    }
-});
-
-
-app.get("/auth/login-google", async (req, res) => {
-  // Generate Google OAuth URL for fresh token each time
-  const oauth2Client = loginOAuthClient;
-  const authUrl = oauth2Client.generateAuthUrl({
-      access_type: "offline",
-      scope: ["https://www.googleapis.com/auth/fitness.activity.read",
-        "https://www.googleapis.com/auth/calendar",
-        'https://www.googleapis.com/auth/userinfo.email',
-        "https://www.googleapis.com/auth/userinfo.profile",
-        "https://www.googleapis.com/auth/fitness.activity.read",
-        "https://www.googleapis.com/auth/fitness.heart_rate.read",
-        "https://www.googleapis.com/auth/fitness.sleep.read"
-      ],
-      prompt: "consent",
+          res.status(500).json({ 
+              error: "Internal Server Error", 
+              details: error.message 
+          });
+      }
   });
 
-  res.json({ url: authUrl });
-});
+    // Route to Handle Google OAuth Callback
+    app.post("/auth/google/callback", async (req, res) => {
+      const { code } = req.body;
+      console.log('Received code:', code);
 
-app.post("/auth/google/check-login", async (req, res) => {
-    const { code } = req.body;
-    console.log("Attempting token exchange with code:", code);
-    
-    if (!code) {
-      return res.status(400).json({ success: false, message: "No authorization code provided" });
-    }
-    
+      if (!code) {
+          return res.status(400).json({ 
+              success: false, 
+              message: "No authorization code provided" 
+          });
+      }
+      const oauth2Client = signupOAuthClient;
+      try {
+          // Exchange code for tokens with correct parameters
+          const { tokens } = await oauth2Client.getToken({
+              code: code,
+              redirect_uri: oauth2Client.redirectUri  // This is crucial
+          });
+          
+          console.log('Token exchange successful');
+          oauth2Client.setCredentials(tokens);
+
+          // Get user info from Google
+          const oauth2 = google.oauth2({ 
+              version: "v2", 
+              auth: oauth2Client 
+          });
+          const { data: googleUser } = await oauth2.userinfo.get();
+
+          // Store user info in database
+          let user = await User.findOne({ email: googleUser.email });
+          if (user) {
+              return res.status(409).json({  // 409 Conflict for already existing user
+                  success: false,
+                  message: "User already exists. Please sign in instead."
+              });
+          }
+
+          if (!user) {
+              user = new User({
+                  fullName: `${googleUser.given_name} ${googleUser.family_name}`,
+                  email: googleUser.email,
+                  avatar: googleUser.picture,
+                  googleId: googleUser.id,
+                  authProvider: "google",
+                  username: googleUser.email.split('@')[0] + "_" + Math.floor(Math.random() * 10000),
+                  tokens: { 
+                      googleFitToken: tokens.access_token,
+                      googleFitTokenExpiry: new Date(tokens.expiry_date),
+                      refreshToken: tokens.refresh_token  // Store refresh token if available
+                  },
+              });
+              await user.save();
+          } else {
+              // Update existing user's tokens
+              user.tokens = { 
+                  googleFitToken: tokens.access_token,
+                  refreshToken: tokens.refresh_token
+              };
+              await user.save();
+          }
+          const activity= getRandomActivity();
+          const jwtToken = jwt.sign(
+              { userId: user._id }, 
+              process.env.ACCESS_TOKEN_SECRET, 
+              { expiresIn: "7d" }
+          );
+          console.log(jwtToken);
+          res.json({ 
+              success: true, 
+              jwt: jwtToken, 
+              user: {
+                  id: user._id,
+                  email: user.email,
+                  fullName: user.fullName,
+                  avatar: user.avatar,
+                  suggestedActivity: activity
+              } 
+          });
+
+      } catch (error) {
+          console.error("Google OAuth Error:", error);
+          console.error("Error details:", {
+              message: error.message,
+              response: error.response?.data
+          });
+          
+          res.status(500).json({ 
+              success: false, 
+              message: "Google authentication failed",
+              error: error.message 
+          });
+      }
+  });
+
+
+  app.get("/auth/login-google", async (req, res) => {
+    // Generate Google OAuth URL for fresh token each time
     const oauth2Client = loginOAuthClient;
-    try {
-      // Exchange code for tokens
-      console.log("Exchanging code for tokens...");
-      const { tokens } = await oauth2Client.getToken(code);
-        console.log("Token exchange successful:", tokens);
-      console.log("Tokens received:", {
-        access_token_exists: !!tokens.access_token,
-        refresh_token_exists: !!tokens.refresh_token,
-        expiry_date_exists: !!tokens.expiry_date
-      });
+    const authUrl = oauth2Client.generateAuthUrl({
+        access_type: "offline",
+        scope: ["https://www.googleapis.com/auth/fitness.activity.read",
+          "https://www.googleapis.com/auth/calendar",
+          'https://www.googleapis.com/auth/userinfo.email',
+          "https://www.googleapis.com/auth/userinfo.profile",
+          "https://www.googleapis.com/auth/fitness.activity.read",
+          "https://www.googleapis.com/auth/fitness.heart_rate.read",
+          "https://www.googleapis.com/auth/fitness.sleep.read"
+        ],
+        prompt: "consent",
+    });
+
+    res.json({ url: authUrl });
+  });
+
+  app.post("/auth/google/check-login", async (req, res) => {
+      const { code } = req.body;
+      console.log("Attempting token exchange with code:", code);
+      
+      if (!code) {
+        return res.status(400).json({ success: false, message: "No authorization code provided" });
+      }
+      
+      const oauth2Client = loginOAuthClient;
+      try {
+        // Exchange code for tokens
+        console.log("Exchanging code for tokens...");
+        const { tokens } = await oauth2Client.getToken(code);
+          console.log("Token exchange successful:", tokens);
+        console.log("Tokens received:", {
+          access_token_exists: !!tokens.access_token,
+          refresh_token_exists: !!tokens.refresh_token,
+          expiry_date_exists: !!tokens.expiry_date
+        });
 
       oauth2Client.setCredentials(tokens);
   
@@ -379,67 +379,78 @@ console.log("Verified tokens after save:", freshUser.tokens);
     }
   });
 
-app.post('/auth/spotify', async (req, res) => {
-    const state = Math.random().toString(36).substring(7);  // Random state string for security
-    const scope = 'playlist-read-private user-library-read';
-    const authUrl = `https://accounts.spotify.com/authorize?` +
-                    `client_id=${SPOTIFY_CLIENT_ID}&` +
-                    `response_type=code&` +
-                    `redirect_uri=${encodeURIComponent(SPOTIFY_REDIRECT_URI)}&` +
-                    `scope=${encodeURIComponent(scope)}&` +
-                    `state=${state}`;
-  
-    // Redirects user to Spotify's login page
-    res.redirect(authUrl);
+  app.post('/auth/spotify', async (req, res) => {
+      const state = Math.random().toString(36).substring(7);  // Random state string for security
+      const scope = 'playlist-read-private user-library-read';
+      const authUrl = `https://accounts.spotify.com/authorize?` +
+                      `client_id=${SPOTIFY_CLIENT_ID}&` +
+                      `response_type=code&` +
+                      `redirect_uri=${encodeURIComponent(SPOTIFY_REDIRECT_URI)}&` +
+                      `scope=${encodeURIComponent(scope)}&` +
+                      `state=${state}`;
+    
+      // Redirects user to Spotify's login page
+      res.redirect(authUrl);
+    });
+    
+  //   app.get('/auth/spotify/callback', async (req, res) => {
+  //     const { code } = req.query;
+
+  //     if (!code) {
+  //         return res.redirect('http://localhost:5173/error?message=No+authorization+code+received');
+  //     }
+
+  //     res.redirect(`http://localhost:5173/loading?code=${code}`);
+  // });
+
+  app.post('/auth/spotify/exchange-token', async (req, res) => {
+      const { code } = req.body;
+    
+      if (!code) {
+          return res.json({ success: false, message: "No authorization code provided" });
+      }
+
+      try {
+          // Exchange authorization code for access/refresh tokens
+          const response = await axios.post('https://accounts.spotify.com/api/token', querystring.stringify({
+              code,
+              redirect_uri: 'http://localhost:5000/auth/spotify/callback',
+              grant_type: 'authorization_code',
+              client_id: 'YOUR_SPOTIFY_CLIENT_ID',
+              client_secret: 'YOUR_SPOTIFY_CLIENT_SECRET',
+          }), { headers: { "Content-Type": "application/x-www-form-urlencoded" } });
+
+          const { access_token, refresh_token } = response.data;
+
+          // Store in database
+          const user = await User.findOne({ email: req.user.email });
+          if (user) {
+              user.spotifyAccessToken = access_token;
+              user.spotifyRefreshToken = refresh_token;
+              await user.save();
+          }
+
+          res.json({ success: true });
+      } catch (error) {
+          console.error("Spotify token exchange failed:", error);
+          res.json({ success: false, message: "Failed to exchange token" });
+      }
   });
-  
-//   app.get('/auth/spotify/callback', async (req, res) => {
-//     const { code } = req.query;
 
-//     if (!code) {
-//         return res.redirect('http://localhost:5173/error?message=No+authorization+code+received');
-//     }
+  // Add Razorpay configuration from environment variables
+  const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
+  const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 
-//     res.redirect(`http://localhost:5173/loading?code=${code}`);
-// });
+  // Check if payment credentials are set
+  if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+    console.warn('⚠️ Warning: Razorpay credentials not set in environment variables. Payment features may not work properly.');
+  }
 
-app.post('/auth/spotify/exchange-token', async (req, res) => {
-    const { code } = req.body;
-  
-    if (!code) {
-        return res.json({ success: false, message: "No authorization code provided" });
-    }
+  // Start Server
+  const PORT = 3000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Payment system ${RAZORPAY_KEY_ID ? 'enabled' : 'disabled'}`);
+  });
 
-    try {
-        // Exchange authorization code for access/refresh tokens
-        const response = await axios.post('https://accounts.spotify.com/api/token', querystring.stringify({
-            code,
-            redirect_uri: 'http://localhost:5000/auth/spotify/callback',
-            grant_type: 'authorization_code',
-            client_id: 'YOUR_SPOTIFY_CLIENT_ID',
-            client_secret: 'YOUR_SPOTIFY_CLIENT_SECRET',
-        }), { headers: { "Content-Type": "application/x-www-form-urlencoded" } });
-
-        const { access_token, refresh_token } = response.data;
-
-        // Store in database
-        const user = await User.findOne({ email: req.user.email });
-        if (user) {
-            user.spotifyAccessToken = access_token;
-            user.spotifyRefreshToken = refresh_token;
-            await user.save();
-        }
-
-        res.json({ success: true });
-    } catch (error) {
-        console.error("Spotify token exchange failed:", error);
-        res.json({ success: false, message: "Failed to exchange token" });
-    }
-});
-
-
-// Start Server
-const PORT = 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-export default app;
+  export default app;

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Clock, Hospital, User, Calendar, FileText } from 'lucide-react';
 import axios from 'axios';
 import Navbar from '../Navbar';
-
+import { Star, Mail, Briefcase, CalendarDays } from 'lucide-react';
 function BookApp() {
   const [doctors, setDoctors] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -115,39 +115,84 @@ function BookApp() {
             ))}
           </select>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredDoctors.map(doctor => (
-            <div key={doctor.id} className="bg-gray-800 rounded-lg shadow-lg overflow-hidden transform transition hover:scale-105">
-              <img 
-                src={doctor.image} 
-                alt={doctor.name} 
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-6">
-                <h3 className="text-xl font-semibold mb-2">{doctor.name}</h3>
-                <p className="text-blue-400 mb-2">{doctor.specialization}</p>
-                <p className="text-gray-400 mb-2">{doctor.email}</p>
-                <p className="text-gray-400 mb-4">Experience: {doctor.experience}</p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span className="text-yellow-400">★</span>
-                    <span className="ml-1">{doctor.rating}</span>
-                  </div>
-                  <button
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-                    onClick={() => {
-                      setSelectedDoctor(doctor);
-                      setShowBooking(true);
-                    }}
-                  >
-                    Book Appointment
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+  {filteredDoctors.map(doctor => {
+    // Create consistent seed from doctor's info
+    const seed = doctor.id || doctor.email || doctor.name || "doctor" + Math.random().toString(36).substring(2, 8);
+    
+    // Professional male avatar parameters
+    const avatarParams = new URLSearchParams({
+      seed: seed,
+      backgroundColor: "b6e3f4,87CEEB,4682B4",
+      backgroundType: "gradientLinear",
+      clothing: "suit",
+      clothingColor: "2c3e50,34495e",
+      hair: "short,combover,buzz",
+      hairColor: "2c3e50,000000",
+      facialHair: "beardLight,beardMedium",
+      facialHairProbability: "50",
+      eyes: "default",
+      mouth: "smile,smirk",
+      accessories: "glasses,glassesProbability50",
+      accessoriesColor: "565656",
+      flip: "true"
+    });
+
+    const avatarUrl = `https://api.dicebear.com/7.x/personas/svg?${avatarParams.toString()}`;
+    
+    const fallbackAvatar = `https://api.dicebear.com/7.x/initials/svg?seed=Dr${doctor.name?.charAt(0) || "D"}&fontFamily=Helvetica&fontWeight=600&backgroundColor=4682B4&color=ffffff`;
+
+    return (
+      <div key={doctor.id} className="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition hover:scale-[1.02]">
+        <div className="w-full h-52 bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
+          <img
+            src={avatarUrl}
+            alt={`Dr. ${doctor.name}`}
+            className="h-44 w-44 rounded-full object-cover border-[3px] border-white shadow-lg"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = fallbackAvatar;
+            }}
+          />
         </div>
+        <div className="p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-xl font-bold mb-1">Dr. {doctor.name}</h3>
+              <p className="text-blue-300 font-medium mb-2">{doctor.specialization}</p>
+            </div>
+            <div className="flex items-center bg-blue-900/30 px-2 py-1 rounded-lg">
+              <Star className="h-4 w-4 text-yellow-400 mr-1" />
+              <span className="font-medium">{doctor.rating}</span>
+            </div>
+          </div>
+          
+          <div className="space-y-2 mt-3">
+            <div className="flex items-center text-gray-300 text-sm">
+              <Mail className="h-4 w-4 mr-2" />
+              <span className="truncate">{doctor.email}</span>
+            </div>
+            <div className="flex items-center text-gray-300 text-sm">
+              <Briefcase className="h-4 w-4 mr-2" />
+              <span>{doctor.experience} experience</span>
+            </div>
+          </div>
+
+          <button
+            className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all flex items-center justify-center"
+            onClick={() => {
+              setSelectedDoctor(doctor);
+              setShowBooking(true);
+            }}
+          >
+            <CalendarDays className="h-5 w-5 mr-2" />
+            Book Appointment
+          </button>
+        </div>
+      </div>
+    );
+  })}
+</div>
       </div>
 
       {showBooking && selectedDoctor && (

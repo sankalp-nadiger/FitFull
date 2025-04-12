@@ -29,6 +29,37 @@ const UserTelemedicine = () => {
   const [testReportStatus, setTestReportStatus] = useState('');
   const [recommendedDoctors, setRecommendedDoctors] = useState([]);
   const [showRecommendations, setShowRecommendations] = useState(false);
+  const [summaryStatus, setSummaryStatus] = useState("");
+
+  // Payment states
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedSession, setSelectedSession] = useState(null);
+  const [paymentAmount, setPaymentAmount] = useState(0);
+
+  const handleSendMedicalSummary = async () => {
+    try {
+      setSummaryStatus("Generating and sending medical summary...");
+      
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/api/sessions/send-medical-summary`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sessionId: activeSession._id }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setSummaryStatus("Medical summary sent successfully!");
+      } else {
+        setSummaryStatus(`Error: ${data.message}`);
+      }
+    } catch (error) {
+      console.error("Error sending medical summary:", error);
+      setSummaryStatus("Failed to send medical summary. Please try again.");
+    }
+  };
 
   // Fetch active sessions on component mount
   useEffect(() => {
@@ -85,6 +116,27 @@ const UserTelemedicine = () => {
     };
   }, [activeSession]);
 
+  const initiatePayment = (session) => {
+    if (!session) return;
+    
+    setSelectedSession(session);
+    const fee = session.fee || 500; // Default to 500 if no fee is specified
+    setPaymentAmount(fee);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentComplete = () => {
+    if (!selectedSession) return;
+    
+    setShowPaymentModal(false);
+    joinSession(selectedSession._id);
+  };
+
+  const cancelPayment = () => {
+    setShowPaymentModal(false);
+    setSelectedSession(null);
+  };
+
   const joinSession = async (sessionId) => {
     try {
       const response = await axios.post(
@@ -111,26 +163,31 @@ const UserTelemedicine = () => {
   };
 
   const handleAddNotes = async () => {
-    if (!notes.trim()) {
-      setNoteStatus('Notes cannot be empty');
-      return;
-    }
-
     try {
-      await axios.post(
-        `${import.meta.env.VITE_BASE_API_URL}/api/users/addNotes`,
-        { sessionId: activeSession._id, notes },
+      // Get the authentication token from localStorage or wherever you store it
+      const accessToken = sessionStorage.getItem('accessToken'); // Adjust based on how you store your token
+      
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_API_URL}/api/doctor/sessions/${sessionId}/notes`,
+        { notes: notes }, // This is the request body in axios format
         {
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
-          },
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}` // Add the Bearer token
+          }
         }
       );
-      setNoteStatus('Notes added successfully!');
-      setNotes('');
-      setTimeout(() => setNoteStatus(''), 3000);
+      
+      // Axios automatically handles the JSON parsing
+      const data = response.data;
+      
+      // Axios handles status codes differently than fetch
+      setNoteStatus(data.message || "Notes added successfully!");
     } catch (error) {
-      setNoteStatus('Failed to add notes. Please try again.');
+      console.error("Error saving notes:", error);
+      // Get the error message from the response if available
+      const errorMessage = error.response?.data?.message || "An error occurred while saving notes";
+      setNoteStatus(errorMessage);
     }
   };
 
@@ -139,7 +196,7 @@ const UserTelemedicine = () => {
       setError('No active session to end.');
       return;
     }
-  
+    
     try {
       await axios.post(
         `${import.meta.env.VITE_BASE_API_URL}/api/users/end`,
@@ -266,6 +323,19 @@ const UserTelemedicine = () => {
     navigate(`/book-appointment?doctorId=${doctorId}`);
   };
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0
+    }).format(amount);
+  };
+
+  // Generate a random transaction ID for display purposes
+  const generateTransactionId = () => {
+    return 'TXN_' + Math.random().toString(36).substr(2, 9).toUpperCase();
+  };
+
   return (
     <div className="flex flex-col items-center min-h-screen w-full bg-gray-900 p-4">
       <Navbar />
@@ -285,11 +355,11 @@ const UserTelemedicine = () => {
           Book New Appointment
         </button>
       </div>
-
+  
       {/* Main Content */}
       <div className="w-full max-w-6xl">
         {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
-
+  
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
@@ -305,7 +375,7 @@ const UserTelemedicine = () => {
               {showRecommendations ? 'Doctor Recommendations' : 'Session Feedback'}
             </h2>
             
-           {!showRecommendations ? (
+            {!showRecommendations ? (
               <div className="space-y-4">
                 <div className="flex flex-col items-center space-y-2">
                   <p className="text-lg font-medium">Rate your experience (1-5):</p>
@@ -410,7 +480,7 @@ const UserTelemedicine = () => {
                   >
                     <div className="flex justify-between items-start mb-3">
                       <h3 className="text-xl font-semibold text-gray-800">
-                        Dr. {session.doctor.fullName }
+                        Dr. {session.doctor.fullName}
                       </h3>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         session.status === 'Active' ? 'bg-green-100 text-green-800' :
@@ -438,13 +508,13 @@ const UserTelemedicine = () => {
                     
                     {session.status === 'Pending' && !activeSession && (
                       <button
-                        onClick={() => joinSession(session._id)}
+                        onClick={() => initiatePayment(session)}
                         className="w-full mt-2 p-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center justify-center"
                       >
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        Join Session
+                        Pay & Join Session
                       </button>
                     )}
                   </motion.div>
@@ -454,7 +524,79 @@ const UserTelemedicine = () => {
           </>
         )}
       </div>
-
+  
+      {/* Payment Modal with Static QR Code */}
+      {showPaymentModal && selectedSession && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <motion.div 
+            className="bg-white rounded-lg shadow-xl w-full max-w-md p-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="text-center mb-4">
+              <h2 className="text-2xl font-bold text-purple-800">Complete Payment</h2>
+              <p className="text-gray-600 mt-2">
+                Please scan the QR code to pay for your appointment with Dr. {selectedSession.doctor.fullName}
+              </p>
+            </div>
+  
+            <div className="flex flex-col items-center bg-gradient-to-br from-purple-50 to-blue-50 p-6 rounded-lg">
+              {/* Attractive QR Code with branded overlay */}
+              <div className="relative mb-6 p-2 bg-white rounded-lg shadow-lg">
+                <img 
+                  src="https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=upi://pay?pa=healthcareclinic@icici&pn=HealthcareClinic&am=500&cu=INR&tn=AppointmentFee" 
+                  alt="Payment QR Code" 
+                  className="w-64 h-64 object-contain"
+                />
+                <div className="absolute inset-0 flex items-center justify-center opacity-30">
+                  <div className="w-16 h-16 rounded-full bg-purple-600 flex items-center justify-center">
+                    <span className="text-white text-2xl font-bold">HC</span>
+                  </div>
+                </div>
+              </div>
+  
+              <div className="w-full space-y-4">
+                <div className="bg-white p-4 rounded-md border border-gray-200">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Amount</span>
+                    <span className="text-lg font-semibold text-gray-800">{formatCurrency(paymentAmount)}</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-gray-500">Transaction ID</span>
+                    <span className="text-sm text-gray-700">{generateTransactionId()}</span>
+                  </div>
+                </div>
+                
+                <div className="text-center text-sm text-gray-500">
+                  <p>You can also pay using any UPI app or internet banking</p>
+                  <div className="flex justify-center space-x-4 mt-2">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/UPI-Logo-vector.svg/1200px-UPI-Logo-vector.svg.png" alt="UPI" className="h-6" />
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Paytm_Logo_%28standalone%29.svg/2560px-Paytm_Logo_%28standalone%29.svg.png" alt="Paytm" className="h-6" />
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Pay_Logo.svg/2560px-Google_Pay_Logo.svg.png" alt="GPay" className="h-6" />
+                  </div>
+                </div>
+  
+                <div className="flex space-x-4 w-full pt-4">
+                  <button
+                    onClick={cancelPayment}
+                    className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition font-medium border border-gray-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handlePaymentComplete}
+                    className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-md hover:from-purple-700 hover:to-blue-700 transition font-medium shadow-md"
+                  >
+                    I've Paid
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+  
       {/* Session Modal */}
       {showModal && activeSession && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
@@ -523,11 +665,26 @@ const UserTelemedicine = () => {
                       accept=".pdf,.jpg,.jpeg,.png"
                     />
                   </label>
+  
                   {testReportStatus && (
                     <p className={`text-sm mt-1 ${testReportStatus.includes('successfully') ? 'text-green-600' : 'text-red-500'}`}>
                       {testReportStatus}
                     </p>
                   )}
+  
+                  <div className="mt-4">
+                  <button 
+                    onClick={handleSendMedicalSummary}
+                    className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition duration-150"
+                  >
+                    Send Medical Summary to Doctor
+                  </button>
+                  {summaryStatus && (
+                    <p className={`text-sm mt-1 ${summaryStatus.includes('successfully') ? 'text-green-600' : 'text-red-500'}`}>
+                      {summaryStatus}
+                    </p>
+                  )}
+                  </div>
                 </div>
               </div>
             </div>

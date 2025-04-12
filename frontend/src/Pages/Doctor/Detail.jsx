@@ -286,7 +286,7 @@ function Detail() {
               <div key={patient.id} className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all p-8 max-w-xl w-full">
                 <div className="flex items-center gap-6 mb-6">
                   <img 
-                    src="/api/placeholder/96/96" 
+                    src="https://image.freepik.com/free-vector/man-profile-cartoon_18591-58482.jpg" 
                     alt={patient.fullName} 
                     className="w-24 h-24 rounded-full object-cover border-2 border-gray-300" 
                   />

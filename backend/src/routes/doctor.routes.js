@@ -5,7 +5,7 @@ import {
     acceptSession,
     endSession,
     getUserAppointments,
-    addNotesToSession,
+  
     updateFeedback,
     getDoctorStats,
     updateProfile,
@@ -21,7 +21,8 @@ import {
     joinSession,
     getPatientsByDoctor,
     getAllDoctors,
-    getPendingConsultations
+    getPendingConsultations,
+   
 } from "../controllers/doctor.controller.js";
 // import { sendOTP } from "../controllers/parent.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -40,7 +41,7 @@ router.post("/:sessionId/join-session", verifyUserOrDoctor, joinSession);
 //router.post("/accept", doctor_verifyJWT, acceptSession);
 router.post("/end", verifyUserOrDoctor, endSession);
 router.get("/active", user_verifyJWT, getUserAppointments);
-router.post("/notes", user_verifyJWT, addNotesToSession);
+// router.post("/notes", user_verifyJWT, handleAddNotes);
 router.get("/pending-consultations", doctor_verifyJWT, getPendingConsultations);
 router.get("/", getAllDoctors); // Get all registered doctors
 
@@ -58,7 +59,7 @@ router.get("/test-reports", doctor_verifyJWT, getDoctorTestReports);
 router.post("/diagnosis", doctor_verifyJWT, addDiagnosis);
 router.get("/diagnoses", doctor_verifyJWT, getDoctorDiagnoses);
 
-
+// router.post('/:sessionId/notes', addNotesToSession);
 router.get("/patients", doctor_verifyJWT, getPatientsByDoctor);
 
 export default router;
