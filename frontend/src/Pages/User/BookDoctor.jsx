@@ -174,7 +174,7 @@ function BookApp() {
             </div>
             <div className="flex items-center text-gray-300 text-sm">
               <Briefcase className="h-4 w-4 mr-2" />
-              <span>{doctor.experience} experience</span>
+              <span>{doctor.yearexp} experience</span>
             </div>
           </div>
 
