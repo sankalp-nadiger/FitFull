@@ -414,78 +414,151 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
     }
   });
 
-  async function startRecording() {
-    audioChunks = [];
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
+  let audioChunks = [];
+let mediaRecorder;
+let audioBlob;
+let transcription = "";
 
-      mediaRecorder.addEventListener('dataavailable', event => {
-        audioChunks.push(event.data);
-      });
-
-      mediaRecorder.addEventListener('stop', () => {
-        audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        audioPlayback.src = audioUrl;
-        audioPlayback.classList.remove('hidden');
-        recordingStatus.textContent = 'Recording complete - play back to verify';
-        recordButton.classList.remove('recording');
-        checkEnableApproveButton();
-      });
-
-      mediaRecorder.start();
-      recordingStatus.textContent = 'Recording in progress...';
-      recordButton.classList.add('recording');
-    } catch (err) {
-      console.error('Error accessing microphone:', err);
-      recordingStatus.textContent = 'Error: Unable to access microphone';
-    }
-  }
-
-  function stopRecording() {
-    if (mediaRecorder) {
-      mediaRecorder.stop();
-      mediaRecorder.stream.getTracks().forEach(track => track.stop());
-    }
-  }
-
-  function checkEnableApproveButton() {
-    approveButton.disabled = !(identityConfirmed.checked && audioBlob);
-  }
-
-  identityConfirmed.addEventListener('change', checkEnableApproveButton);
-
-  function blobToBase64(blob) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result.split(',')[1]; // remove data URL part
-        resolve(base64String);
+// Option 1: Record and transcribe simultaneously
+async function startRecording() {
+  audioChunks = [];
+  transcription = "";
+  
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    
+    // Set up speech recognition right away
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      
+      recognition.onresult = function(event) {
+        // Get the latest transcription result
+        const current = event.resultIndex;
+        const transcript = event.results[current][0].transcript;
+        
+        // Append to the full transcription
+        transcription += transcript + " ";
+        recordingStatus.textContent = "Recording... Transcription: "${transcription.trim()}";
       };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  }
-
-  approveButton.addEventListener('click', async () => {
-    try {
-      approveButton.disabled = true;
-      approveButton.textContent = 'Processing...';
-
-      const base64Audio = await blobToBase64(audioBlob);
-
-      const response = await fetch('/api/users/family/approve', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          token: '${token.replace(/'/g, "\\'")}', // server-injected token
-          voiceRecording: base64Audio
-        })
+      
+      recognition.onerror = function(event) {
+        console.error('Speech recognition error:', event.error);
+        recordingStatus.textContent = 'Recording, but transcription error occurred';
+      };
+      
+      // Start recognition at the same time as recording
+      recognition.start();
+      
+      // When recording stops, also stop recognition
+      mediaRecorder.addEventListener('stop', () => {
+        try {
+          recognition.stop();
+        } catch (e) {
+          console.log('Recognition may have already stopped:', e);
+        }
       });
+    }
+
+    // Handle the audio data from recording
+    mediaRecorder.addEventListener('dataavailable', event => {
+      audioChunks.push(event.data);
+    });
+
+    mediaRecorder.addEventListener('stop', () => {
+      audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      audioPlayback.src = audioUrl;
+      audioPlayback.classList.remove('hidden');
+      
+      // Check for negative words in transcription
+if (transcription) {
+  const negativeWords = ['no', 'reject', 'decline', 'disapprove', 'cancel', 'hate', 'dislike', 'negative', 'stop', 'don\'t'];
+  const hasNegativeWords = negativeWords.some(word => 
+    transcription.toLowerCase().includes(word.toLowerCase())
+  );
+  
+  if (hasNegativeWords) {
+  recordingStatus.textContent = "Recording complete. Transcription: \"" + transcription + "\" - Contains negative words, approval not allowed";
+  // Make sure approveButton exists before accessing its properties
+  if (approveButton) {
+    approveButton.disabled = true;
+  }
+} else {
+  recordingStatus.textContent = "Recording complete. Transcription: \"" + transcription + "\"";
+  // Only call checkEnableApproveButton if it exists
+  if (typeof checkEnableApproveButton === 'function') {
+    checkEnableApproveButton();
+  }
+}
+} else {
+  recordingStatus.textContent = 'Recording complete - no transcription available';
+  // Only call checkEnableApproveButton if it exists
+  if (typeof checkEnableApproveButton === 'function') {
+    checkEnableApproveButton();
+  }
+}
+      
+      recordButton.classList.remove('recording');
+    });
+
+    mediaRecorder.start();
+    recordingStatus.textContent = 'Recording in progress...';
+    recordButton.classList.add('recording');
+  } catch (err) {
+    console.error('Error accessing microphone:', err);
+    recordingStatus.textContent = 'Error: Unable to access microphone';
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder) {
+    mediaRecorder.stop();
+    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+  }
+}
+
+function checkEnableApproveButton() {
+  approveButton.disabled = !(identityConfirmed.checked && audioBlob);
+}
+
+identityConfirmed.addEventListener('change', checkEnableApproveButton);
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result.split(',')[1]; // remove data URL part
+      resolve(base64String);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+approveButton.addEventListener('click', async () => {
+  try {
+    approveButton.disabled = true;
+    approveButton.textContent = 'Processing...';
+
+    const base64Audio = await blobToBase64(audioBlob);
+
+    const response = await fetch('/api/users/family/approve', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        token: '${token.replace(/'/g, "\\'")}', // server-injected token
+        voiceRecording: base64Audio,
+        transcription: transcription // Send the transcription along with the audio
+      })
+    });
 
       if (response.ok) {
         window.location.href = 'https://fitfull.onrender.com/api/users/approval-success/${token}';
