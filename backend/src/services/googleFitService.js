@@ -1,9 +1,14 @@
 import {User} from "../models/user.model.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from 'dotenv'
+  import { google } from 'googleapis'; 
 dotenv.config();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
+const loginOAuthClient = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.LOGIN_REDIRECT_URI
+);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 async function fetchGoogleFitHealthData(accessToken, selectedDevice) {
     try {
@@ -398,7 +403,7 @@ export const refreshGoogleAccessToken = async (userId) => {
             throw new Error("No refresh token available.");
         }
 
-        const oauth2Client = signupOAuthClient;
+        const oauth2Client = loginOAuthClient;
         oauth2Client.setCredentials({ refresh_token: user.tokens.refreshToken });
 
         const { credentials } = await oauth2Client.refreshAccessToken();
