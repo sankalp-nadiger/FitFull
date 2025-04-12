@@ -147,7 +147,7 @@ function BookApp() {
         <div className="w-full h-52 bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
           <img
             src={avatarUrl}
-            alt={`Dr. ${doctor.name}`}
+            alt={`Dr. ${doctor.fullName}`}
             className="h-44 w-44 rounded-full object-cover border-[3px] border-white shadow-lg"
             onError={(e) => {
               e.target.onerror = null;
@@ -158,8 +158,8 @@ function BookApp() {
         <div className="p-6">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-xl font-bold mb-1">Dr. {doctor.name}</h3>
-              <p className="text-blue-300 font-medium mb-2">{doctor.specialization}</p>
+              <h3 className="text-xl font-bold mb-1">Dr. {doctor.fullName}</h3>
+              <p className="text-blue-400 mb-2">{doctor.specification.join(", ")}</p>
             </div>
             <div className="flex items-center bg-blue-900/30 px-2 py-1 rounded-lg">
               <Star className="h-4 w-4 text-yellow-400 mr-1" />
