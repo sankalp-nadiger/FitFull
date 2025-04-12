@@ -252,154 +252,151 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
       
       // Render the verification page
       const verificationPage = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Family Request Verification</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; background-color: #f5f5f5; }
-            .container { max-width: 800px; margin: 30px auto; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-            .header { background-color: #4CAF50; color: white; padding: 15px; text-align: center; border-radius: 8px 8px 0 0; margin: -20px -20px 20px; }
-            .content { padding: 20px 0; }
-            .verifier { margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
-            .requester-info { background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-            .button { 
-              display: inline-block; 
-              background-color: #4CAF50; 
-              color: white; 
-              padding: 12px 24px; 
-              text-decoration: none; 
-              border-radius: 5px; 
-              border: none;
-              cursor: pointer;
-              font-size: 16px;
-              margin-top: 10px;
-            }
-            .button:disabled {
-              background-color: #cccccc;
-              cursor: not-allowed;
-            }
-            .button-secondary {
-              background-color: #f44336;
-            }
-            .voice-controls {
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              margin: 20px 0;
-            }
-            .record-button {
-              display: inline-block;
-              background-color: #f44336;
-              color: white;
-              width: 60px;
-              height: 60px;
-              border-radius: 50%;
-              text-align: center;
-              line-height: 60px;
-              font-size: 24px;
-              cursor: pointer;
-              margin-bottom: 10px;
-            }
-            .recording {
-              animation: pulse 1.5s infinite;
-            }
-            .hidden { display: none; }
-            .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
-            .verification-steps {
-              counter-reset: step;
-              margin: 30px 0;
-            }
-            .step {
-              position: relative;
-              padding-left: 50px;
-              margin-bottom: 20px;
-            }
-            .step:before {
-              counter-increment: step;
-              content: counter(step);
-              position: absolute;
-              left: 0;
-              top: 0;
-              width: 30px;
-              height: 30px;
-              background-color: #4CAF50;
-              color: white;
-              border-radius: 50%;
-              text-align: center;
-              line-height: 30px;
-              font-weight: bold;
-            }
-            @keyframes pulse {
-              0% { transform: scale(1); }
-              50% { transform: scale(1.1); }
-              100% { transform: scale(1); }
-            }
-            #confirmText {
-              font-size: 18px;
-              font-weight: bold;
-              margin: 20px 0;
-              padding: 10px;
-              background-color: #f0f8ff;
-              border-radius: 5px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Family Request Verification</h1>
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Family Request Verification</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; background-color: #f5f5f5; }
+          .container { max-width: 800px; margin: 30px auto; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .header { background-color: #4CAF50; color: white; padding: 15px; text-align: center; border-radius: 8px 8px 0 0; margin: -20px -20px 20px; }
+          .content { padding: 20px 0; }
+          .verifier { margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+          .requester-info { background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+          .button { 
+            display: inline-block; 
+            background-color: #4CAF50; 
+            color: white; 
+            padding: 12px 24px; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+          }
+          .button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+          }
+          .button-secondary {
+            background-color: #f44336;
+          }
+          .voice-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+          }
+          .record-button {
+            display: inline-block;
+            background-color: #f44336;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            margin-bottom: 10px;
+          }
+          .recording {
+            animation: pulse 1.5s infinite;
+          }
+          .hidden { display: none; }
+          .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+          .verification-steps {
+            counter-reset: step;
+            margin: 30px 0;
+          }
+          .step {
+            position: relative;
+            padding-left: 50px;
+            margin-bottom: 20px;
+          }
+          .step:before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 30px;
+            height: 30px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+          }
+          @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+          }
+          #confirmText {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #f0f8ff;
+            border-radius: 5px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Family Request Verification</h1>
+          </div>
+          <div class="content">
+            <h2>Hello ${recipient.fullName},</h2>
+            
+            <div class="requester-info">
+              <h3>Request Details:</h3>
+              <p><strong>${requester.fullName}</strong> (${requester.email}) has requested to add you as a family member.</p>
+              <p>This will grant them access to view your medical records and health information.</p>
             </div>
-            <div class="content">
-              <h2>Hello ${recipient.fullName},</h2>
-              
-              <div class="requester-info">
-                <h3>Request Details:</h3>
-                <p><strong>${requester.fullName}</strong> (${requester.email}) has requested to add you as a family member.</p>
-                <p>This will grant them access to view your medical records and health information.</p>
+            
+            <div class="verification-steps">
+              <div class="step">
+                <h3>Verify Identity</h3>
+                <p>Please confirm that you know <strong>${requester.fullName}</strong> and are comfortable sharing your health information with them.</p>
+                <label>
+                  <input type="checkbox" id="identityConfirmed"> Yes, I confirm this request is legitimate
+                </label>
               </div>
               
-              <div class="verification-steps">
-                <div class="step">
-                  <h3>Verify Identity</h3>
-                  <p>Please confirm that you know <strong>${requester.fullName}</strong> and are comfortable sharing your health information with them.</p>
-                  <label>
-                    <input type="checkbox" id="identityConfirmed"> Yes, I confirm this request is legitimate
-                  </label>
-                </div>
+              <div class="step">
+                <h3>Voice Verification</h3>
+                <p>For added security, please record yourself saying the following phrase:</p>
+                <div id="confirmText">"I, ${recipient.fullName}, approve ${requester.fullName} to access my medical records."</div>
                 
-                <div class="step">
-                  <h3>Voice Verification</h3>
-                  <p>For added security, please record yourself saying the following phrase:</p>
-                  <div id="confirmText">"I, ${recipient.fullName}, approve ${requester.fullName} to access my medical records."</div>
-                  
-                  <div class="voice-controls">
-                    <div class="record-button" id="recordButton">
-                      <i>🎤</i>
-                    </div>
-                    <p id="recordingStatus">Click to start recording</p>
-                    <audio id="audioPlayback" controls class="hidden"></audio>
+                <div class="voice-controls">
+                  <div class="record-button" id="recordButton">
+                    <i>🎤</i>
                   </div>
-                </div>
-                
-                <div class="step">
-                  <h3>Final Approval</h3>
-                  <p>Once you've completed the steps above, click the button below to approve this request:</p>
-                  <button id="approveButton" class="button" disabled>Approve Request</button>
-                  <button id="denyButton" class="button button-secondary">Deny Request</button>
+                  <p id="recordingStatus">Click to start recording</p>
+                  <audio id="audioPlayback" controls class="hidden"></audio>
                 </div>
               </div>
-            </div>
-            <div class="footer">
-              <p>This is a secure verification page. If you have any concerns, please contact support.</p>
+              
+              <div class="step">
+                <h3>Final Approval</h3>
+                <p>Once you've completed the steps above, click the button below to approve this request:</p>
+                <button id="approveButton" class="button" disabled>Approve Request</button>
+                <button id="denyButton" class="button button-secondary">Deny Request</button>
+              </div>
             </div>
           </div>
-          
-          <script>
-  // Remove the duplicate declaration at the top level
-// let audioChunks = []; - REMOVE THIS LINE
-
+          <div class="footer">
+            <p>This is a secure verification page. If you have any concerns, please contact support.</p>
+          </div>
+        </div>
+        
+        <script>
 let mediaRecorder;
 let audioChunks = [];
 let audioBlob;
@@ -481,7 +478,7 @@ async function startRecording() {
       
       // Check for negative words in transcription without updating status
       if (transcription) {
-        const negativeWords = ['no', 'reject', 'decline', 'disapprove', 'cancel', 'hate', 'dislike', 'negative', 'stop', 'don\'t'];
+        const negativeWords = ['no', 'reject', 'decline', 'disapprove', 'cancel', 'hate', 'dislike', 'negative', 'stop', 'don\\'t'];
         const hasNegativeWords = negativeWords.some(word => 
           transcription.toLowerCase().includes(word.toLowerCase())
         );
@@ -539,7 +536,7 @@ approveButton.addEventListener('click', async () => {
       },
       credentials: 'include',
       body: JSON.stringify({
-        token: '${token.replace(/'/g, "\\'")}', // server-injected token
+        token: '${token}',
         voiceRecording: base64Audio,
         transcription: transcription // Send the transcription along with the audio
       })
@@ -567,10 +564,9 @@ denyButton.addEventListener('click', () => {
   }
 });
 </script>
- </body>
-        </html>
-      `;
-      
+</body>
+      </html>
+    `;
       return res.status(200).send(verificationPage);
     } catch (error) {
       console.error("Error displaying verification page:", error);
