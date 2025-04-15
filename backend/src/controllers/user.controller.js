@@ -1322,41 +1322,61 @@ export const getDiagnosisReport = async (req, res) => {
 };
 
 const getFamilyTest = async (req, res) => {
-    try {
-        const { familyMemberEmail } = req.body; // Email of the family member whose data is requested
-        const requestingUser = req.user; // Authenticated user
+  try {
+      console.log("Starting getFamilyTest handler");
+      const { familyMemberEmail } = req.body;
+      console.log("Family member email:", familyMemberEmail);
+      const requestingUser = req.user;
+      console.log("Requesting user ID:", requestingUser._id);
 
-        // Validate request
-        if (!familyMemberEmail) {
-            return res.status(400).json({ message: "Family member email is required." });
-        }
+      // Validate request
+      if (!familyMemberEmail) {
+          console.log("Missing email in request");
+          return res.status(400).json({ message: "Family member email is required." });
+      }
 
-        // Find the requested family member
-        const requestedUser = await User.findOne({ email: familyMemberEmail });
-        if (!requestedUser) {
-            return res.status(404).json({ message: "Requested user not found." });
-        }
+      // Find the requested family member
+      console.log("Looking up requested user");
+      const requestedUser = await User.findOne({ email: familyMemberEmail });
+      
+      if (!requestedUser) {
+          console.log("Requested user not found");
+          return res.status(404).json({ message: "Requested user not found." });
+      }
+      console.log("Found requested user:", requestedUser._id);
 
-        // Check if the requesting user has access to this user's data
-        if (!requestingUser.family.includes(requestedUser._id)) {
-            return res.status(403).json({ message: "You do not have access to this family member's records." });
-        }
+      // Check if the requesting user has access
+      console.log("Checking family access, user family array:", requestingUser.family);
+      if (!requestingUser.family.includes(requestedUser._id)) {
+          console.log("Access denied - not in family list");
+          return res.status(403).json({ message: "You do not have access to this family member's records." });
+      }
+      console.log("Access verified");
 
-        // Retrieve the test report of the requested user
-        const testReports = await TestReport.find({ user: requestedUser._id });
+      // Retrieve the test reports
+      console.log("Finding test reports for user:", requestedUser._id);
+      const testReports = await TestReport.find({ user: requestedUser._id });
+      console.log("Test reports found:", testReports.length);
 
-        if (!testReports.length) return res.status(404).json({ message: "No test report found for this user." });
+      if (!testReports.length) {
+          console.log("No test reports found");
+          return res.status(404).json({ message: "No test report found for this user." });
+      }
 
-        res.json(testReports.map(testReport=>({
-            testName: testReport.testName,
-            result: decryptData(testReport.result),
-            documentUrl: testReport.documentUrl ? decryptData(testReport.documentUrl) : null,
-            date: testReport.date
-        })));
-    } catch (error) {
-        console.error("Error retrieving test report:", error);
-        res.status(500).json({ success: false, message: "Failed to retrieve test report" });
-    }
+      console.log("Processing reports for response");
+      const processedReports = testReports.map(testReport => ({
+          testName: testReport.testName,
+          result: decryptData(testReport.result),
+          documentUrl: testReport.documentUrl ? decryptData(testReport.documentUrl) : null,
+          date: testReport.date
+      }));
+      
+      console.log("Sending response");
+      res.json(processedReports);
+  } catch (error) {
+      console.error("Error retrieving test report:", error);
+      res.status(500).json({ success: false, message: "Failed to retrieve test report" });
+  }
 };
 
   export const getDoctors = asyncHandler(async (req, res) => {

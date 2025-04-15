@@ -27,7 +27,7 @@ useEffect(() => {
 const fetchFamilyMembers = async () => {
     setFamilyLoading(true);
     setFamilyError('');
-    
+    console.log("Fetching family members...");
     try {
       const token = sessionStorage.getItem("accessToken");
       const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/api/users/family`, {
@@ -37,13 +37,13 @@ const fetchFamilyMembers = async () => {
           'Content-Type': 'application/json'
         }
       });
-  
       if (!response.ok) {
         throw new Error(`Failed to fetch family members: ${response.status}`);
       }
   
       const result = await response.json();
-      setFamilyMember(result);
+      console.log(result)
+      setFamilyMember(result.data.familyMembers);
     } catch (error) {
       console.error('Error fetching family members:', error);
       setFamilyError('Failed to load family members. Please try again.');
@@ -241,8 +241,8 @@ const fetchFamilyMembers = async () => {
   ) : (
     <>
       <option value="">Select Family Member</option>
-      {familyMembers.length > 0 ? (
-        familyMembers.map((member) => (
+      {familyMember.length > 0 ? (
+        familyMember.map((member) => (
           <option key={member._id} value={member.email}>
             {`${member.fullName} (${member.email})`}
           </option>
@@ -321,7 +321,7 @@ const fetchFamilyMembers = async () => {
       </button>
       <DialogTitle className="text-xl font-bold mb-6">Add Family Members</DialogTitle>
       {/* ✅ Pass fetchFamilyMembers function to FamilyForm */}
-      <FamilyForm onFamilyAdded={fetchFamilyMembers} setFamilyMembers={setFamilyMember}
+      <FamilyForm onFamilyAdded={fetchFamilyMembers} setFamilyMember={setFamilyMember}
   closeModal={() => setIsFamilyModalOpenState(false)} />
     </div>
   </div>

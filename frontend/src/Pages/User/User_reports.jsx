@@ -18,7 +18,7 @@ const User_reports = () => {
   const [aiSummary, setAiSummary] = useState("");
   
   // Save the API key in state for proper usage throughout component
-  const [geminiApiKey, setGeminiApiKey] = useState("AIzaSyDNjg_c9FSrG4VG4JTEjIIcTiCtxAHxdEo");
+  const [geminiApiKey, setGeminiApiKey] = useState(import.meta.env.VITE_GEMINI_API_KEY);
   const [apiKeyConfigured, setApiKeyConfigured] = useState(true); // Assume key is valid by default
 
   // Add these helper functions to your component
@@ -527,24 +527,7 @@ const User_reports = () => {
     fetchDiagnoses();
   }, [userActiveTab, selectedDoctor]);
   // Fetch family members
-  useEffect(() => {
-    const fetchFamilyMembers = async () => {
-      try {
-        const token = sessionStorage.getItem("accessToken");
-        const headers = { Authorization: `Bearer ${token}` };
-        
-        const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/api/users/family`, { headers });
-        
-        if (response.data?.data?.familyMembers) {
-          setFamilyMembers(response.data.data.familyMembers);
-        }
-      } catch (error) {
-        console.error("Error fetching family members:", error);
-      }
-    };
-
-    fetchFamilyMembers();
-  }, []);
+ 
  // useEffect(() => {
   //   const fetchPrescriptions = async () => {
   //     try {
@@ -590,27 +573,14 @@ const User_reports = () => {
           diagnoses: diagnoses.data
         });
 
-        // Fetch family reports if family member is selected
-        if (selectedFamilyMember) {
-          const [familyTests, familyPrescriptions, familyDiagnoses] = await Promise.all([
-            axios.get(`${endpointMap.tests}/family/${selectedFamilyMember}`, { headers }),
-            axios.get(`${endpointMap.prescriptions}/family/${selectedFamilyMember}`, { headers }),
-            axios.get(`${endpointMap.diagnoses}/family/${selectedFamilyMember}`, { headers })
-          ]);
-
-          setFamilyReports({
-            testReports: familyTests.data,
-            prescriptions: familyPrescriptions.data,
-            diagnoses: familyDiagnoses.data
-          });
-        }
+       
       } catch (error) {
         console.error("Error fetching reports:", error);
       }
     };
     
     fetchReports();
-  }, [selectedDoctor, selectedFamilyMember]);
+  }, [selectedDoctor]);
 
   // FIXED: Improved file handling for uploads
   const handleFileChange = (e) => {
@@ -941,7 +911,7 @@ const handleDownloadFile = (url, fileName) => {
       }
 
       const response = await axios.post(
-        "http://localhost:8000/api/users/family/add", 
+        `${import.meta.env.VITE_BASE_API_URL}/api/users/family/add`, 
         { familyMembers: validEmails },
         { headers }
       );
@@ -1246,7 +1216,24 @@ const handleDownloadFile = (url, fileName) => {
       </div>
     </Dialog>
   );
+  useEffect(() => {
+    const fetchFamilyMembers = async () => {
+      try {
+        const token = sessionStorage.getItem("accessToken");
+        const headers = { Authorization: `Bearer ${token}` };
+        
+        const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/api/users/family`, { headers });
+        
+        if (response.data?.data?.familyMembers) {
+          setFamilyMembers(response.data.data.familyMembers);
+        }
+      } catch (error) {
+        console.error("Error fetching family members:", error);
+      }
+    };
 
+    fetchFamilyMembers();
+  }, []);
   // Main component render
   return (
     <div className="container mx-auto px-4 py-8">
@@ -1359,97 +1346,97 @@ const handleDownloadFile = (url, fileName) => {
 
             {/* Test Reports */}
             {userActiveTab === "tests" && !isLoading.tests && (
-  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-    {userReports.testReports && userReports.testReports.length > 0 ? (
-      userReports.testReports.map((report, index) => (
-        <div key={index} className="border rounded-lg p-4 shadow-sm hover:shadow-md transition">
-          <h3 className="font-semibold text-lg mb-1">{report.testName}</h3>
-          <p className="text-sm text-gray-500 mb-2">
-            {new Date(report.date).toLocaleDateString()} | Dr. {report.doctorName || "Unknown"}
-          </p>
-          <p className="text-sm mb-3 line-clamp-2">
-            <span className="font-medium">Result:</span> {report.result}
-          </p>
-          <div className="flex space-x-2">
-            {report.documentUrl && (
-              <>
-                <a
-                  href={report.documentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded transition"
-                >
-                  View File
-                </a>
-                <button
-                  onClick={() => handleDownloadFile(report.documentUrl, `${report.testName}_${new Date(report.date).toLocaleDateString()}.pdf`)}
-                  className="text-sm px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded transition"
-                >
-                  Download
-                </button>
-              </>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {userReports.testReports && userReports.testReports.length > 0 ? (
+                  userReports.testReports.map((report, index) => (
+                    <div key={index} className="border rounded-lg p-4 shadow-sm hover:shadow-md transition">
+                      <h3 className="font-semibold text-lg mb-1">{report.testName}</h3>
+                      <p className="text-sm text-gray-500 mb-2">
+                        {new Date(report.date).toLocaleDateString()} | Dr. {report.doctorName || "Unknown"}
+                      </p>
+                      <p className="text-sm mb-3 line-clamp-2">
+                        <span className="font-medium">Result:</span> {report.result}
+                      </p>
+                      <div className="flex space-x-2">
+                        {report.documentUrl && (
+                          <>
+                            <a
+                              href={report.documentUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded transition"
+                            >
+                              View File
+                            </a>
+                            <button
+                              onClick={() => handleDownloadFile(report.documentUrl, `${report.testName}_${new Date(report.date).toLocaleDateString()}.pdf`)}
+                              className="text-sm px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded transition"
+                            >
+                              Download
+                            </button>
+                          </>
+                        )}
+                        <button
+                          onClick={() => handleViewAIInsights(report)}
+                          className="text-sm px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded transition"
+                        >
+                          AI Insights
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-12 text-gray-500">
+                    No test reports found. Add your first report.
+                  </div>
+                )}
+              </div>
             )}
-            <button
-              onClick={() => handleViewAIInsights(report)}
-              className="text-sm px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded transition"
-            >
-              AI Insights
-            </button>
-          </div>
-        </div>
-      ))
-    ) : (
-      <div className="col-span-full text-center py-12 text-gray-500">
-        No test reports found. Add your first report.
-      </div>
-    )}
-  </div>
-)}
             {/* Prescriptions */}
             {userActiveTab === "prescriptions" && !isLoading.prescriptions && (
-  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-    {userReports.prescriptions && userReports.prescriptions.length > 0 ? (
-      userReports.prescriptions.map((prescription, index) => (
-        <div key={index} className="border rounded-lg p-4 shadow-sm hover:shadow-md transition">
-          <h3 className="font-semibold text-lg mb-1">{prescription.medication}</h3>
-          <p className="text-sm text-gray-500 mb-2">
-            {new Date(prescription.date).toLocaleDateString()} | Dr. {prescription.doctorName || "Unknown"}
-          </p>
-          <p className="text-sm mb-2">
-            <span className="font-medium">Dosage:</span> {prescription.dosage}
-          </p>
-          {prescription.instructions && (
-            <p className="text-sm mb-3 line-clamp-2">
-              <span className="font-medium">Instructions:</span> {prescription.instructions}
-            </p>
-          )}
-          {prescription.documentUrl && (
-            <div className="flex space-x-2">
-              <a
-                href={prescription.documentUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded transition"
-              >
-                View File
-              </a>
-              <button
-                onClick={() => handleDownloadFile(prescription.documentUrl, `${prescription.medication}_${new Date(prescription.date).toLocaleDateString()}.pdf`)}
-                className="text-sm px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded transition"
-              >
-                Download
-              </button>
-            </div>
-          )}
-        </div>
-      ))
-    ) : (
-      <div className="col-span-full text-center py-12 text-gray-500">
-        No prescriptions found. Add your first prescription.
-      </div>
-    )}
-  </div>
-)}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {userReports.prescriptions && userReports.prescriptions.length > 0 ? (
+                  userReports.prescriptions.map((prescription, index) => (
+                    <div key={index} className="border rounded-lg p-4 shadow-sm hover:shadow-md transition">
+                      <h3 className="font-semibold text-lg mb-1">{prescription.medication}</h3>
+                      <p className="text-sm text-gray-500 mb-2">
+                        {new Date(prescription.date).toLocaleDateString()} | Dr. {prescription.doctorName || "Unknown"}
+                      </p>
+                      <p className="text-sm mb-2">
+                        <span className="font-medium">Dosage:</span> {prescription.dosage}
+                      </p>
+                      {prescription.instructions && (
+                        <p className="text-sm mb-3 line-clamp-2">
+                          <span className="font-medium">Instructions:</span> {prescription.instructions}
+                        </p>
+                      )}
+                      {prescription.documentUrl && (
+                        <div className="flex space-x-2">
+                          <a
+                            href={prescription.documentUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded transition"
+                          >
+                            View File
+                          </a>
+                          <button
+                            onClick={() => handleDownloadFile(prescription.documentUrl, `${prescription.medication}_${new Date(prescription.date).toLocaleDateString()}.pdf`)}
+                            className="text-sm px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded transition"
+                          >
+                            Download
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-12 text-gray-500">
+                    No prescriptions found. Add your first prescription.
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Diagnoses */}
             {userActiveTab === "diagnoses" && !isLoading.diagnoses && (
@@ -1499,47 +1486,13 @@ const handleDownloadFile = (url, fileName) => {
         ) : (
           // Family Reports Section
           <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Family Reports</h2>
-              <button
-                onClick={() => setIsFamilyModalOpen(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
-              >
-                <span className="mr-1">+</span> Add Family Member
-              </button>
-            </div>
-
-            {/* Family Member Selection */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-1">Select Family Member:</label>
-              <select
-                value={selectedFamilyMember}
-                onChange={(e) => setSelectedFamilyMember(e.target.value)}
-                className="p-2 border rounded w-full md:w-64"
-              >
-                <option value="">Select a family member</option>
-                {familyMembers.map((member, index) => (
-                  <option key={index} value={member.id}>
-                    {member.fullName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {!selectedFamilyMember ? (
-              <div className="text-center py-12 text-gray-500">
-                Please select a family member to view their reports.
-              </div>
-            ) : (
-              <FamilyReportsSection
-                activeTab={familyActiveTab} 
-                setActiveTab={setFamilyActiveTab}
-                reports={familyReports}
-                familyMemberId={selectedFamilyMember}
-                onViewAIInsights={handleViewAIInsights}
-                onDownloadFile={handleDownloadFile}
-              />
-            )}
+            {/* Instead of handling family selection here, we now pass the proper props to FamilyReportsSection */}
+            <FamilyReportsSection
+  familyMembers={familyMembers}
+  setIsFamilyModalOpen={setIsFamilyModalOpen}
+  activeTab={familyActiveTab}
+  setActiveTab={setFamilyActiveTab}
+/>
           </div>
         )}
       </div>

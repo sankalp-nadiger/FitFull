@@ -6,9 +6,8 @@ import UserSignUp from "./UserSignUp";
 const UserSignIn = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [passwordVisible, setPasswordVisible] = useState(false); // State for password visibility toggle
-  const [isSignUp, setIsSignUp] = useState(false); // State for managing active form (SignIn or SignUp)
-
+  const [passwordVisible, setPasswordVisible] = useState(false); 
+  const [isSignUp, setIsSignUp] = useState(false); 
   // Sign in with Google
   async function signInWithGoogle() {
     navigate("/in-loading");
@@ -40,7 +39,7 @@ const UserSignIn = () => {
    
         },
         {
-          withCredentials: true, // ✅ Send & receive cookies!
+          withCredentials: true
         }
       );
       
