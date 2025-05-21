@@ -447,7 +447,7 @@ console.log("Verified tokens after save:", freshUser.tokens);
   }
 
   // Start Server
-  const PORT = 3000;
+  const PORT = 8000;
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Payment system ${RAZORPAY_KEY_ID ? 'enabled' : 'disabled'}`);
