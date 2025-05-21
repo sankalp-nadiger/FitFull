@@ -393,6 +393,10 @@ console.log("Verified tokens after save:", freshUser.tokens);
       res.redirect(authUrl);
     });
     
+app.get('/health', (req, res) => {
+  res.status(200).send("OK");
+});
+
   //   app.get('/auth/spotify/callback', async (req, res) => {
   //     const { code } = req.query;
 
@@ -445,12 +449,5 @@ console.log("Verified tokens after save:", freshUser.tokens);
   if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
     console.warn('⚠️ Warning: Razorpay credentials not set in environment variables. Payment features may not work properly.');
   }
-
-  // Start Server
-  const PORT = 8000;
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Payment system ${RAZORPAY_KEY_ID ? 'enabled' : 'disabled'}`);
-  });
 
   export default app;
