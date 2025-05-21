@@ -2,7 +2,7 @@
   import cors from "cors";
   import cookieParser from "cookie-parser";
   import axios from 'axios';
-  //import queryString from 'querystring';  
+import { swaggerUi, swaggerSpec } from './swagger.js'; 
   import { google } from 'googleapis'; 
   import { User } from './models/user.model.js';
   import dotenv, { configDotenv } from 'dotenv';
@@ -18,11 +18,6 @@ import userRouter from './routes/user.routes.js';
 //import activityRouter from "./routes/activity.routes.js";
  import communityRouter from "./routes/community.routes.js";
 import doctorRouter from "./routes/doctor.routes.js";
-// import dm_chatRouter from "./routes/dm_chat.routes.js";
-// import journalRouter from "./routes/journal.routes.js";
-// import storyRouter from "./routes/story.routes.js";
-// import postsRouter from "./routes/posts.routes.js";
-// import recomendations from "./routes/recommendations.route.js";
 import wearableRouter from "./routes/wearable.routes.js" 
 import healthRouter from "./routes/healthData.routes.js";
 import ocrRouter from "./routes/ocr.routes.js";
@@ -48,6 +43,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta1/models/gemini-1.5-pro:generateContent?key=${GEMINI_API_KEY}`;
 // Routes
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/users", userRouter);
 // app.use("/api/resources", resourceRouter);
 // app.use("/api/journals", journalRouter);
@@ -93,7 +89,45 @@ const loginOAuthClient = new google.auth.OAuth2(
     res.json({url});
   });
 
-
+  /**
+   * @swagger
+   * /analyze:
+   *   post:
+   *     summary: Analyze medical test report
+   *     description: Analyzes a medical test report and returns bullet point insights and a spoken summary
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - text
+   *             properties:
+   *               text:
+   *                 type: string
+   *                 description: The medical test report text to analyze
+   *     responses:
+   *       200:
+   *         description: Analysis results
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 result:
+   *                   type: string
+   *                   description: Analysis results including bullet points and summary
+   *       500:
+   *         description: Server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 error:
+   *                   type: string
+   */
   app.post('/analyze', async (req, res) => {
     try {
       const { text } = req.body;
@@ -126,8 +160,52 @@ const loginOAuthClient = new google.auth.OAuth2(
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });    /**
+     * @swagger
+     * /api/chat:
+     *   post:
+     *     summary: Chat with Gemini AI
+     *     description: Send a message to Gemini AI chatbot and get a response
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - message
+     *             properties:
+     *               message:
+     *                 type: string
+     *                 description: The user's message to the chatbot
+     *               systemPrompt:
+     *                 type: string
+     *                 description: Optional system prompt to guide the chatbot's response
+     *     responses:
+     *       200:
+     *         description: Chatbot response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 botResponse:
+     *                   type: string
+     *                   description: The chatbot's response message
+     *       400:
+     *         description: Bad request - Message is required
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 error:
+     *                   type: string
+     *                 details:
+     *                   type: string
+     */
     app.post("/api/chat", async (req, res) => {
       try {
           const { message, systemPrompt } = req.body;
