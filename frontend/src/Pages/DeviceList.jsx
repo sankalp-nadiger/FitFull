@@ -50,7 +50,7 @@ const DeviceList = () => {
       setLoading(true);
       setError(null);
       const response = await axios.post(
-        `${API_BASE_URL}/add`,
+        `${API_BASE_URL}/devices`,
         { deviceName },
         {
           headers: { Authorization: `Bearer ${accessToken}` },
@@ -111,17 +111,15 @@ const DeviceList = () => {
 
     try {
       setAiLoading(true);
-      setError(null);
-      const response = await axios.post(
-        `${import.meta.env.VITE_BASE_API_URL}/api/chat`,
-        { message: userMessage },
+      setError(null);      const response = await axios.get(
+        `${API_BASE_URL}/ai-insights`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
           withCredentials: true,
         }
       );
 
-      const botResponse = response.data.botResponse;
+      const botResponse = response.data.insights;
 
       if (botResponse) {
         setAiInsights(botResponse);
@@ -134,6 +132,30 @@ const DeviceList = () => {
       console.error("AI insights error:", error);
     } finally {
       setAiLoading(false);
+    }
+  };
+
+  const selectDevice = async (deviceModel) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await axios.post(
+        `${API_BASE_URL}/devices/select`,
+        { deviceModel },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          withCredentials: true,
+        }
+      );
+      
+      if (response.data.success) {
+        setSelectedDevice(deviceModel);
+      }
+    } catch (error) {
+      setError("⚠ Failed to select device. Please try again.");
+      console.error("Select device error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -198,13 +220,13 @@ const DeviceList = () => {
             devices.map((device, index) => (
               <div key={index} className="bg-gray-800 p-4 rounded-xl shadow-md">
                 <h3 className="text-lg font-semibold">{device.model || device.deviceName || "Unknown Device"}</h3>
-                <p className="text-sm text-gray-400">{device.manufacturer || "Unknown"}</p>
-                <button 
-                  onClick={() => setSelectedDevice(device.model || device.deviceName)} 
+                <p className="text-sm text-gray-400">{device.manufacturer || "Unknown"}</p>                <button 
+                  onClick={() => selectDevice(device.model || device.deviceName)} 
                   className={`mt-4 py-2 px-5 w-full text-sm font-semibold rounded-lg transition
                     ${selectedDevice === (device.model || device.deviceName) 
                       ? 'bg-green-600 text-white' 
                       : 'bg-gray-700 text-gray-200 hover:bg-blue-600'}`}
+                  disabled={loading}
                 >
                   {selectedDevice === (device.model || device.deviceName) ? "Selected ✅" : "Select"}
                 </button>
