@@ -208,7 +208,7 @@ const createApprovalEmailTemplate = (requestingUser, token, recipientName) => {
             <p><strong>${requestingUser.fullName}</strong> has requested to add you as a family member, which would grant them access to view your medical records.</p>
             <p>For enhanced security, we've implemented a two-factor verification process. Please click the button below to proceed to our secure verification page:</p>
             <p style="text-align: center;">
-             <form action="https://fitfull.onrender.com/api/users/verify-family-request/${token}" method="POST" style="display:inline;">
+             <form action="${process.env.BACKEND_URL}/api/users/verify-family-request/${token}" method="POST" style="display:inline;">
   <button type="submit" class="button" style="border:none; background:none; padding:0; font: inherit; cursor: pointer; color: inherit;">
     Verify Request
   </button>
@@ -543,7 +543,7 @@ approveButton.addEventListener('click', async () => {
     });
 
     if (response.ok) {
-      window.location.href = 'https://fitfull.onrender.com/api/users/approval-success/${token}';
+      window.location.href = '${process.env.BACKEND_URL}/api/users/approval-success/${token}';
     } else {
       const errorData = await response.json();
       alert('Error: ' + (errorData.message || 'Failed to process approval'));
@@ -560,7 +560,7 @@ approveButton.addEventListener('click', async () => {
 
 denyButton.addEventListener('click', () => {
   if (confirm('Are you sure you want to deny this request?')) {
-    window.location.href = 'https://fitfull.onrender.com/api/users/approval-denied/${token}';
+    window.location.href = '${process.env.BACKEND_URL}/api/users/approval-denied/${token}';
   }
 });
 </script>
