@@ -957,7 +957,7 @@ const registerUser = asyncHandler(async (req, res) => {
     try {
         const { fullName, email, username, password, gender, age } = req.body;
     
-        if ([fullName, email, username, password].some((field) => field?.trim() === "")) {
+        if ([fullName, email, password].some((field) => field?.trim() === "")) {
             return res.status(400).json({ success: false, message: "All fields are required" });
         }
     
@@ -1030,10 +1030,10 @@ export const getRandomActivity = () => {
 };
   
 const loginUser = asyncHandler(async (req, res) => {
-    const { username, password } = req.body;
+    const { email, username, password } = req.body;
     console.log("Request body:", req.body);
 
-    if (!username) {
+    if (!email) {
         throw new ApiError(400, "Username or email is required");
     }
 
