@@ -70,22 +70,23 @@ const DeviceList = () => {
       setLoading(false);
     }
   };
-
   const fetchHealthData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await axios.get(`${API_BASE_URL}/health-data`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        withCredentials: true,
-      });
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      if (response.data.success) {
-        setHealthData(response.data.healthData);
-      } else {
-        throw new Error("Failed to fetch health data.");
-      }
+      // Hardcoded sample health data
+      const mockHealthData = {
+        heartRate: Math.floor(Math.random() * (100 - 60) + 60), // Random heart rate between 60-100
+        steps: Math.floor(Math.random() * (15000 - 5000) + 5000), // Random steps between 5000-15000
+        calories: Math.floor(Math.random() * (3000 - 1500) + 1500), // Random calories between 1500-3000
+        sleep: (Math.random() * (9 - 5) + 5).toFixed(1), // Random sleep hours between 5-9
+      };
+
+      setHealthData(mockHealthData);
     } catch (error) {
       setError("⚠ Failed to fetch health data.");
       console.error("Fetch health data error:", error);
