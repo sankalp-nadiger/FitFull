@@ -956,7 +956,6 @@ export const removeFamilyMember = asyncHandler(async (req, res) => {
 const registerUser = asyncHandler(async (req, res) => {
     try {
 
-        // Map frontend keys to backend variables
         const {
             fullName,
             email,
@@ -980,8 +979,21 @@ const registerUser = asyncHandler(async (req, res) => {
             return res.status(409).json({ success: false, message: "User with this email already exists" });
         }
 
+        // If fullName is not provided, generate from user_name
+        let computedFullName = fullName;
+        if (!computedFullName && user_name) {
+            // Capitalize first letter, stop at first number or space
+            let result = '';
+            for (let i = 0; i < user_name.length; i++) {
+                const char = user_name[i];
+                if (char === ' ' || !isNaN(Number(char))) break;
+                result += i === 0 ? char.toUpperCase() : char;
+            }
+            computedFullName = result;
+        }
+
         const user = await User.create({
-            fullName,
+            fullName: computedFullName,
             email,
             password,
             gender,
