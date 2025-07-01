@@ -955,49 +955,53 @@ export const removeFamilyMember = asyncHandler(async (req, res) => {
 
 const registerUser = asyncHandler(async (req, res) => {
     try {
-        const { fullName, email, username, password, gender, age } = req.body;
-    
-        if ([fullName, email, password].some((field) => field?.trim() === "")) {
+
+        // Map frontend keys to backend variables
+        const {
+            fullName,
+            email,
+            password,
+            gender,
+            age,
+            current_height,
+            current_weight,
+            pregnancy_trimester,
+            expected_due_date,
+            user_name 
+        } = req.body;
+
+        if ([email, password].some((field) => field?.toString().trim() === "")) {
             return res.status(400).json({ success: false, message: "All fields are required" });
         }
-    
-        // Check if user exists
-        const existedUser = await User.findOne({ $or: [{ username }, { email }] });
+
+        // Check if user exists only by email
+        const existedUser = await User.findOne({ email });
         if (existedUser) {
-            return res.status(409).json({ success: false, message: "User with email or username already exists" });
+            return res.status(409).json({ success: false, message: "User with this email already exists" });
         }
-  
-        // Process location
-        // let parsedLocation;
-        // try {
-        //     parsedLocation = JSON.parse(location);
-        //     if (!parsedLocation.type || !parsedLocation.coordinates) {
-        //         throw new Error("Invalid location format");
-        //     }
-        // } catch (error) {
-        //     return res.status(400).json({ success: false, message: "Invalid location JSON format" });
-        // }
-  
-        // Create user
+
         const user = await User.create({
             fullName,
             email,
             password,
             gender,
             age,
-            username: username.toLowerCase(),
-            // location: parsedLocation,
+            current_height,
+            current_weight,
+            pregnancy_trimester,
+            expected_due_date,
+            username: user_name ? user_name.toLowerCase() : undefined,
             authProvider: "local",
-            family: [] // Initialize empty family array
+            family: []
         });
-  
+
         console.log("User successfully created:", user);
         await user.assignRandomAvatar(); 
         await user.save();
-  
+
         const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
         console.log("Generated Tokens:", { accessToken, refreshToken });
-  
+
         const options = {
             httpOnly: true,
             secure: false,
@@ -1030,29 +1034,22 @@ export const getRandomActivity = () => {
 };
   
 const loginUser = asyncHandler(async (req, res) => {
-    const { email, username, password } = req.body;
+    const { email, password } = req.body;
     console.log("Request body:", req.body);
 
-    if (!email) {
-        throw new ApiError(400, "Username or email is required");
+    if (!email || !password) {
+        throw new ApiError(400, "Email and password are required");
     }
 
-    const user = await User.findOne({ $or: [{ username }] });
+    const user = await User.findOne({ email });
 
     if (!user) {
         throw new ApiError(404, "User does not exist");
     }
 
-    let passwordSet = false;
-
-    if (!user.password && password) {
-        await user.save();
-        passwordSet = true;
-    } else {
-        const isPasswordValid = await user.isPasswordCorrect(password);
-        if (!isPasswordValid) {
-            throw new ApiError(401, "Invalid user credentials");
-        }
+    const isPasswordValid = await user.isPasswordCorrect(password);
+    if (!isPasswordValid) {
+        throw new ApiError(401, "Invalid user credentials");
     }
 
     const now = new Date();
@@ -1075,7 +1072,7 @@ const loginUser = asyncHandler(async (req, res) => {
     await user.save();
 
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
-     console.log(accessToken)
+    console.log(accessToken)
     const loggedInUser = await User.findById(user._id)
         .select("-password -refreshToken")
         .populate('family', 'fullName email username'); // Populate family members
@@ -1086,10 +1083,6 @@ const loginUser = asyncHandler(async (req, res) => {
     };
 
     const randomActivity = getRandomActivity();
-
-    const responseMessage = passwordSet
-        ? "Password has been set and user logged in successfully"
-        : "User logged in successfully";
 
     return res
         .status(200)
@@ -1103,7 +1096,7 @@ const loginUser = asyncHandler(async (req, res) => {
                 streak: user.streak,
                 maxStreak: user.maxStreak,
                 suggestedActivity: randomActivity,
-            }, responseMessage),
+            }, "User logged in successfully"),
         );
 });
 

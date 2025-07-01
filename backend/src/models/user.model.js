@@ -48,6 +48,18 @@ const userSchema = new Schema(
     age: {
       type: Number,
     },
+    current_height: {
+      type: Number,
+    },
+    current_weight: {
+      type: Number,
+    },
+    pregnancy_trimester: {
+      type: Number,
+    },
+    expected_due_date: {
+      type: String, // or Date if you want strict typing
+    },
     gender: {
       type: String,
       enum: ["Male", "Female", "Other"],
