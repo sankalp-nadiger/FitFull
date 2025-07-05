@@ -23,6 +23,7 @@ import CommunityChat from "./Community/community";
 import UserProfile from "./Pages/User/User_profile";
 import User_reports from "./Pages/User/User_reports";
 import PhysicalActivity from "./Pages/Activity/Activity";
+import HomePage2 from "./Pages/HomePage2";
 
 function App() {
   return (

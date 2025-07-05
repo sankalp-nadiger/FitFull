@@ -18,11 +18,11 @@ const UserSignIn = () => {
     event.preventDefault();
 
     // Collect form data
-    const username = event.target.username.value;
+    const email = event.target.email.value;
     const password = event.target.password.value;
 
     // Validate fields
-    if (!password || !username) {
+    if (!password || !email) {
       alert("Please fill in all fields.");
       return;
     }
@@ -34,7 +34,7 @@ const UserSignIn = () => {
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_API_URL}/api/users/login`,
         {
-          username,
+          email,
           password,
    
         },
@@ -99,13 +99,13 @@ const UserSignIn = () => {
             {!isSignUp ? (
               <form onSubmit={handleSignIn} className="space-y-5">
                 <div className="space-y-2">
-                  <label htmlFor="username" className="block text-gray-700 font-medium">Username</label>
+                  <label htmlFor="email" className="block text-gray-700 font-medium">Email</label>
                   <input
-                    type="text"
-                    id="username"
-                    name="username"
+                    type="email"
+                    id="email"
+                    name="email"
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="Enter your username"
+                    placeholder="Enter your email"
                   />
                 </div>
 
