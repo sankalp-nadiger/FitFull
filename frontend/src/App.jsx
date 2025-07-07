@@ -24,7 +24,8 @@ import UserProfile from "./Pages/User/User_profile";
 import User_reports from "./Pages/User/User_reports";
 import PhysicalActivity from "./Pages/Activity/Activity";
 import HomePage2 from "./Pages/HomePage2";
-
+import DoctorLogIn from "./Pages/Doctor/DoctorSignIn2";
+import DoctorLogUp from "./Pages/Doctor/DoctorSignUp2";
 function App() {
   return (
   //  <Layout>
@@ -41,6 +42,8 @@ function App() {
         <Route path="/up-loading" element={<SignUpLoadingPage/>}/>
         <Route path="/doctor-signin" element={<DoctorSignIn/>}/>
         <Route path="/doctor-signup" element={<DoctorSignUp/>}/>
+        <Route path="/doctor-login" element={<DoctorLogIn/>}/>
+        <Route path="/signup" element={<DoctorLogUp/>}/>
         <Route path="/doctor-dashboard" element={<DoctorDashBoard/>}/>
         <Route path="/details" element={<Detail/>}/>
         <Route path="/main-page" element={<MainPage/>}/>
