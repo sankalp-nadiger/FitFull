@@ -31,7 +31,7 @@ function App() {
   //  <Layout>
     <Router>
       <Routes>
-        <Route path="/" element={<HomePage2/>} />
+        <Route path="/" element={<HomePage/>} />
         <Route path="/auth" element={<Auth/>} />
         <Route path="/user-signin" element={<UserSignIn />}/>
         <Route path="/user-signup" element={<UserSignUp />} />
