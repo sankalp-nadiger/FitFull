@@ -41,20 +41,12 @@ const SPOTIFY_CLIENT_SECRET = 'YOUR_SPOTIFY_CLIENT_SECRET';
 const SPOTIFY_REDIRECT_URI = 'http://localhost:5173/loading';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta1/models/gemini-1.5-pro:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 // Routes
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/users", userRouter);
-// app.use("/api/resources", resourceRouter);
-// app.use("/api/journals", journalRouter);
-// app.use("/api/activity", activityRouter);
  app.use("/api/community", communityRouter);
 app.use("/api/doctor", doctorRouter);
-// app.use("/api/dm_chat", dm_chatRouter);
-// //app.use("/api/parent", parentRouter);
-// app.use("/api/story", storyRouter);
-// app.use("/api/post", postsRouter);
-// app.use("/api/recommendations", recomendations);
 app.use("/api/health", healthRouter);
 app.use("/api/wearables",wearableRouter)
 app.use("/api/ocr",ocrRouter);
@@ -134,7 +126,8 @@ const loginOAuthClient = new google.auth.OAuth2(
       const prompt = `Analyze this medical test report and give:
   1. Bullet point insights.
   2. A spoken summary.
-  
+  3. The patients are pregnant, so how it is relevant to a pregnant's journey and how it might affect them, positive, negative, any risks, etc.
+
   Report:
   ${text}`;
   
